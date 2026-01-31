@@ -74,3 +74,20 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
 }
+
+model CashFlow {
+  id            String       @id @default(cuid())
+  date          DateTime
+  receiptNumber String       // Numero de recibo del comprobante
+  provider      String       // Proveedor
+  description   String       // Descripcion del registro
+  type          CashFlowType // Ingreso o Gasto
+  amount        Decimal      // Monto
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum CashFlowType {
+  INCOME  // Ingreso
+  EXPENSE // Gasto
+}
