@@ -14,7 +14,14 @@
     "@prisma/client": "^6.2.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^22.19.7",
+    "bcrypt": "^6.0.0",
     "prisma": "^6.2.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
+    },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
