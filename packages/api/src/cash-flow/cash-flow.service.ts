@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CashFlowType } from '@prisma/client';
 
 @Injectable()
 export class CashFlowService {
@@ -13,21 +14,19 @@ export class CashFlowService {
     type: 'INCOME' | 'EXPENSE';
     amount: number;
   }) {
-    // @ts-ignore
     return this.prisma.cashFlow.create({
       data: {
         date: new Date(data.date),
         receiptNumber: data.receiptNumber,
         provider: data.provider,
         description: data.description,
-        type: data.type,
+        type: data.type as CashFlowType,
         amount: data.amount,
       },
     });
   }
 
   async findAll() {
-    // @ts-ignore
     return this.prisma.cashFlow.findMany({
       orderBy: {
         date: 'desc',
@@ -36,7 +35,6 @@ export class CashFlowService {
   }
 
   async getSummary() {
-    // @ts-ignore
     const aggregated = await this.prisma.cashFlow.groupBy({
       by: ['type'],
       _sum: {
@@ -44,8 +42,8 @@ export class CashFlowService {
       },
     });
 
-    const totalIncome = aggregated.find((a: any) => a.type === 'INCOME')?._sum.amount || 0;
-    const totalExpense = aggregated.find((a: any) => a.type === 'EXPENSE')?._sum.amount || 0;
+    const totalIncome = aggregated.find((a) => a.type === CashFlowType.INCOME)?._sum.amount || 0;
+    const totalExpense = aggregated.find((a) => a.type === CashFlowType.EXPENSE)?._sum.amount || 0;
 
     return {
       totalIncome: Number(totalIncome),

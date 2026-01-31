@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modelo de ejemplo - ajustar según necesidades del negocio
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -19,12 +18,6 @@ model User {
   orders    Order[]
 }
 
-enum UserRole {
-  USER
-  ADMIN
-  EMPLOYEE
-}
-
 model Product {
   id          String      @id @default(cuid())
   name        String
@@ -34,10 +27,10 @@ model Product {
   stock       Int
   images      String[]
   categoryId  String?
-  category    Category?   @relation(fields: [categoryId], references: [id])
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   OrderItem   OrderItem[]
+  category    Category?   @relation(fields: [categoryId], references: [id])
 }
 
 model Category {
@@ -49,22 +42,40 @@ model Category {
 model Order {
   id        String      @id @default(cuid())
   userId    String
-  user      User        @relation(fields: [userId], references: [id])
   total     Decimal
   status    OrderStatus @default(PENDING)
-  items     OrderItem[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
 }
 
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
   productId String
-  product   Product @relation(fields: [productId], references: [id])
   quantity  Int
   price     Decimal
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model CashFlow {
+  id            String       @id @default(cuid())
+  date          DateTime
+  receiptNumber String
+  provider      String
+  description   String
+  type          CashFlowType
+  amount        Decimal
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  EMPLOYEE
 }
 
 enum OrderStatus {
@@ -75,19 +86,7 @@ enum OrderStatus {
   CANCELLED
 }
 
-model CashFlow {
-  id            String       @id @default(cuid())
-  date          DateTime
-  receiptNumber String       // Numero de recibo del comprobante
-  provider      String       // Proveedor
-  description   String       // Descripcion del registro
-  type          CashFlowType // Ingreso o Gasto
-  amount        Decimal      // Monto
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-}
-
 enum CashFlowType {
-  INCOME  // Ingreso
-  EXPENSE // Gasto
+  INCOME
+  EXPENSE
 }

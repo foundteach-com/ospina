@@ -90,9 +90,14 @@ export default function CashFlowPage() {
             amount: '',
         });
         fetchData();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to save record:', errorData);
+        alert(`Error al guardar el registro: ${errorData.message || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error('Error saving record:', error);
+      alert('Error de conexión o al guardar el registro.');
     }
   };
 
