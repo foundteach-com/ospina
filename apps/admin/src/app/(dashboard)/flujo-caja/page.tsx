@@ -42,8 +42,8 @@ export default function CashFlowPage() {
       };
 
       const [recordsRes, summaryRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/cash-flow`, { headers }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/cash-flow/summary`, { headers })
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cash-flow`, { headers }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cash-flow/summary`, { headers })
       ]);
 
       if (recordsRes.ok && summaryRes.ok) {
@@ -67,7 +67,7 @@ export default function CashFlowPage() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cash-flow`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cash-flow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
