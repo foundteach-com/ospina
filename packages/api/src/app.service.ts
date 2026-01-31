@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello from Ospina API!';
+  getHello(): any {
+    return {
+      status: 'ok',
+      message: 'Ospina API is running flawlessly 🚀',
+      timestamp: new Date().toISOString(),
+    };
   }
 }
