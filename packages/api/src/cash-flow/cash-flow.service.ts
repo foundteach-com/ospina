@@ -26,11 +26,68 @@ export class CashFlowService {
     });
   }
 
-  async findAll() {
+  async findAll(filters?: {
+    type?: 'INCOME' | 'EXPENSE';
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) {
+    const where: any = {};
+
+    if (filters?.type) {
+      where.type = filters.type as CashFlowType;
+    }
+
+    if (filters?.startDate || filters?.endDate) {
+      where.date = {};
+      if (filters.startDate) {
+        where.date.gte = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        where.date.lte = new Date(filters.endDate);
+      }
+    }
+
+    if (filters?.search) {
+      where.OR = [
+        { provider: { contains: filters.search, mode: 'insensitive' } },
+        { receiptNumber: { contains: filters.search, mode: 'insensitive' } },
+        { description: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
     return this.prisma.cashFlow.findMany({
+      where,
       orderBy: {
         date: 'desc',
       },
+    });
+  }
+
+  async update(id: string, data: {
+    date?: string | Date;
+    receiptNumber?: string;
+    provider?: string;
+    description?: string;
+    type?: 'INCOME' | 'EXPENSE';
+    amount?: number;
+  }) {
+    return this.prisma.cashFlow.update({
+      where: { id },
+      data: {
+        ...(data.date && { date: new Date(data.date) }),
+        ...(data.receiptNumber && { receiptNumber: data.receiptNumber }),
+        ...(data.provider && { provider: data.provider }),
+        ...(data.description && { description: data.description }),
+        ...(data.type && { type: data.type as CashFlowType }),
+        ...(data.amount !== undefined && { amount: data.amount }),
+      },
+    });
+  }
+
+  async remove(id: string) {
+    return this.prisma.cashFlow.delete({
+      where: { id },
     });
   }
 
