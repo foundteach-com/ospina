@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface CashFlowRecord {
   id: string;
@@ -25,13 +28,19 @@ export default function CashFlowPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<CashFlowRecord | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   
-  // Filter state
+  // Filter & Sort state
   const [filters, setFilters] = useState({
     type: '',
     search: '',
     startDate: '',
     endDate: '',
+  });
+
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
+    key: 'date',
+    direction: 'desc',
   });
   
   // Form state
@@ -51,12 +60,16 @@ export default function CashFlowPage() {
         'Authorization': `Bearer ${token}`,
       };
 
-      // Build query params from filters
+      // Build query params from filters and sort
       const params = new URLSearchParams();
       if (filters.type) params.append('type', filters.type);
       if (filters.search) params.append('search', filters.search);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
+      
+      // Add sort params
+      params.append('sortBy', sortConfig.key);
+      params.append('order', sortConfig.direction);
 
       const [recordsRes, summaryRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/cash-flow?${params}`, { headers }),
@@ -78,7 +91,27 @@ export default function CashFlowPage() {
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters, sortConfig]);
+
+  const handleSort = (key: string) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  const getSortIcon = (key: string) => {
+    if (sortConfig.key !== key) {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-30"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+      );
+    }
+    return sortConfig.direction === 'asc' ? (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="m7 9 5-5 5 5"/></svg>
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="m7 15 5 5 5-5"/></svg>
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +158,10 @@ export default function CashFlowPage() {
     }
   };
 
+  const handleError = () => {
+     alert('Error inesperado. Por favor intente nuevamente.');
+  };
+
   const handleEdit = (record: CashFlowRecord) => {
     setEditingRecord(record);
     setFormData({
@@ -160,35 +197,93 @@ export default function CashFlowPage() {
     }
   };
 
-  const handleExport = () => {
-    if (records.length === 0) {
-      alert('No hay registros para exportar');
-      return;
-    }
+  const getFormattedDataForExport = () => {
+    return records.map(r => ({
+      Fecha: new Date(r.date).toLocaleDateString('es-CO'),
+      'N° Recibo': r.receiptNumber,
+      Proveedor: r.provider,
+      Descripción: r.description,
+      Tipo: r.type === 'INCOME' ? 'Ingreso' : 'Egreso',
+      Monto: r.amount
+    }));
+  };
 
-    // Generate CSV
-    const headers = ['Fecha', 'N° Recibo', 'Proveedor', 'Descripción', 'Tipo', 'Monto'];
-    const rows = records.map(r => [
-      new Date(r.date).toLocaleDateString('es-CO'),
-      r.receiptNumber,
-      r.provider,
-      r.description,
-      r.type === 'INCOME' ? 'Ingreso' : 'Egreso',
-      r.amount.toString()
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const exportCSV = () => {
+    if (records.length === 0) return alert('No hay registros para exportar');
+    
+    const ws = XLSX.utils.json_to_sheet(getFormattedDataForExport());
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `flujo-caja-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
+  const exportExcel = () => {
+    if (records.length === 0) return alert('No hay registros para exportar');
+
+    const ws = XLSX.utils.json_to_sheet(getFormattedDataForExport());
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Flujo de Caja");
+    
+    // Auto-width columns
+    const maxWidth = 50;
+    const colWidths = [
+        { wch: 15 }, // Date
+        { wch: 20 }, // Receipt
+        { wch: 30 }, // Provider
+        { wch: 40 }, // Description
+        { wch: 15 }, // Type
+        { wch: 15 }  // Amount
+    ];
+    ws['!cols'] = colWidths;
+
+    XLSX.writeFile(wb, `flujo-caja-${new Date().toISOString().split('T')[0]}.xlsx`);
+    setShowExportMenu(false);
+  };
+
+  const exportPDF = () => {
+     if (records.length === 0) return alert('No hay registros para exportar');
+
+     const doc = new jsPDF();
+     
+     // Title
+     doc.setFontSize(18);
+     doc.text('Reporte de Flujo de Caja', 14, 22);
+     doc.setFontSize(11);
+     doc.text(`Generado: ${new Date().toLocaleDateString('es-CO')}`, 14, 30);
+     
+     // Summary
+     doc.text(`Ingresos: $${summary.totalIncome.toLocaleString()}`, 14, 40);
+     doc.text(`Gastos: $${summary.totalExpense.toLocaleString()}`, 80, 40);
+     doc.text(`Balance: $${summary.balance.toLocaleString()}`, 140, 40);
+
+     const tableColumn = ["Fecha", "N° Recibo", "Proveedor", "Descripción", "Tipo", "Monto"];
+     const tableRows = records.map(record => [
+       new Date(record.date).toLocaleDateString('es-CO'),
+       record.receiptNumber,
+       record.provider,
+       record.description,
+       record.type === 'INCOME' ? 'Ingreso' : 'Egreso',
+       `$${record.amount.toLocaleString()}`
+     ]);
+
+     autoTable(doc, {
+       head: [tableColumn],
+       body: tableRows,
+       startY: 50,
+       theme: 'grid',
+       styles: { fontSize: 8 },
+       headStyles: { fillColor: [22, 163, 74] } // Green-600
+     });
+
+     doc.save(`flujo-caja-${new Date().toISOString().split('T')[0]}.pdf`);
+     setShowExportMenu(false);
   };
 
   const handleNewRecord = () => {
@@ -285,15 +380,38 @@ export default function CashFlowPage() {
             />
           </div>
 
-          <div className="flex items-end">
+          <div className="flex items-end relative">
             <button
-              onClick={handleExport}
+              onClick={() => setShowExportMenu(!showExportMenu)}
               className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-              title="Exportar a CSV"
+              title="Exportar"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Exportar
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transform transition-transform ${showExportMenu ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
             </button>
+            
+            {showExportMenu && (
+              <div className="absolute top-full right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <button onClick={exportCSV} className="w-full text-left px-4 py-3 hover:bg-gray-700 text-gray-200 flex items-center gap-2 transition-colors">
+                  <span className="bg-green-600/20 text-green-400 p-1 rounded font-bold text-xs">CSV</span>
+                  <span>Archivo CSV</span>
+                </button>
+                <button onClick={exportExcel} className="w-full text-left px-4 py-3 hover:bg-gray-700 text-gray-200 flex items-center gap-2 transition-colors">
+                  <span className="bg-green-600/20 text-green-400 p-1 rounded font-bold text-xs">XLS</span>
+                  <span>Excel (XLSX)</span>
+                </button>
+                <button onClick={exportPDF} className="w-full text-left px-4 py-3 hover:bg-gray-700 text-gray-200 flex items-center gap-2 transition-colors border-t border-gray-700">
+                  <span className="bg-red-600/20 text-red-400 p-1 rounded font-bold text-xs">PDF</span>
+                  <span>Documento PDF</span>
+                </button>
+              </div>
+            )}
+            
+            {/* Click outside closer overlay */}
+            {showExportMenu && (
+              <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)}></div>
+            )}
           </div>
         </div>
       </div>
@@ -304,11 +422,31 @@ export default function CashFlowPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-800/50 border-b border-gray-800">
-                <th className="px-6 py-4 text-sm font-semibold text-gray-300">Fecha</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-300">N° Recibo</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-300">Proveedor</th>
+                <th 
+                  className="px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:bg-gray-800 hover:text-white transition-colors select-none"
+                  onClick={() => handleSort('date')}
+                >
+                  <div className="flex items-center gap-1">Fecha {getSortIcon('date')}</div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:bg-gray-800 hover:text-white transition-colors select-none"
+                  onClick={() => handleSort('receiptNumber')}
+                >
+                  <div className="flex items-center gap-1">N° Recibo {getSortIcon('receiptNumber')}</div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-sm font-semibold text-gray-300 cursor-pointer hover:bg-gray-800 hover:text-white transition-colors select-none"
+                  onClick={() => handleSort('provider')}
+                >
+                  <div className="flex items-center gap-1">Proveedor {getSortIcon('provider')}</div>
+                </th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-300">Descripción</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-300 text-right">Monto</th>
+                <th 
+                  className="px-6 py-4 text-sm font-semibold text-gray-300 text-right cursor-pointer hover:bg-gray-800 hover:text-white transition-colors select-none"
+                  onClick={() => handleSort('amount')}
+                >
+                  <div className="flex items-center justify-end gap-1">Monto {getSortIcon('amount')}</div>
+                </th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-300 text-right">Acciones</th>
               </tr>
             </thead>

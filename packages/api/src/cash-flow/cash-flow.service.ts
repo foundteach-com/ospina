@@ -31,6 +31,8 @@ export class CashFlowService {
     startDate?: string;
     endDate?: string;
     search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
   }) {
     const where: any = {};
 
@@ -56,11 +58,13 @@ export class CashFlowService {
       ];
     }
 
+    const orderBy = filters?.sortBy
+      ? { [filters.sortBy]: filters.order || 'desc' }
+      : { date: 'desc' as const };
+
     return this.prisma.cashFlow.findMany({
       where,
-      orderBy: {
-        date: 'desc',
-      },
+      orderBy,
     });
   }
 
