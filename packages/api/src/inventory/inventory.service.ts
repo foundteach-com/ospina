@@ -101,7 +101,7 @@ export class InventoryService {
       include: {
         sale: {
           include: {
-            user: true,
+            client: true,
           },
         },
       },
@@ -135,7 +135,7 @@ export class InventoryService {
         quantity: Number(item.quantity),
         price: Number(item.salePrice),
         referenceNumber: item.sale.referenceNumber || undefined,
-        partner: item.sale.user.name || item.sale.user.email,
+        partner: item.sale.client.name,
       });
     });
 

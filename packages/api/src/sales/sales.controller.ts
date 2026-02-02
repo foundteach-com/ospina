@@ -21,7 +21,7 @@ export class SalesController {
   create(
     @Body()
     data: {
-      userId: string;
+      clientId: string;
       referenceNumber?: string;
       date: string;
       notes?: string;
@@ -42,7 +42,7 @@ export class SalesController {
   @Get()
   findAll(@Query() query: any) {
     return this.salesService.findAll({
-      where: query.userId ? { userId: query.userId } : undefined,
+      where: query.clientId ? { clientId: query.clientId } : undefined,
     });
   }
 

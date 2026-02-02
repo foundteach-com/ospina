@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-interface User {
+interface Client {
   id: string;
-  name?: string;
-  email: string;
+  name: string;
+  taxId: string;
 }
 
 interface Product {
@@ -26,13 +26,13 @@ interface SaleItem {
 
 export default function CreateSalePage() {
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    userId: '',
+    clientId: '',
     referenceNumber: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
@@ -43,23 +43,23 @@ export default function CreateSalePage() {
   ]);
 
   useEffect(() => {
-    fetchUsers();
+    fetchClients();
     fetchProducts();
     fetchInventory();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchClients = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
-        setUsers(data);
+        setClients(data);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching clients:', error);
     }
   };
 
@@ -198,15 +198,15 @@ export default function CreateSalePage() {
                 Cliente *
               </label>
               <select
-                value={formData.userId}
-                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                value={formData.clientId}
+                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                 className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                 required
               >
                 <option value="">Seleccionar cliente</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name || user.email}
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name} - {client.taxId}
                   </option>
                 ))}
               </select>

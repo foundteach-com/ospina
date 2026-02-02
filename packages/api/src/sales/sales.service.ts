@@ -7,7 +7,7 @@ export class SalesService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: {
-    userId: string;
+    clientId: string;
     referenceNumber?: string;
     date: Date;
     notes?: string;
@@ -39,7 +39,7 @@ export class SalesService {
     // Create sale with items in a transaction
     return this.prisma.sale.create({
       data: {
-        userId: data.userId,
+        clientId: data.clientId,
         referenceNumber: data.referenceNumber,
         date: data.date,
         notes: data.notes,
@@ -53,7 +53,7 @@ export class SalesService {
         },
       },
       include: {
-        user: true,
+        client: true,
         items: {
           include: {
             product: true,
@@ -76,7 +76,7 @@ export class SalesService {
       where,
       orderBy: orderBy || { date: 'desc' },
       include: {
-        user: true,
+        client: true,
         items: {
           include: {
             product: true,
@@ -90,7 +90,7 @@ export class SalesService {
     return this.prisma.sale.findUnique({
       where: { id },
       include: {
-        user: true,
+        client: true,
         items: {
           include: {
             product: true,
@@ -114,7 +114,7 @@ export class SalesService {
         notes: data.notes,
       },
       include: {
-        user: true,
+        client: true,
         items: {
           include: {
             product: true,

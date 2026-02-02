@@ -43,9 +43,12 @@ export default function UsersPage() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-          Usuarios
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+            Usuarios del Sistema
+          </h1>
+          <p className="text-gray-400 mt-2">Gestiona el acceso de administradores y empleados</p>
+        </div>
         <Link
           href="/usuarios/crear"
           className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2"
