@@ -1,75 +1,78 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
-function CreateProductForm() {
+export default function EditProductPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(false);
-  const [fetchingTemplate, setFetchingTemplate] = useState(false);
+  const params = useParams();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
   const [formData, setFormData] = useState({
-    code: '',
     name: '',
     description: '',
-    basePrice: '',
+    code: '',
     sku: '',
     unit: 'unidad',
+    basePrice: '',
     categoryId: '',
+    images: [] as string[],
   });
 
   useEffect(() => {
-    const fromId = searchParams.get('from');
-    if (fromId) {
-      fetchTemplate(fromId);
-    }
-  }, [searchParams]);
+    fetchProduct();
+  }, []);
 
-  const fetchTemplate = async (id: string) => {
-    setFetchingTemplate(true);
+  const fetchProduct = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      
       if (response.ok) {
         const data = await response.json();
         setFormData({
-          code: `${data.code}-COPY`,
-          name: `${data.name} (Copia)`,
+          name: data.name,
           description: data.description,
-          basePrice: data.basePrice.toString(),
-          sku: `${data.sku}-COPY`,
+          code: data.code,
+          sku: data.sku,
           unit: data.unit,
+          basePrice: data.basePrice.toString(),
           categoryId: data.categoryId || '',
+          images: data.images || [],
         });
+      } else {
+        alert('Error al cargar el producto');
+        router.push('/productos');
       }
     } catch (error) {
-      console.error('Error fetching product template:', error);
+      console.error('Error fetching product:', error);
+      alert('Error de conexión');
     } finally {
-      setFetchingTemplate(false);
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
 
     try {
       const token = localStorage.getItem('access_token');
       
-      // Clean data before sending
       const payload = {
         ...formData,
         basePrice: parseFloat(formData.basePrice),
-        categoryId: formData.categoryId || undefined, // Send undefined if empty string
+        categoryId: formData.categoryId || undefined,
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-        method: 'POST',
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -82,14 +85,13 @@ function CreateProductForm() {
         router.refresh();
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', errorData);
-        alert(`Error al crear el producto: ${errorData.message || 'Error desconocido'}`);
+        alert(`Error al actualizar: ${errorData.message || 'Error desconocido'}`);
       }
     } catch (error) {
-      console.error('Error creating product:', error);
-      alert('Error al crear el producto');
+      console.error('Error updating product:', error);
+      alert('Error al actualizar el producto');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -100,15 +102,15 @@ function CreateProductForm() {
     });
   };
 
-  if (fetchingTemplate) return <div className="p-8 text-white">Cargando plantilla...</div>;
+  if (loading) return <div className="p-8 text-white">Cargando...</div>;
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/productos" className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <Link href="/productos" className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </Link>
-        <h1 className="text-3xl font-bold text-white">Nuevo Producto</h1>
+        <h1 className="text-3xl font-bold text-white">Editar Producto</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 space-y-6">
@@ -121,7 +123,6 @@ function CreateProductForm() {
             value={formData.name}
             onChange={handleChange}
             className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-            placeholder="Ej: Cemento Portland"
           />
         </div>
 
@@ -134,7 +135,6 @@ function CreateProductForm() {
             onChange={handleChange}
             rows={3}
             className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all resize-none"
-            placeholder="Descripción detallada del producto"
           />
         </div>
 
@@ -148,7 +148,6 @@ function CreateProductForm() {
               value={formData.code}
               onChange={handleChange}
               className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-              placeholder="Ej: CEM-001"
             />
           </div>
           <div>
@@ -160,7 +159,6 @@ function CreateProductForm() {
               value={formData.sku}
               onChange={handleChange}
               className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-              placeholder="Código único de barras"
             />
           </div>
         </div>
@@ -177,12 +175,19 @@ function CreateProductForm() {
             >
               <option value="unidad">Unidad</option>
               <option value="kg">Kilogramo (kg)</option>
-              <option value="litro">Litro</option>
-              <option value="metro">Metro (m)</option>
+              <option value="g">Gramo (g)</option>
+              <option value="ton">Tonelada (ton)</option>
+              <option value="litro">Litro (L)</option>
+              <option value="ml">Mililitro (ml)</option>
+              <option value="galon">Galón</option>
+              <option value="m">Metro (m)</option>
+              <option value="m2">Metro Cuadrado (m²)</option>
+              <option value="m3">Metro Cúbico (m³)</option>
               <option value="caja">Caja</option>
               <option value="paquete">Paquete</option>
-              <option value="bolsa">Bolsa</option>
-              <option value="galon">Galón</option>
+              <option value="bulto">Bulto</option>
+              <option value="saco">Saco</option>
+              <option value="rollo">Rollo</option>
             </select>
           </div>
           <div>
@@ -196,45 +201,33 @@ function CreateProductForm() {
               value={formData.basePrice}
               onChange={handleChange}
               className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-              placeholder="0.00"
             />
-            <p className="mt-1 text-xs text-gray-500">Precio de referencia (puede variar por venta)</p>
           </div>
         </div>
 
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-          <div className="flex gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            <p className="text-sm text-blue-400">
-              El stock de este producto se gestionará automáticamente a través del módulo de <strong>Compras</strong> e <strong>Inventario</strong>.
-            </p>
-          </div>
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 mt-0.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <p className="text-sm text-blue-200">
+            El stock de este producto se gestionará automáticamente a través del módulo de <Link href="/compras" className="font-bold underline">Compras</Link> e <Link href="/inventario" className="font-bold underline">Inventario</Link>.
+          </p>
         </div>
 
         <div className="pt-4 flex justify-end gap-4">
           <Link
             href="/productos"
-            className="px-6 py-3 rounded-xl font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
+            className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
           >
             Cancelar
           </Link>
           <button
             type="submit"
-            disabled={loading}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={saving}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Guardando...' : 'Guardar Producto'}
+            {saving ? 'Guardando...' : 'Guardar Cambios'}
           </button>
         </div>
       </form>
     </div>
-  );
-}
-
-export default function CreateProductPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-white">Cargando formulario...</div>}>
-      <CreateProductForm />
-    </Suspense>
   );
 }
