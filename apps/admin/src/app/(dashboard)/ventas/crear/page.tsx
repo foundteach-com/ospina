@@ -159,10 +159,8 @@ export default function CreateSalePage() {
         },
         body: JSON.stringify({
           ...formData,
-          items: items.filter(item => item.productId).map(item => {
-            const { availableStock, ...rest } = item;
-            return rest;
-          }),
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          items: items.filter(item => item.productId).map(({ availableStock: _, ...rest }) => rest),
         }),
       });
 

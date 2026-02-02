@@ -44,7 +44,7 @@ export default function ProductsPage() {
         
         // Map stock to products
         const productsWithStock = prodData.map((p: Product) => {
-          const invItem = invData.find((i: any) => i.productId === p.id);
+          const invItem = invData.find((i: { productId: string; currentStock: number }) => i.productId === p.id);
           return {
             ...p,
             currentStock: invItem ? invItem.currentStock : 0

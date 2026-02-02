@@ -22,41 +22,41 @@ export default function EditProductPage() {
   });
 
   useEffect(() => {
-    fetchProduct();
-  }, []);
-
-  const fetchProduct = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setFormData({
-          name: data.name,
-          description: data.description,
-          code: data.code,
-          sku: data.sku,
-          unit: data.unit,
-          basePrice: data.basePrice.toString(),
-          categoryId: data.categoryId || '',
-          images: data.images || [],
+    const fetchProduct = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-      } else {
-        alert('Error al cargar el producto');
-        router.push('/productos');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setFormData({
+            name: data.name,
+            description: data.description,
+            code: data.code,
+            sku: data.sku,
+            unit: data.unit,
+            basePrice: data.basePrice.toString(),
+            categoryId: data.categoryId || '',
+            images: data.images || [],
+          });
+        } else {
+          alert('Error al cargar el producto');
+          router.push('/productos');
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        alert('Error de conexión');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      alert('Error de conexión');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchProduct();
+  }, [params.id, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
