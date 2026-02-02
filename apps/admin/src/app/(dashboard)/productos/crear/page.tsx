@@ -50,7 +50,8 @@ export default function CreateProductPage() {
       }
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert(`Error al guardar: ${errorMessage}\nAPI: ${process.env.NEXT_PUBLIC_API_URL}`);
     } finally {
       setLoading(false);
     }
