@@ -72,6 +72,17 @@ model CashFlow {
   updatedAt     DateTime     @updatedAt
 }
 
+model Provider {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  taxId     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum UserRole {
   USER
   ADMIN

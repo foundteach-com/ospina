@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CashFlowModule } from './cash-flow/cash-flow.module';
+import { ProvidersModule } from './providers/providers.module';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { CashFlowModule } from './cash-flow/cash-flow.module';
     UsersModule, 
     AuthModule, 
     ProductsModule, 
-    OrdersModule, CashFlowModule
+    OrdersModule, CashFlowModule, ProvidersModule
   ],
   controllers: [AppController],
   providers: [AppService],
