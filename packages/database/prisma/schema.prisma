@@ -8,29 +8,33 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      UserRole @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    Order[]
+  id            String          @id @default(cuid())
+  email         String          @unique
+  password      String
+  name          String?
+  role          UserRole        @default(USER)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  sales         Sale[]
+  clientPricing ClientPricing[]
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String
-  price       Decimal
-  sku         String      @unique
-  stock       Int
-  images      String[]
-  categoryId  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  OrderItem   OrderItem[]
-  category    Category?   @relation(fields: [categoryId], references: [id])
+  id            String          @id @default(cuid())
+  code          String          @unique
+  name          String
+  description   String
+  basePrice     Decimal
+  sku           String          @unique
+  unit          String // e.g., "unidad", "kg", "litro", "caja"
+  images        String[]
+  categoryId    String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  category      Category?       @relation(fields: [categoryId], references: [id])
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
+  clientPricing ClientPricing[]
 }
 
 model Category {
@@ -39,25 +43,81 @@ model Category {
   products Product[]
 }
 
-model Order {
-  id        String      @id @default(cuid())
-  userId    String
-  total     Decimal
-  status    OrderStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  user      User        @relation(fields: [userId], references: [id])
-  items     OrderItem[]
+model Provider {
+  id        String     @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  taxId     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  purchases Purchase[]
 }
 
-model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
+model Purchase {
+  id              String         @id @default(cuid())
+  providerId      String
+  referenceNumber String // Factura, orden de compra, etc.
+  date            DateTime
+  total           Decimal
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  provider        Provider       @relation(fields: [providerId], references: [id])
+  items           PurchaseItem[]
+}
+
+model PurchaseItem {
+  id             String   @id @default(cuid())
+  purchaseId     String
+  productId      String
+  quantity       Decimal
+  purchasePrice  Decimal // Precio de compra en este momento específico
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  purchase       Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product        Product  @relation(fields: [productId], references: [id])
+}
+
+model Sale {
+  id              String     @id @default(cuid())
+  userId          String // Cliente
+  referenceNumber String? // Número de factura o recibo
+  date            DateTime
+  total           Decimal
+  status          SaleStatus @default(PENDING)
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  user            User       @relation(fields: [userId], references: [id])
+  items           SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  saleId    String
   productId String
-  quantity  Int
-  price     Decimal
-  order     Order   @relation(fields: [orderId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  quantity  Decimal
+  salePrice Decimal // Precio de venta en este momento específico
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model ClientPricing {
+  id         String   @id @default(cuid())
+  userId     String // Cliente
+  productId  String
+  priceType  String // "FIXED", "DISCOUNT", "MARKUP"
+  value      Decimal // Precio fijo, % de descuento, o % de recargo
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
 }
 
 model CashFlow {
@@ -72,28 +132,16 @@ model CashFlow {
   updatedAt     DateTime     @updatedAt
 }
 
-model Provider {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  address   String?
-  taxId     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum UserRole {
   USER
   ADMIN
   EMPLOYEE
 }
 
-enum OrderStatus {
+enum SaleStatus {
   PENDING
   PROCESSING
-  SHIPPED
-  DELIVERED
+  COMPLETED
   CANCELLED
 }
 

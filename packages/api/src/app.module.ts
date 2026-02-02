@@ -7,7 +7,9 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductsModule } from './products/products.module';
-import { OrdersModule } from './orders/orders.module';
+import { PurchasesModule } from './purchases/purchases.module';
+import { SalesModule } from './sales/sales.module';
+import { InventoryModule } from './inventory/inventory.module';
 import { CashFlowModule } from './cash-flow/cash-flow.module';
 import { ProvidersModule } from './providers/providers.module';
 
@@ -19,8 +21,12 @@ import { ProvidersModule } from './providers/providers.module';
     PrismaModule, 
     UsersModule, 
     AuthModule, 
-    ProductsModule, 
-    OrdersModule, CashFlowModule, ProvidersModule
+    ProductsModule,
+    PurchasesModule,
+    SalesModule,
+    InventoryModule,
+    CashFlowModule,
+    ProvidersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

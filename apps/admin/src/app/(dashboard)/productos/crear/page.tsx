@@ -8,11 +8,12 @@ export default function CreateProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    code: '',
     name: '',
     description: '',
-    price: '',
+    basePrice: '',
     sku: '',
-    stock: '',
+    unit: 'unidad',
     categoryId: '', // Optional for now
   });
 
@@ -30,8 +31,7 @@ export default function CreateProductPage() {
         },
         body: JSON.stringify({
           ...formData,
-          price: parseFloat(formData.price),
-          stock: parseInt(formData.stock),
+          basePrice: parseFloat(formData.basePrice),
         }),
       });
 
@@ -39,17 +39,17 @@ export default function CreateProductPage() {
         router.push('/productos');
         router.refresh();
       } else {
-        alert('Error creating product');
+        alert('Error al crear el producto');
       }
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error creating product');
+      alert('Error al crear el producto');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -67,7 +67,7 @@ export default function CreateProductPage() {
 
       <form onSubmit={handleSubmit} className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">Nombre</label>
+          <label className="block text-sm font-medium text-gray-400 mb-2">Nombre del Producto *</label>
           <input
             type="text"
             name="name"
@@ -75,12 +75,12 @@ export default function CreateProductPage() {
             value={formData.name}
             onChange={handleChange}
             className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-            placeholder="Nombre del producto"
+            placeholder="Ej: Cemento Portland"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">Descripción</label>
+          <label className="block text-sm font-medium text-gray-400 mb-2">Descripción *</label>
           <textarea
             name="description"
             required
@@ -88,13 +88,25 @@ export default function CreateProductPage() {
             onChange={handleChange}
             rows={3}
             className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all resize-none"
-            placeholder="Descripción detallada"
+            placeholder="Descripción detallada del producto"
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">SKU</label>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Código Interno *</label>
+            <input
+              type="text"
+              name="code"
+              required
+              value={formData.code}
+              onChange={handleChange}
+              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="Ej: CEM-001"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">SKU *</label>
             <input
               type="text"
               name="sku"
@@ -102,37 +114,55 @@ export default function CreateProductPage() {
               value={formData.sku}
               onChange={handleChange}
               className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-              placeholder="Código único"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Stock Inicial</label>
-            <input
-              type="number"
-              name="stock"
-              required
-              min="0"
-              value={formData.stock}
-              onChange={handleChange}
-              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-              placeholder="0"
+              placeholder="Código único de barras"
             />
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">Precio ($)</label>
-          <input
-            type="number"
-            name="price"
-            required
-            min="0"
-            step="0.01"
-            value={formData.price}
-            onChange={handleChange}
-            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-            placeholder="0.00"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Unidad de Medida *</label>
+            <select
+              name="unit"
+              required
+              value={formData.unit}
+              onChange={handleChange}
+              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+            >
+              <option value="unidad">Unidad</option>
+              <option value="kg">Kilogramo (kg)</option>
+              <option value="litro">Litro</option>
+              <option value="metro">Metro (m)</option>
+              <option value="caja">Caja</option>
+              <option value="paquete">Paquete</option>
+              <option value="bolsa">Bolsa</option>
+              <option value="galon">Galón</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Precio Base ($) *</label>
+            <input
+              type="number"
+              name="basePrice"
+              required
+              min="0"
+              step="0.01"
+              value={formData.basePrice}
+              onChange={handleChange}
+              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="0.00"
+            />
+            <p className="mt-1 text-xs text-gray-500">Precio de referencia (puede variar por venta)</p>
+          </div>
+        </div>
+
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+          <div className="flex gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <p className="text-sm text-blue-400">
+              El stock de este producto se gestionará automáticamente a través del módulo de <strong>Compras</strong> e <strong>Inventario</strong>.
+            </p>
+          </div>
         </div>
 
         <div className="pt-4 flex justify-end gap-4">
