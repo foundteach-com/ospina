@@ -23,23 +23,30 @@ export default function CreateProductPage() {
 
     try {
       const token = localStorage.getItem('access_token');
+      
+      // Clean data before sending
+      const payload = {
+        ...formData,
+        basePrice: parseFloat(formData.basePrice),
+        categoryId: formData.categoryId || undefined, // Send undefined if empty string
+      };
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          basePrice: parseFloat(formData.basePrice),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         router.push('/productos');
         router.refresh();
       } else {
-        alert('Error al crear el producto');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData);
+        alert(`Error al crear el producto: ${errorData.message || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error('Error creating product:', error);
