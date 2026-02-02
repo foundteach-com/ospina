@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-interface InventoryItem {
+export interface InventoryItem {
   productId: string;
   productCode: string;
   productName: string;
@@ -14,7 +14,7 @@ interface InventoryItem {
   };
 }
 
-interface StockMovement {
+export interface StockMovement {
   id: string;
   date: Date;
   type: 'PURCHASE' | 'SALE';
