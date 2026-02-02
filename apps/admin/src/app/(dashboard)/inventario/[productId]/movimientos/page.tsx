@@ -34,6 +34,7 @@ export default function ProductMovementsPage() {
       fetchProduct();
       fetchMovements();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const fetchProduct = async () => {

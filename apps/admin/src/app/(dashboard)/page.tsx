@@ -24,12 +24,6 @@ export default function AdminPage() {
     }
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
-
   if (!user) {
     return null; // or a loading spinner
   }

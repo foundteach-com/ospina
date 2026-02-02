@@ -87,7 +87,7 @@ export default function CreateSalePage() {
       if (response.ok) {
         const data = await response.json();
         const inv: Record<string, number> = {};
-        data.forEach((item: any) => {
+        data.forEach((item: { productId: string; currentStock: number }) => {
           inv[item.productId] = item.currentStock;
         });
         setInventory(inv);
@@ -105,7 +105,7 @@ export default function CreateSalePage() {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof SaleItem, value: any) => {
+  const updateItem = (index: number, field: keyof SaleItem, value: string | number) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -159,7 +159,10 @@ export default function CreateSalePage() {
         },
         body: JSON.stringify({
           ...formData,
-          items: items.filter(item => item.productId).map(({ availableStock, ...item }) => item),
+          items: items.filter(item => item.productId).map(item => {
+            const { availableStock, ...rest } = item;
+            return rest;
+          }),
         }),
       });
 

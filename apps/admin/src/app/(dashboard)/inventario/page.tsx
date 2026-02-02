@@ -24,6 +24,7 @@ export default function InventoryPage() {
 
   useEffect(() => {
     fetchInventory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, lowStockOnly]);
 
   const fetchInventory = async () => {

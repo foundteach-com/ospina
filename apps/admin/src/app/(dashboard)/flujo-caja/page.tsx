@@ -91,6 +91,7 @@ export default function CashFlowPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, sortConfig]);
 
   const handleSort = (key: string) => {
@@ -158,9 +159,8 @@ export default function CashFlowPage() {
     }
   };
 
-  const handleError = () => {
-     alert('Error inesperado. Por favor intente nuevamente.');
-  };
+  // Error handler removed
+
 
   const handleEdit = (record: CashFlowRecord) => {
     setEditingRecord(record);
@@ -232,7 +232,7 @@ export default function CashFlowPage() {
     XLSX.utils.book_append_sheet(wb, ws, "Flujo de Caja");
     
     // Auto-width columns
-    const maxWidth = 50;
+
     const colWidths = [
         { wch: 15 }, // Date
         { wch: 20 }, // Receipt
