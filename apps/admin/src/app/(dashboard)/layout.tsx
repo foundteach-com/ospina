@@ -77,7 +77,7 @@ const menuItems = [
     ],
   },
   {
-    name: 'Comercial',
+    name: 'Ventas',
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -96,7 +96,7 @@ const menuItems = [
       </svg>
     ),
     children: [
-      { name: 'Ventas', href: '/ventas' },
+      { name: 'Movimientos de Ventas', href: '/ventas' },
       { name: 'Clientes', href: '/clientes' },
     ],
   },
