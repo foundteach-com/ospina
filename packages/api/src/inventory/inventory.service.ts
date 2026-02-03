@@ -5,7 +5,7 @@ export interface InventoryItem {
   productId: string;
   productCode: string;
   productName: string;
-  unit: string;
+  unit: string | null;
   basePrice: number;
   currentStock: number;
   category?: {
@@ -62,7 +62,7 @@ export class InventoryService {
         productId: product.id,
         productCode: product.code,
         productName: product.name,
-        unit: product.unit,
+        unit: product.measurementUnit,
         basePrice: Number(product.basePrice),
         currentStock: stock,
         category: product.category

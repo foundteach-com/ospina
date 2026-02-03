@@ -47,4 +47,10 @@ export class ProductsService {
       where: { id },
     });
   }
+
+  async findAllCategories() {
+    return this.prisma.category.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
 }

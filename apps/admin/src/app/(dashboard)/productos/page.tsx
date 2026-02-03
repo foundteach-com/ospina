@@ -7,10 +7,13 @@ interface Product {
   id: string;
   code: string;
   name: string;
-  description: string;
-  basePrice: string;
-  sku: string;
-  unit: string;
+  description?: string;
+  brand?: string;
+  category?: { name: string };
+  purchasePrice: number;
+  purchaseIvaPercent: number;
+  utilityPercent: number;
+  salesIvaPercent: number;
   currentStock?: number;
 }
 
@@ -65,7 +68,7 @@ export default function ProductsPage() {
     const filtered = products.filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+      p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
@@ -142,30 +145,43 @@ export default function ProductsPage() {
               <tr className="border-b border-gray-800 bg-gray-900/50">
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Código</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Producto</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">SKU</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Unidad</th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Precio Base</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Categoría</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Marca</th>
+                <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">P. Venta + IVA</th>
                 <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Stock</th>
                 <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-800/50 transition-colors group">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-400">
-                    {product.code}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-white">{product.name}</span>
-                      <span className="text-xs text-gray-500 truncate max-w-xs">{product.description}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{product.sku}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 capitalize">{product.unit}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-400 font-medium">
-                    ${parseFloat(product.basePrice).toLocaleString('es-CO')}
-                  </td>
+              {filteredProducts.map((product) => {
+                const purchasePrice = Number(product.purchasePrice || 0);
+                const purchaseIva = purchasePrice * (Number(product.purchaseIvaPercent || 0) / 100);
+                const costWithIva = purchasePrice + purchaseIva;
+                const utilityValue = costWithIva * (Number(product.utilityPercent || 0) / 100);
+                const sellingPrice = costWithIva + utilityValue;
+                const salesIvaValue = sellingPrice * (Number(product.salesIvaPercent || 0) / 100);
+                const finalPrice = sellingPrice + salesIvaValue;
+
+                return (
+                  <tr key={product.id} className="hover:bg-gray-800/50 transition-colors group">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-400">
+                      {product.code}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-white">{product.name}</span>
+                        <span className="text-xs text-gray-500 truncate max-w-xs">{product.description}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      {product.category?.name || 'S/C'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      {product.brand || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-400 font-medium">
+                      ${finalPrice.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                     <span className={`font-bold ${
                       (product.currentStock || 0) <= 0 ? 'text-red-500' : 
@@ -178,7 +194,7 @@ export default function ProductsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-1">
                       <Link 
-                        href={`/inventario/${product.id}/movimientos`} 
+                        href={`/productos/${product.id}`} 
                         title="Ver Detalles"
                         className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-all"
                       >
@@ -208,7 +224,8 @@ export default function ProductsPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
               {filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500">

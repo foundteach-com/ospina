@@ -18,21 +18,31 @@ model User {
 }
 
 model Product {
-  id            String          @id @default(cuid())
-  code          String          @unique
-  name          String
-  description   String
-  basePrice     Decimal
-  sku           String          @unique
-  unit          String // e.g., "unidad", "kg", "litro", "caja"
-  images        String[]
-  categoryId    String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  category      Category?       @relation(fields: [categoryId], references: [id])
-  purchaseItems PurchaseItem[]
-  saleItems     SaleItem[]
-  clientPricing ClientPricing[]
+  id                  String          @id @default(cuid())
+  code                String          @unique
+  name                String
+  description         String?
+  brand               String?
+  measurementQuantity Decimal?
+  measurementUnit     String?         // e.g., "ml", "kg", "unidad"
+  
+  purchasePrice       Decimal         @default(0) // Precio de compra sin IVA
+  purchaseIvaPercent  Decimal         @default(19) // % de IVA compra (default 19%)
+  
+  utilityPercent      Decimal         @default(0) // % de utilidad
+  
+  salesIvaPercent     Decimal         @default(19) // % de IVA venta (default 19%)
+  
+  basePrice           Decimal         @default(0) // This will map to final selling price with IVA for compatibility
+  sku                 String?         @unique // Keeping as optional for now to avoid migration pain, but will hide from UI
+
+  categoryId          String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  category            Category?       @relation(fields: [categoryId], references: [id])
+  purchaseItems       PurchaseItem[]
+  saleItems           SaleItem[]
+  clientPricing       ClientPricing[]
 }
 
 model Category {
