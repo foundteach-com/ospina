@@ -12,11 +12,24 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
+    console.log('[AuthService] Validating user:', email);
     const user = await this.usersService.findOne(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
+    
+    if (!user) {
+      console.error('[AuthService] User not found:', email);
+      return null;
+    }
+    
+    console.log('[AuthService] User found, checking password');
+    const passwordMatch = await bcrypt.compare(pass, user.password);
+    
+    if (passwordMatch) {
+      console.log('[AuthService] Password match successful');
       const { password, ...result } = user;
       return result;
     }
+    
+    console.error('[AuthService] Password mismatch for user:', email);
     return null;
   }
 
