@@ -61,6 +61,12 @@ function CreateProductForm() {
     try {
       const token = localStorage.getItem('access_token');
       
+      if (!token) {
+        alert('Error: No se encontró el token de autenticación. Por favor, inicia sesión nuevamente.');
+        router.push('/login');
+        return;
+      }
+      
       // Clean data before sending
       const payload = {
         ...formData,
@@ -83,11 +89,17 @@ function CreateProductForm() {
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('API Error:', errorData);
-        alert(`Error al crear el producto: ${errorData.message || 'Error desconocido'}`);
+        
+        if (response.status === 401) {
+          alert('Error al crear el producto: Unauthorized\n\nTu sesión ha expirado o no tienes permisos para crear productos. Por favor, inicia sesión nuevamente.');
+          router.push('/login');
+        } else {
+          alert(`Error al crear el producto: ${errorData.message || 'Error desconocido'}`);
+        }
       }
     } catch (error) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto');
+      alert('Error al crear el producto: ' + (error instanceof Error ? error.message : 'Error de conexión'));
     } finally {
       setLoading(false);
     }
