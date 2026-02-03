@@ -107,7 +107,6 @@ export default function EditProductPage() {
         utilityPercent: parseFloat(formData.utilityPercent),
         salesIvaPercent: parseFloat(formData.salesIvaPercent),
         categoryId: formData.categoryId || null,
-        stock: parseInt(formData.stock),
         basePrice: sPriceWithIva, // For compatibility
       };
 
