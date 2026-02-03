@@ -48,8 +48,8 @@ const menuItems = [
       </svg>
     ),
     children: [
+      { name: 'Stock', href: '/inventario' },
       { name: 'Productos', href: '/productos' },
-      { name: 'Stock de Inventario', href: '/inventario' },
     ],
   },
   {
