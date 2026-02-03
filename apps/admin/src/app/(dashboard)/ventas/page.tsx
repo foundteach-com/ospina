@@ -9,14 +9,15 @@ interface Sale {
   referenceNumber?: string;
   total: string;
   status: string;
-  user: {
+  client: {
     id: string;
-    name?: string;
-    email: string;
+    name: string;
+    taxId: string;
+    email?: string;
   };
   items: {
     id: string;
-    quantity: string;
+    quantity: number;
     salePrice: string;
     product: {
       name: string;
@@ -125,7 +126,7 @@ export default function SalesPage() {
                     {sale.referenceNumber || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                    {sale.user.name || sale.user.email}
+                    {sale.client?.name || 'Cliente desconocido'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-400">
                     {sale.items.length} producto(s)
