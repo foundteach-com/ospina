@@ -179,10 +179,10 @@ export default function ProductsPage() {
                     <div className="flex justify-end gap-1">
                       <Link 
                         href={`/inventario/${product.id}/movimientos`} 
-                        title="Ver Movimientos"
+                        title="Ver Detalles"
                         className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-all"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v10.3a4 4 0 0 1-1.172 2.872L4 22"/><path d="m20 22-6.828-6.828A4 4 0 0 1 12 12.3V2"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
                       </Link>
                       <Link 
                         href={`/productos/crear?from=${product.id}`} 
