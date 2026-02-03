@@ -106,20 +106,27 @@ export default function CreateSalePage() {
   };
 
   const updateItem = (index: number, field: keyof SaleItem, value: string | number) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setItems(newItems);
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = { ...newItems[index], [field]: value };
+      return newItems;
+    });
   };
 
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
     const stock = inventory[productId] || 0;
     
-    updateItem(index, 'productId', productId);
-    updateItem(index, 'availableStock', stock);
-    if (product) {
-      updateItem(index, 'salePrice', parseFloat(product.basePrice));
-    }
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = { 
+        ...newItems[index], 
+        productId,
+        availableStock: stock,
+        salePrice: product ? parseFloat(product.basePrice) : 0
+      };
+      return newItems;
+    });
   };
 
   const calculateTotal = () => {

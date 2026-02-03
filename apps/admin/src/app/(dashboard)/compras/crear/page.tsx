@@ -83,17 +83,24 @@ export default function CreatePurchasePage() {
   };
 
   const updateItem = (index: number, field: keyof PurchaseItem, value: string | number) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setItems(newItems);
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = { ...newItems[index], [field]: value };
+      return newItems;
+    });
   };
 
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
-    updateItem(index, 'productId', productId);
-    if (product) {
-      updateItem(index, 'purchasePrice', parseFloat(product.basePrice));
-    }
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = { 
+        ...newItems[index], 
+        productId,
+        purchasePrice: product ? parseFloat(product.basePrice) : 0
+      };
+      return newItems;
+    });
   };
 
   const calculateTotal = () => {
