@@ -210,6 +210,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <nav>
             <ul className="space-y-1">
               {menuItems.map((item) => {
+                // Hide "Usuarios" tab for specific user
+                if (item.name === 'Usuarios' && user.name === 'LUIS FERNANDO OSPINA SUAREZ') {
+                  return null;
+                }
                 if (item.children) {
                   const isExpanded = openGroups.includes(item.name);
                   const isAnyChildActive = item.children.some((child) => child.href === pathname);
