@@ -13,6 +13,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { CashFlowModule } from './cash-flow/cash-flow.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ClientsModule } from './clients/clients.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ClientsModule } from './clients/clients.module';
     CashFlowModule,
     ProvidersModule,
     ClientsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
