@@ -141,24 +141,24 @@ export default function CreatePurchasePage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold text-gray-900">
           Nueva Compra
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">Información General</h2>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Información General</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Proveedor *
               </label>
               <select
                 value={formData.providerId}
                 onChange={(e) => setFormData({ ...formData, providerId: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
                 required
               >
                 <option value="">Seleccionar proveedor</option>
@@ -171,20 +171,20 @@ export default function CreatePurchasePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha *
               </label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Número de Referencia *
               </label>
               <input
@@ -192,13 +192,13 @@ export default function CreatePurchasePage() {
                 value={formData.referenceNumber}
                 onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
                 placeholder="Factura, orden de compra, etc."
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Notas
               </label>
               <input
@@ -206,19 +206,19 @@ export default function CreatePurchasePage() {
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Opcional"
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-white">Productos</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Productos</h2>
             <button
               type="button"
               onClick={addItem}
-              className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
               Agregar Producto
@@ -227,15 +227,15 @@ export default function CreatePurchasePage() {
 
           <div className="space-y-4">
             {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-4 items-end">
+              <div key={index} className="grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div className="col-span-5">
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Producto
                   </label>
                   <select
                     value={item.productId}
                     onChange={(e) => handleProductChange(index, e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   >
                     <option value="">Seleccionar producto</option>
@@ -248,7 +248,7 @@ export default function CreatePurchasePage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Cantidad
                   </label>
                   <input
@@ -257,13 +257,13 @@ export default function CreatePurchasePage() {
                     onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
                     min="0.01"
                     step="0.01"
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Precio Compra
                   </label>
                   <input
@@ -272,16 +272,16 @@ export default function CreatePurchasePage() {
                     onChange={(e) => updateItem(index, 'purchasePrice', parseFloat(e.target.value))}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Subtotal
                   </label>
-                  <div className="px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-green-400 font-medium">
+                  <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold">
                     ${(item.quantity * item.purchasePrice).toLocaleString('es-CO')}
                   </div>
                 </div>
@@ -291,7 +291,7 @@ export default function CreatePurchasePage() {
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
@@ -301,11 +301,11 @@ export default function CreatePurchasePage() {
             ))}
           </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-800">
+          <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex justify-end">
               <div className="text-right">
-                <div className="text-sm text-gray-400 mb-1">Total</div>
-                <div className="text-2xl font-bold text-green-400">
+                <div className="text-sm text-gray-500 mb-1">Total</div>
+                <div className="text-2xl font-bold text-green-600">
                   ${calculateTotal().toLocaleString('es-CO')}
                 </div>
               </div>
@@ -317,14 +317,14 @@ export default function CreatePurchasePage() {
           <button
             type="button"
             onClick={() => router.push('/compras')}
-            className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg transition-colors shadow-sm"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 shadow-sm"
           >
             {loading ? 'Guardando...' : 'Crear Compra'}
           </button>

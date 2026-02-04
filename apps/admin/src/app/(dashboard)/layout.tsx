@@ -196,15 +196,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col justify-between h-screen sticky top-0 overflow-y-auto">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen sticky top-0 overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="font-bold text-white">O</span>
             </div>
-            <h2 className="text-xl font-bold tracking-tight">Ospina Admin</h2>
+            <h2 className="text-xl font-bold tracking-tight text-gray-900">Ospina Admin</h2>
           </div>
 
           <nav>
@@ -220,8 +220,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         onClick={() => toggleGroup(item.name)}
                         className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl font-medium transition-all border ${
                           isAnyChildActive
-                            ? 'bg-blue-600/5 text-blue-400 border-blue-600/10'
-                            : 'text-gray-400 border-transparent hover:text-white hover:bg-gray-800/50'
+                            ? 'bg-blue-50 text-blue-600 border-blue-100'
+                            : 'text-gray-600 border-transparent hover:text-gray-900 hover:bg-gray-50'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -245,7 +245,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </button>
 
                       {isExpanded && (
-                        <ul className="ml-4 pl-4 border-l border-gray-800 space-y-1 mt-1">
+                        <ul className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1">
                           {item.children.map((child) => {
                             const isChildActive = pathname === child.href;
                             return (
@@ -254,8 +254,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                   href={child.href}
                                   className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                     isChildActive
-                                      ? 'text-blue-400 bg-blue-600/10'
-                                      : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
+                                      ? 'text-blue-600 bg-blue-50'
+                                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                                   }`}
                                 >
                                   {child.name}
@@ -276,8 +276,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       href={item.href || '#'}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all border ${
                         isActive
-                          ? 'bg-blue-600/10 text-blue-400 border-blue-600/20'
-                          : 'text-gray-400 border-transparent hover:text-white hover:bg-gray-800'
+                          ? 'bg-blue-50 text-blue-600 border-blue-100'
+                          : 'text-gray-600 border-transparent hover:text-gray-900 hover:bg-gray-50'
                       }`}
                     >
                       {item.icon}
@@ -290,19 +290,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
 
-        <div className="p-6 border-t border-gray-800">
+        <div className="p-6 border-t border-gray-200">
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-300">
+            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600">
               {user.name?.charAt(0) || 'A'}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium text-white truncate">{user.name}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

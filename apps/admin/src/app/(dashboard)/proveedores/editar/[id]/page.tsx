@@ -83,76 +83,76 @@ export default function EditProviderPage({ params }: { params: Promise<{ id: str
     });
   };
 
-  if (loading) return <div className="p-8 text-white text-center">Cargando datos del proveedor...</div>;
+  if (loading) return <div className="p-8 text-gray-600 text-center">Cargando datos del proveedor...</div>;
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/proveedores" className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+        <Link href="/proveedores" className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </Link>
-        <h1 className="text-3xl font-bold text-white">Editar Proveedor</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Editar Proveedor</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl p-8 space-y-6 shadow-sm">
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">Nombre</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
           <input
             type="text"
             name="name"
             required
             value={formData.name}
             onChange={handleChange}
-            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
             placeholder="Nombre de la empresa o proveedor"
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
               placeholder="ejemplo@correo.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Teléfono</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
             <input
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
               placeholder="+57 300 123 4567"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">Dirección</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
           <input
             type="text"
             name="address"
             value={formData.address}
             onChange={handleChange}
-            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
             placeholder="Dirección física"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">RUC / NIT</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">RUC / NIT</label>
           <input
             type="text"
             name="taxId"
             value={formData.taxId}
             onChange={handleChange}
-            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
             placeholder="Identificación tributaria"
           />
         </div>
@@ -160,14 +160,14 @@ export default function EditProviderPage({ params }: { params: Promise<{ id: str
         <div className="pt-4 flex justify-end gap-4">
           <Link
             href="/proveedores"
-            className="px-6 py-3 rounded-xl font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
+            className="px-6 py-3 rounded-xl font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all"
           >
             Cancelar
           </Link>
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Guardando...' : 'Actualizar Proveedor'}
           </button>

@@ -100,7 +100,7 @@ export default function ProductMovementsPage() {
       <div className="mb-8">
         <button
           onClick={() => router.push('/inventario')}
-          className="mb-4 text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+          className="mb-4 text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
           Volver al Inventario
@@ -108,78 +108,78 @@ export default function ProductMovementsPage() {
 
         {product && (
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-gray-900">
               Movimientos de {product.name}
             </h1>
-            <p className="text-gray-400 mt-2">
-              Código: <span className="font-mono text-white">{product.code}</span> | Unidad: <span className="text-white">{product.unit}</span>
+            <p className="text-gray-500 mt-2">
+              Código: <span className="font-mono text-gray-700">{product.code}</span> | Unidad: <span className="text-gray-700">{product.unit}</span>
             </p>
           </div>
         )}
       </div>
 
-      <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-800 bg-gray-900/50">
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Fecha
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Tipo
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Referencia
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Proveedor / Cliente
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Cantidad
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Precio
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Balance
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody className="divide-y divide-gray-200">
               {movements.map((movement, index) => (
-                <tr key={movement.id} className="hover:bg-gray-800/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                <tr key={movement.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(movement.date).toLocaleDateString('es-CO')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {movement.type === 'PURCHASE' ? (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/10 text-green-500 border border-green-500/20">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200">
                         Compra
                       </span>
                     ) : (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         Venta
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                     {movement.referenceNumber || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {movement.partner || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {movement.type === 'PURCHASE' ? (
-                      <span className="text-green-400">+{movement.quantity}</span>
+                      <span className="text-green-600">+{movement.quantity}</span>
                     ) : (
-                      <span className="text-red-400">-{movement.quantity}</span>
+                      <span className="text-red-600">-{movement.quantity}</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
                     ${movement.price.toLocaleString('es-CO')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
                     {balances[index]}
                   </td>
                 </tr>
@@ -198,27 +198,27 @@ export default function ProductMovementsPage() {
 
       {movements.length > 0 && (
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 rounded-2xl p-6">
-            <div className="text-green-400 text-sm font-medium mb-2">Total Comprado</div>
-            <div className="text-3xl font-bold text-white">
+          <div className="bg-white border border-green-200 rounded-2xl p-6 shadow-sm">
+            <div className="text-green-600 text-sm font-medium mb-2">Total Comprado</div>
+            <div className="text-3xl font-bold text-gray-900">
               {movements
                 .filter(m => m.type === 'PURCHASE')
                 .reduce((sum, m) => sum + m.quantity, 0)
                 .toLocaleString('es-CO')}
             </div>
           </div>
-          <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-2xl p-6">
-            <div className="text-blue-400 text-sm font-medium mb-2">Total Vendido</div>
-            <div className="text-3xl font-bold text-white">
+          <div className="bg-white border border-blue-200 rounded-2xl p-6 shadow-sm">
+            <div className="text-blue-600 text-sm font-medium mb-2">Total Vendido</div>
+            <div className="text-3xl font-bold text-gray-900">
               {movements
                 .filter(m => m.type === 'SALE')
                 .reduce((sum, m) => sum + m.quantity, 0)
                 .toLocaleString('es-CO')}
             </div>
           </div>
-          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-2xl p-6">
-            <div className="text-purple-400 text-sm font-medium mb-2">Stock Actual</div>
-            <div className="text-3xl font-bold text-white">
+          <div className="bg-white border border-purple-200 rounded-2xl p-6 shadow-sm">
+            <div className="text-purple-600 text-sm font-medium mb-2">Stock Actual</div>
+            <div className="text-3xl font-bold text-gray-900">
               {balances[0]?.toLocaleString('es-CO') || 0}
             </div>
           </div>
