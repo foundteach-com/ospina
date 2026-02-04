@@ -39,7 +39,7 @@ export default function ProductDetailPage() {
           try {
              if (invRes.ok) {
                const invData = await invRes.json();
-               const item = invData.find((i: any) => i.productId === data.id);
+               const item = invData.find((i: { productId: string; currentStock: number }) => i.productId === data.id);
                if (item) stock = item.currentStock;
              }
           } catch(e) {
