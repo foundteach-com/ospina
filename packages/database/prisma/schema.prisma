@@ -37,6 +37,7 @@ model Product {
   sku                 String?         @unique // Keeping as optional for now to avoid migration pain, but will hide from UI
 
   categoryId          String?
+  imageUrl            String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
   category            Category?       @relation(fields: [categoryId], references: [id])
@@ -156,6 +157,7 @@ enum UserRole {
   USER
   ADMIN
   EMPLOYEE
+  VIEWER
 }
 
 enum SaleStatus {

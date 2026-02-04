@@ -48,6 +48,39 @@ async function main() {
     });
     console.log(`✅ Usuario administrador creado exitosamente con ID: ${user.id}`);
   }
+
+  // --- Crear Usuario Jefe (VIEWER) ---
+  const bossEmail = 'grupoasesores777@gmail.com';
+  const bossPassword = 'Osp1n4.2026';
+  
+  const existingBoss = await prisma.user.findUnique({
+    where: { email: bossEmail },
+  });
+
+  if (existingBoss) {
+    console.log(`⚠️ El usuario Jefe ${bossEmail} ya existe.`);
+    if (existingBoss.role !== UserRole.VIEWER) {
+      console.log('🔄 Actualizando rol a VIEWER...');
+      await prisma.user.update({
+        where: { email: bossEmail },
+        data: { role: UserRole.VIEWER },
+      });
+      console.log('✅ Rol de Jefe actualizado correctamente.');
+    }
+  } else {
+    console.log(`🆕 Creando usuario Jefe: ${bossEmail}`);
+    const hashedBossPassword = await bcrypt.hash(bossPassword, 10);
+
+    const bossUser = await prisma.user.create({
+      data: {
+        email: bossEmail,
+        password: hashedBossPassword,
+        name: 'LUIS FERNANDO OSPINA SUAREZ',
+        role: UserRole.VIEWER,
+      },
+    });
+    console.log(`✅ Usuario Jefe creado exitosamente con ID: ${bossUser.id}`);
+  }
 }
 
 main()

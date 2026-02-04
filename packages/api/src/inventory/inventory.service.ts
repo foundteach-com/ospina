@@ -12,6 +12,7 @@ export interface InventoryItem {
     id: string;
     name: string;
   };
+  imageUrl?: string | null;
 }
 
 export interface StockMovement {
@@ -71,6 +72,7 @@ export class InventoryService {
               name: product.category.name,
             }
           : undefined,
+        imageUrl: product.imageUrl,
       });
     }
 

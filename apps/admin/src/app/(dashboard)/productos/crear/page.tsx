@@ -23,7 +23,8 @@ function CreateProductForm() {
     utilityPercent: '0',
     salesIvaPercent: '19',
     categoryId: '',
-    stock: '0'
+    stock: '0',
+    imageUrl: ''
   });
 
   useEffect(() => {
@@ -72,7 +73,8 @@ function CreateProductForm() {
           utilityPercent: data.utilityPercent?.toString() || '0',
           salesIvaPercent: data.salesIvaPercent?.toString() || '19',
           categoryId: data.categoryId || '',
-          stock: '0'
+          stock: '0',
+          imageUrl: data.imageUrl || ''
         });
       }
     } catch (error) {
@@ -120,6 +122,7 @@ function CreateProductForm() {
         utilityPercent: parseFloat(formData.utilityPercent),
         salesIvaPercent: parseFloat(formData.salesIvaPercent),
         categoryId: formData.categoryId || null,
+        imageUrl: formData.imageUrl || null,
         basePrice: sPriceWithIva, // For compatibility
       };
 
@@ -241,9 +244,23 @@ function CreateProductForm() {
               value={formData.description}
               onChange={handleChange}
               rows={2}
-              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none"
-              placeholder="Descripción breve..."
             />
+          </div>
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-400 mb-2">URL de la Imagen del Producto</label>
+            <input
+              type="text"
+              name="imageUrl"
+              value={formData.imageUrl}
+              onChange={handleChange}
+              placeholder="https://ejemplo.com/imagen.jpg"
+              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
+            />
+            {formData.imageUrl && (
+              <div className="mt-4 aspect-video max-w-sm rounded-xl overflow-hidden border border-gray-800 bg-black/50 flex items-center justify-center">
+                 <img src={formData.imageUrl} alt="Vista previa" className="max-h-full max-w-full object-contain" />
+              </div>
+            )}
           </div>
         </div>
 
