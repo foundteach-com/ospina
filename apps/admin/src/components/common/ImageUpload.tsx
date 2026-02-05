@@ -36,7 +36,16 @@ export default function ImageUpload({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/storage/upload?folder=${folder}`, {
+      // Robust API URL detection for production
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/storage/upload?folder=${folder}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -48,9 +57,16 @@ export default function ImageUpload({
         const data = await response.json();
         onUploadSuccess(data.url);
       } else {
-        const errorData = await response.json();
-        alert(`Error al subir imagen: ${errorData.message || 'Error desconocido'}`);
-        setPreview(currentImageUrl || null); // Reset preview on error
+        const errorText = await response.text();
+        let errorMessage = 'Error desconocido';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        alert(`Error al subir imagen: ${errorMessage}`);
+        setPreview(currentImageUrl || null);
       }
     } catch (error) {
       console.error('Error uploading image:', error);
