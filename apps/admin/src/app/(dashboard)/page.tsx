@@ -149,6 +149,22 @@ export default function AdminPage() {
     monthName: item.month.includes('-') ? getMonthName(item.month) : item.month
   }));
 
+  const formatPeriod = (dateString: string) => {
+    if (!dateString.includes('-')) return dateString;
+    const [year, month] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    const formatted = new Intl.DateTimeFormat('es-CO', { month: 'short', year: 'numeric' }).format(date);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
+
+  const cashFlowData = cashFlowTrend.map(item => ({
+    ...item,
+    period: formatPeriod(item.month),
+    Ingresos: item.income,
+    Egresos: item.expense,
+    Balance: item.balance
+  }));
+
   if (!user || loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -329,9 +345,9 @@ export default function AdminPage() {
       {/* Cash Flow Trend */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         <AreaChart
-          data={cashFlowTrend}
-          dataKeys={['income', 'expense', 'balance']}
-          xAxisKey="month"
+          data={cashFlowData}
+          dataKeys={['Ingresos', 'Egresos', 'Balance']}
+          xAxisKey="period"
           title="Flujo de Caja (Últimos 6 meses)"
           colors={['#10b981', '#ef4444', '#3b82f6']}
           height={300}
