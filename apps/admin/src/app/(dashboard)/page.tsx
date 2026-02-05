@@ -346,10 +346,10 @@ export default function AdminPage() {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         <AreaChart
           data={cashFlowData}
-          dataKeys={['Ingresos', 'Egresos', 'Balance']}
+          dataKeys={['Balance', 'Egresos', 'Ingresos']}
           xAxisKey="period"
           title="Flujo de Caja (Últimos 6 meses)"
-          colors={['#10b981', '#ef4444', '#3b82f6']}
+          colors={['#3b82f6', '#ef4444', '#10b981']}
           height={300}
           yAxisFormatter={formatCurrency}
         />
