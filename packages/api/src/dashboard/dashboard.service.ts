@@ -75,13 +75,59 @@ export class DashboardService {
     };
   }
 
-  async getSalesTrend(days: number = 30) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+  async getPurchasesByMonth(year?: number) {
+    const targetYear = year || new Date().getFullYear();
+    const startDate = new Date(targetYear, 0, 1); // January 1st
+    const endDate = new Date(targetYear, 11, 31, 23, 59, 59); // December 31st
+
+    const purchases = await this.prisma.purchase.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        date: true,
+        total: true,
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    // Group by month
+    const purchasesByMonth = purchases.reduce((acc, purchase) => {
+      const monthKey = `${purchase.date.getFullYear()}-${String(purchase.date.getMonth() + 1).padStart(2, '0')}`;
+      if (!acc[monthKey]) {
+        acc[monthKey] = { month: monthKey, total: 0, count: 0 };
+      }
+      acc[monthKey].total += Number(purchase.total);
+      acc[monthKey].count += 1;
+      return acc;
+    }, {} as Record<string, { month: string; total: number; count: number }>);
+
+    // Ensure all 12 months are present
+    const allMonths = [];
+    for (let i = 0; i < 12; i++) {
+      const monthKey = `${targetYear}-${String(i + 1).padStart(2, '0')}`;
+      allMonths.push(
+        purchasesByMonth[monthKey] || { month: monthKey, total: 0, count: 0 }
+      );
+    }
+
+    return allMonths;
+  }
+
+  async getSalesByMonth(year?: number) {
+    const targetYear = year || new Date().getFullYear();
+    const startDate = new Date(targetYear, 0, 1); // January 1st
+    const endDate = new Date(targetYear, 11, 31, 23, 59, 59); // December 31st
 
     const sales = await this.prisma.sale.findMany({
       where: {
-        date: { gte: startDate },
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
         status: { not: 'CANCELLED' },
       },
       select: {
@@ -91,117 +137,27 @@ export class DashboardService {
       orderBy: { date: 'asc' },
     });
 
-    // Group by date
-    const salesByDate = sales.reduce((acc, sale) => {
-      const dateKey = sale.date.toISOString().split('T')[0];
-      if (!acc[dateKey]) {
-        acc[dateKey] = { date: dateKey, total: 0, count: 0 };
+    // Group by month
+    const salesByMonth = sales.reduce((acc, sale) => {
+      const monthKey = `${sale.date.getFullYear()}-${String(sale.date.getMonth() + 1).padStart(2, '0')}`;
+      if (!acc[monthKey]) {
+        acc[monthKey] = { month: monthKey, total: 0, count: 0 };
       }
-      acc[dateKey].total += Number(sale.total);
-      acc[dateKey].count += 1;
+      acc[monthKey].total += Number(sale.total);
+      acc[monthKey].count += 1;
       return acc;
-    }, {} as Record<string, { date: string; total: number; count: number }>);
+    }, {} as Record<string, { month: string; total: number; count: number }>);
 
-    return Object.values(salesByDate);
-  }
+    // Ensure all 12 months are present
+    const allMonths = [];
+    for (let i = 0; i < 12; i++) {
+      const monthKey = `${targetYear}-${String(i + 1).padStart(2, '0')}`;
+      allMonths.push(
+        salesByMonth[monthKey] || { month: monthKey, total: 0, count: 0 }
+      );
+    }
 
-  async getTopProducts(limit: number = 5) {
-    const topProducts = await this.prisma.saleItem.groupBy({
-      by: ['productId'],
-      _sum: {
-        quantity: true,
-      },
-      _count: {
-        productId: true,
-      },
-      orderBy: {
-        _sum: {
-          quantity: 'desc',
-        },
-      },
-      take: limit,
-    });
-
-    const productsWithDetails = await Promise.all(
-      topProducts.map(async (item) => {
-        const product = await this.prisma.product.findUnique({
-          where: { id: item.productId },
-          select: { name: true, code: true },
-        });
-        return {
-          productId: item.productId,
-          productName: product?.name || 'Unknown',
-          productCode: product?.code || 'N/A',
-          totalQuantity: item._sum.quantity || 0,
-          salesCount: item._count.productId,
-        };
-      })
-    );
-
-    return productsWithDetails;
-  }
-
-  async getTopClients(limit: number = 5) {
-    const topClients = await this.prisma.sale.groupBy({
-      by: ['clientId'],
-      where: {
-        status: { not: 'CANCELLED' },
-      },
-      _sum: {
-        total: true,
-      },
-      _count: {
-        clientId: true,
-      },
-      orderBy: {
-        _sum: {
-          total: 'desc',
-        },
-      },
-      take: limit,
-    });
-
-    const clientsWithDetails = await Promise.all(
-      topClients.map(async (item) => {
-        const client = await this.prisma.client.findUnique({
-          where: { id: item.clientId },
-          select: { name: true, taxId: true },
-        });
-        return {
-          clientId: item.clientId,
-          clientName: client?.name || 'Unknown',
-          clientTaxId: client?.taxId || 'N/A',
-          totalPurchases: item._sum.total || 0,
-          purchaseCount: item._count.clientId,
-        };
-      })
-    );
-
-    return clientsWithDetails;
-  }
-
-  async getRevenueByCategory() {
-    const sales = await this.prisma.saleItem.findMany({
-      include: {
-        product: {
-          include: {
-            category: true,
-          },
-        },
-      },
-    });
-
-    const revenueByCategory = sales.reduce((acc, item) => {
-      const categoryName = item.product.category?.name || 'Sin categoría';
-      if (!acc[categoryName]) {
-        acc[categoryName] = { category: categoryName, revenue: 0, count: 0 };
-      }
-      acc[categoryName].revenue += Number(item.salePrice) * item.quantity;
-      acc[categoryName].count += 1;
-      return acc;
-    }, {} as Record<string, { category: string; revenue: number; count: number }>);
-
-    return Object.values(revenueByCategory).sort((a, b) => b.revenue - a.revenue);
+    return allMonths;
   }
 
   async getInventoryStatus() {

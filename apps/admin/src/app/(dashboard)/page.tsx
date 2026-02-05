@@ -23,8 +23,8 @@ interface DashboardStats {
   cashFlowBalance: number;
 }
 
-interface SalesTrendData {
-  date: string;
+interface MonthlyData {
+  month: string;
   total: number;
   count: number;
   [key: string]: string | number;
@@ -48,13 +48,6 @@ interface TopClient {
   [key: string]: string | number;
 }
 
-interface RevenueByCategory {
-  category: string;
-  revenue: number;
-  count: number;
-  [key: string]: string | number;
-}
-
 interface CashFlowTrendData {
   month: string;
   income: number;
@@ -67,11 +60,13 @@ export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [salesTrend, setSalesTrend] = useState<SalesTrendData[]>([]);
+  const [purchasesByMonth, setPurchasesByMonth] = useState<MonthlyData[]>([]);
+  const [salesByMonth, setSalesByMonth] = useState<MonthlyData[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [topClients, setTopClients] = useState<TopClient[]>([]);
-  const [revenueByCategory, setRevenueByCategory] = useState<RevenueByCategory[]>([]);
   const [cashFlowTrend, setCashFlowTrend] = useState<CashFlowTrendData[]>([]);
+  const [purchasesYear, setPurchasesYear] = useState<number>(new Date().getFullYear());
+  const [salesYear, setSalesYear] = useState<number>(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,7 +84,7 @@ export default function AdminPage() {
 
     // Fetch dashboard data
     fetchDashboardData(token);
-  }, [router]);
+  }, [router, purchasesYear, salesYear]);
 
   const fetchDashboardData = async (token: string) => {
     try {
@@ -100,27 +95,27 @@ export default function AdminPage() {
       };
 
       // Fetch all dashboard data in parallel
-      const [statsRes, trendRes, productsRes, clientsRes, categoryRes, cashFlowRes] = await Promise.all([
+      const [statsRes, purchasesRes, salesRes, productsRes, clientsRes, cashFlowRes] = await Promise.all([
         fetch(`${baseUrl}/dashboard/stats`, { headers }),
-        fetch(`${baseUrl}/dashboard/sales-trend?days=30`, { headers }),
+        fetch(`${baseUrl}/dashboard/purchases-by-month?year=${purchasesYear}`, { headers }),
+        fetch(`${baseUrl}/dashboard/sales-by-month?year=${salesYear}`, { headers }),
         fetch(`${baseUrl}/dashboard/top-products?limit=5`, { headers }),
         fetch(`${baseUrl}/dashboard/top-clients?limit=5`, { headers }),
-        fetch(`${baseUrl}/dashboard/revenue-by-category`, { headers }),
         fetch(`${baseUrl}/dashboard/cash-flow-trend?months=6`, { headers }),
       ]);
 
       const statsData = await statsRes.json();
-      const trendData = await trendRes.json();
+      const purchasesData = await purchasesRes.json();
+      const salesData = await salesRes.json();
       const productsData = await productsRes.json();
       const clientsData = await clientsRes.json();
-      const categoryData = await categoryRes.json();
       const cashFlowData = await cashFlowRes.json();
 
       setStats(statsData);
-      setSalesTrend(trendData);
+      setPurchasesByMonth(purchasesData);
+      setSalesByMonth(salesData);
       setTopProducts(productsData);
       setTopClients(clientsData);
-      setRevenueByCategory(categoryData);
       setCashFlowTrend(cashFlowData);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -204,26 +199,48 @@ export default function AdminPage() {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Sales Trend */}
+        {/* Purchases by Month */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Compras por Mes</h3>
+            <select
+              value={purchasesYear}
+              onChange={(e) => setPurchasesYear(Number(e.target.value))}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => 2020 + i).map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
           <LineChart
-            data={salesTrend}
+            data={purchasesByMonth}
             dataKey="total"
-            xAxisKey="date"
-            title="Tendencia de Ventas (Últimos 30 días)"
-            color="#10b981"
+            xAxisKey="month"
+            color="#f59e0b"
             height={300}
           />
         </div>
 
-        {/* Revenue by Category */}
+        {/* Sales by Month */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Ventas por Mes</h3>
+            <select
+              value={salesYear}
+              onChange={(e) => setSalesYear(Number(e.target.value))}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => 2020 + i).map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
           <BarChart
-            data={revenueByCategory}
-            dataKey="revenue"
-            xAxisKey="category"
-            title="Ingresos por Categoría"
-            color="#3b82f6"
+            data={salesByMonth}
+            dataKey="total"
+            xAxisKey="month"
+            color="#10b981"
             height={300}
           />
         </div>

@@ -12,27 +12,16 @@ export class DashboardController {
     return this.dashboardService.getStats();
   }
 
-  @Get('sales-trend')
-  getSalesTrend(@Query('days') days?: string) {
-    const daysNum = days ? parseInt(days, 10) : 30;
-    return this.dashboardService.getSalesTrend(daysNum);
+  @Get('purchases-by-month')
+  getPurchasesByMonth(@Query('year') year?: string) {
+    const yearNum = year ? parseInt(year, 10) : undefined;
+    return this.dashboardService.getPurchasesByMonth(yearNum);
   }
 
-  @Get('top-products')
-  getTopProducts(@Query('limit') limit?: string) {
-    const limitNum = limit ? parseInt(limit, 10) : 5;
-    return this.dashboardService.getTopProducts(limitNum);
-  }
-
-  @Get('top-clients')
-  getTopClients(@Query('limit') limit?: string) {
-    const limitNum = limit ? parseInt(limit, 10) : 5;
-    return this.dashboardService.getTopClients(limitNum);
-  }
-
-  @Get('revenue-by-category')
-  getRevenueByCategory() {
-    return this.dashboardService.getRevenueByCategory();
+  @Get('sales-by-month')
+  getSalesByMonth(@Query('year') year?: string) {
+    const yearNum = year ? parseInt(year, 10) : undefined;
+    return this.dashboardService.getSalesByMonth(yearNum);
   }
 
   @Get('inventory-status')
