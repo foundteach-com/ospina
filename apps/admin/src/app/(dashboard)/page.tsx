@@ -153,8 +153,8 @@ export default function AdminPage() {
     if (!dateString.includes('-')) return dateString;
     const [year, month] = dateString.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
-    const formatted = new Intl.DateTimeFormat('es-CO', { month: 'short', year: 'numeric' }).format(date);
-    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    // Return lowercase format: "ene. 2026"
+    return new Intl.DateTimeFormat('es-CO', { month: 'short', year: 'numeric' }).format(date);
   };
 
   const cashFlowData = cashFlowTrend.map(item => ({
@@ -351,6 +351,7 @@ export default function AdminPage() {
           title="Flujo de Caja (Últimos 6 meses)"
           colors={['#10b981', '#ef4444', '#3b82f6']}
           height={300}
+          yAxisFormatter={formatCurrency}
         />
       </div>
     </div>

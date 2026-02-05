@@ -13,6 +13,7 @@ interface AreaChartProps {
   title?: string;
   colors?: string[];
   height?: number;
+  yAxisFormatter?: (value: number) => string;
 }
 
 const DEFAULT_COLORS = ['#10b981', '#ef4444', '#3b82f6'];
@@ -23,7 +24,8 @@ export default function AreaChart({
   xAxisKey, 
   title, 
   colors = DEFAULT_COLORS, 
-  height = 300 
+  height = 300,
+  yAxisFormatter
 }: AreaChartProps) {
   return (
     <div className="w-full">
@@ -40,8 +42,18 @@ export default function AreaChart({
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey={xAxisKey} stroke="#6b7280" fontSize={12} />
-          <YAxis stroke="#6b7280" fontSize={12} />
+          <YAxis 
+            stroke="#6b7280" 
+            fontSize={12} 
+            tickFormatter={yAxisFormatter}
+          />
           <Tooltip 
+            formatter={(value: number | string | Array<number | string> | undefined) => {
+              if (yAxisFormatter && typeof value === 'number') {
+                return yAxisFormatter(value);
+              }
+              return value;
+            }}
             contentStyle={{ 
               backgroundColor: 'white', 
               border: '1px solid #e5e7eb',
