@@ -40,11 +40,21 @@ export default function ProductDetailPage() {
     const fetchProduct = async () => {
       try {
         const token = localStorage.getItem('access_token');
+        
+        // Robust API URL detection for production
+        let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+          const hostname = window.location.hostname;
+          if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+            apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+          }
+        }
+
         const [prodRes, invRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`, {
+          fetch(`${apiUrl}/products/${params.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory`, {
+          fetch(`${apiUrl}/inventory`, {
             headers: { Authorization: `Bearer ${token}` },
           })
         ]);

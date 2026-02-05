@@ -39,7 +39,17 @@ function CreateProductForm() {
   const fetchCategories = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/categories`, {
+      
+      // Robust API URL detection for production
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/products/categories`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -55,7 +65,17 @@ function CreateProductForm() {
     setFetchingTemplate(true);
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
+      
+      // Robust API URL detection for production
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/products/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -127,7 +147,16 @@ function CreateProductForm() {
         basePrice: sPriceWithIva, // For compatibility
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+      // Robust API URL detection for production
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

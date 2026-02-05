@@ -33,12 +33,21 @@ export default function EditProductPage() {
       try {
         const token = localStorage.getItem('access_token');
         
+        // Robust API URL detection for production
+        let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+          const hostname = window.location.hostname;
+          if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+            apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+          }
+        }
+
         // Fetch product and categories
         const [prodRes, catRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`, {
+          fetch(`${apiUrl}/products/${params.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/categories`, {
+          fetch(`${apiUrl}/products/categories`, {
             headers: { Authorization: `Bearer ${token}` },
           })
         ]);
@@ -114,7 +123,16 @@ export default function EditProductPage() {
         basePrice: sPriceWithIva, // For compatibility
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${params.id}`, {
+      // Robust API URL detection for production
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/products/${params.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
