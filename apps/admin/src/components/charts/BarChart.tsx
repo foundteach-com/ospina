@@ -42,7 +42,7 @@ export default function BarChart({
             tickFormatter={yAxisFormatter}
           />
           <Tooltip 
-            formatter={(value: any) => yAxisFormatter ? yAxisFormatter(Number(value)) : value}
+            formatter={(value: number | undefined) => (yAxisFormatter && value !== undefined) ? yAxisFormatter(Number(value)) : value}
             contentStyle={{ 
               backgroundColor: 'white', 
               border: '1px solid #e5e7eb',
