@@ -129,8 +129,26 @@ export default function AdminPage() {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   };
+
+  const getMonthName = (dateString: string) => {
+    const [year, month] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return new Intl.DateTimeFormat('es-CO', { month: 'short' }).format(date);
+  };
+
+  // Transform data to use month names
+  const purchasesData = purchasesByMonth.map(item => ({
+    ...item,
+    monthName: item.month.includes('-') ? getMonthName(item.month) : item.month
+  }));
+
+  const salesData = salesByMonth.map(item => ({
+    ...item,
+    monthName: item.month.includes('-') ? getMonthName(item.month) : item.month
+  }));
 
   if (!user || loading) {
     return (
@@ -213,12 +231,14 @@ export default function AdminPage() {
               ))}
             </select>
           </div>
-          <LineChart
-            data={purchasesByMonth}
+          <BarChart
+            data={purchasesData}
             dataKey="total"
-            xAxisKey="month"
+            xAxisKey="monthName"
             color="#f59e0b"
             height={300}
+            yAxisFormatter={formatCurrency}
+            hideLegend={true}
           />
         </div>
 
@@ -237,11 +257,13 @@ export default function AdminPage() {
             </select>
           </div>
           <BarChart
-            data={salesByMonth}
+            data={salesData}
             dataKey="total"
-            xAxisKey="month"
+            xAxisKey="monthName"
             color="#10b981"
             height={300}
+            yAxisFormatter={formatCurrency}
+            hideLegend={true}
           />
         </div>
       </div>
