@@ -2,8 +2,12 @@
 
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
+interface DataPoint {
+  [key: string]: string | number;
+}
+
 interface PieChartProps {
-  data: any[];
+  data: DataPoint[];
   dataKey: string;
   nameKey: string;
   title?: string;
@@ -33,7 +37,7 @@ export default function PieChart({
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            label
             outerRadius={80}
             innerRadius={innerRadius}
             fill="#8884d8"

@@ -2,8 +2,12 @@
 
 import { AreaChart as RechartsAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
+interface DataPoint {
+  [key: string]: string | number;
+}
+
 interface AreaChartProps {
-  data: any[];
+  data: DataPoint[];
   dataKeys: string[];
   xAxisKey: string;
   title?: string;

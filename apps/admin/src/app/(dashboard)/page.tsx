@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import KPICard from '@/components/dashboard/KPICard';
 import LineChart from '@/components/charts/LineChart';
 import BarChart from '@/components/charts/BarChart';
-import PieChart from '@/components/charts/PieChart';
 import AreaChart from '@/components/charts/AreaChart';
 
 interface User {
@@ -24,15 +23,55 @@ interface DashboardStats {
   cashFlowBalance: number;
 }
 
+interface SalesTrendData {
+  date: string;
+  total: number;
+  count: number;
+  [key: string]: string | number;
+}
+
+interface TopProduct {
+  productId: string;
+  productName: string;
+  productCode: string;
+  totalQuantity: number;
+  salesCount: number;
+  [key: string]: string | number;
+}
+
+interface TopClient {
+  clientId: string;
+  clientName: string;
+  clientTaxId: string;
+  totalPurchases: number;
+  purchaseCount: number;
+  [key: string]: string | number;
+}
+
+interface RevenueByCategory {
+  category: string;
+  revenue: number;
+  count: number;
+  [key: string]: string | number;
+}
+
+interface CashFlowTrendData {
+  month: string;
+  income: number;
+  expense: number;
+  balance: number;
+  [key: string]: string | number;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [salesTrend, setSalesTrend] = useState<any[]>([]);
-  const [topProducts, setTopProducts] = useState<any[]>([]);
-  const [topClients, setTopClients] = useState<any[]>([]);
-  const [revenueByCategory, setRevenueByCategory] = useState<any[]>([]);
-  const [cashFlowTrend, setCashFlowTrend] = useState<any[]>([]);
+  const [salesTrend, setSalesTrend] = useState<SalesTrendData[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [topClients, setTopClients] = useState<TopClient[]>([]);
+  const [revenueByCategory, setRevenueByCategory] = useState<RevenueByCategory[]>([]);
+  const [cashFlowTrend, setCashFlowTrend] = useState<CashFlowTrendData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

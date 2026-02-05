@@ -2,8 +2,12 @@
 
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
+interface DataPoint {
+  [key: string]: string | number;
+}
+
 interface BarChartProps {
-  data: any[];
+  data: DataPoint[];
   dataKey: string;
   xAxisKey: string;
   title?: string;

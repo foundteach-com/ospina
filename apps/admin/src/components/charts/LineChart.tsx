@@ -2,8 +2,12 @@
 
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
+interface DataPoint {
+  [key: string]: string | number;
+}
+
 interface LineChartProps {
-  data: any[];
+  data: DataPoint[];
   dataKey: string;
   xAxisKey: string;
   title?: string;
