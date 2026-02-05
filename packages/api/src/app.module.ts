@@ -14,6 +14,7 @@ import { CashFlowModule } from './cash-flow/cash-flow.module';
 import { ProvidersModule } from './providers/providers.module';
 import { ClientsModule } from './clients/clients.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ProvidersModule,
     ClientsModule,
     DashboardModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

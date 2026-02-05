@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import ImageUpload from '@/components/common/ImageUpload';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -231,20 +232,12 @@ export default function EditProductPage() {
               />
           </div>
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">URL de la Imagen del Producto</label>
-            <input
-              type="text"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              placeholder="https://ejemplo.com/imagen.jpg"
-              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
+            <ImageUpload 
+              label="Imagen del Producto"
+              folder="products"
+              currentImageUrl={formData.imageUrl}
+              onUploadSuccess={(url) => setFormData({ ...formData, imageUrl: url })}
             />
-            {formData.imageUrl && (
-              <div className="mt-4 aspect-video max-w-sm rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
-                 <img src={formData.imageUrl} alt="Vista previa" className="max-h-full max-w-full object-contain" />
-              </div>
-            )}
           </div>
         </div>
 
