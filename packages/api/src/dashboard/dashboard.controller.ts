@@ -34,4 +34,16 @@ export class DashboardController {
     const monthsNum = months ? parseInt(months, 10) : 6;
     return this.dashboardService.getCashFlowTrend(monthsNum);
   }
+
+  @Get('top-products')
+  getTopSellingProducts(@Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit, 10) : 5;
+    return this.dashboardService.getTopSellingProducts(limitNum);
+  }
+
+  @Get('top-clients')
+  getTopClients(@Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit, 10) : 5;
+    return this.dashboardService.getTopClients(limitNum);
+  }
 }

@@ -210,6 +210,92 @@ export class DashboardService {
     return Object.values(flowByMonth);
   }
 
+  async getTopSellingProducts(limit: number = 5) {
+    const topProducts = await this.prisma.saleItem.groupBy({
+      by: ['productId'],
+      _sum: {
+        quantity: true,
+      },
+      _count: {
+        _all: true,
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc',
+        },
+      },
+      take: limit,
+    });
+
+    const enrichedProducts = await Promise.all(
+      topProducts.map(async (item: any) => {
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { name: true, code: true },
+        });
+
+        return {
+          productId: item.productId,
+          productName: product?.name || 'Producto Desconocido',
+          productCode: product?.code || 'N/A',
+          totalQuantity: item._sum?.quantity || 0,
+          salesCount: item._count?._all || 0,
+        };
+      })
+    );
+
+    return enrichedProducts;
+  }
+
+  async getTopClients(limit: number = 5) {
+    const topClients = await this.prisma.sale.groupBy({
+      by: ['clientId'],
+      where: {
+        status: 'COMPLETED',
+      },
+      _sum: {
+        total: true,
+      },
+      _count: {
+        _all: true,
+      },
+      orderBy: {
+        _sum: {
+          total: 'desc',
+        },
+      },
+      take: limit,
+    });
+
+    // Filtramos clientes nulos y aseguramos tipos
+    const validClients = topClients.filter(
+      (item) => item.clientId !== null
+    );
+
+    const enrichedClients = await Promise.all(
+      validClients.map(async (item: any) => {
+        // TypeScript ya sabe que item.clientId no es null aquí si lo forzamos o si la inferencia funciona
+        // pero para estar seguros:
+        if (!item.clientId) return null;
+
+        const client = await this.prisma.client.findUnique({
+          where: { id: item.clientId },
+          select: { name: true, taxId: true },
+        });
+
+        return {
+          clientId: item.clientId,
+          clientName: client?.name || 'Cliente Desconocido',
+          clientTaxId: client?.taxId || 'N/A',
+          totalPurchases: item._sum?.total || 0,
+          purchaseCount: item._count?._all || 0,
+        };
+      })
+    );
+
+    return enrichedClients.filter((item): item is NonNullable<typeof item> => item !== null);
+  }
+
   private async getCashFlowSummary() {
     const cashFlows = await this.prisma.cashFlow.findMany();
 
