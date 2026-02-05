@@ -274,7 +274,9 @@ function CreateProductForm() {
               value={formData.description}
               onChange={handleChange}
               rows={2}
-            />
+              className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+              placeholder="Descripción del producto..."
+            ></textarea>
           </div>
           <div className="mt-6">
             <ImageUpload 

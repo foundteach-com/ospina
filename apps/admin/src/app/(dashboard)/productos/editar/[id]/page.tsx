@@ -93,9 +93,10 @@ export default function EditProductPage() {
           alert('Error al cargar datos');
           router.push('/productos');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         console.error('Error fetching:', error);
-        alert(`Error de conexión al cargar datos.\nURL: ${getApiUrl()}\nDetalle: ${error.message || 'Error desconocido'}`);
+        alert(`Error de conexión al cargar datos.\nURL: ${getApiUrl()}\nDetalle: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
