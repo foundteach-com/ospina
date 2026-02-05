@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-interface Purchase {
+  interface Purchase {
   id: string;
   date: string;
   referenceNumber: string;
@@ -11,6 +11,7 @@ interface Purchase {
   provider: {
     id: string;
     name: string;
+    taxId: string;
   };
   items: {
     id: string;
@@ -89,7 +90,7 @@ export default function PurchasesPage() {
         {userRole !== 'VIEWER' && (
           <Link
             href="/compras/crear"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
             Nueva Compra
@@ -102,8 +103,7 @@ export default function PurchasesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Referencia</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">NIT</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Proveedor</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Productos</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
@@ -113,13 +113,10 @@ export default function PurchasesPage() {
             <tbody className="divide-y divide-gray-200">
               {purchases.map((purchase) => (
                 <tr key={purchase.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(purchase.date).toLocaleDateString('es-CO')}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {purchase.referenceNumber}
+                    {purchase.provider.taxId || 'N/A'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold uppercase">
                     {purchase.provider.name}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
@@ -152,7 +149,7 @@ export default function PurchasesPage() {
               ))}
               {purchases.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     No hay compras registradas
                   </td>
                 </tr>
