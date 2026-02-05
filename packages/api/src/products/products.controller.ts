@@ -21,6 +21,11 @@ export class ProductsController {
     });
   }
 
+  @Get('categories')
+  findAllCategories() {
+    return this.productsService.findAllCategories();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
@@ -36,10 +41,5 @@ export class ProductsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
-  }
-
-  @Get('categories')
-  findAllCategories() {
-    return this.productsService.findAllCategories();
   }
 }

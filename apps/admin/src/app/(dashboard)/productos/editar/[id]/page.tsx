@@ -28,19 +28,27 @@ export default function EditProductPage() {
     imageUrl: ''
   });
 
+  const getApiUrl = () => {
+    let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+        if (!apiUrl || apiUrl.includes('localhost')) {
+          return 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+    }
+    if (apiUrl && !apiUrl.startsWith('http')) {
+      apiUrl = `https://${apiUrl}`;
+    }
+    return apiUrl || 'http://localhost:4000';
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('access_token');
-        
-        // Robust API URL detection for production
-        let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
-          const hostname = window.location.hostname;
-          if (hostname.includes('ospinacomercializadoraysuministros.com')) {
-            apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
-          }
-        }
+        const apiUrl = getApiUrl();
 
         // Fetch product and categories
         const [prodRes, catRes] = await Promise.all([
@@ -52,9 +60,18 @@ export default function EditProductPage() {
           })
         ]);
         
-        if (prodRes.ok && catRes.ok) {
+        if (prodRes.ok) {
           const data = await prodRes.json();
-          const cats = await catRes.json();
+          let cats = [];
+          
+          if (catRes.ok) {
+            try {
+              cats = await catRes.json();
+            } catch (e) {
+              console.error('Error parsing categories:', e);
+            }
+          }
+          
           setCategories(cats);
           
           setFormData({
@@ -76,9 +93,9 @@ export default function EditProductPage() {
           alert('Error al cargar datos');
           router.push('/productos');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching:', error);
-        alert('Error de conexión');
+        alert(`Error de conexión al cargar datos.\nURL: ${getApiUrl()}\nDetalle: ${error.message || 'Error desconocido'}`);
       } finally {
         setLoading(false);
       }
@@ -106,6 +123,7 @@ export default function EditProductPage() {
 
     try {
       const token = localStorage.getItem('access_token');
+      const apiUrl = getApiUrl();
       
       const payload = {
         code: formData.code,
@@ -122,15 +140,6 @@ export default function EditProductPage() {
         imageUrl: formData.imageUrl || null,
         basePrice: sPriceWithIva, // For compatibility
       };
-
-      // Robust API URL detection for production
-      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
-        const hostname = window.location.hostname;
-        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
-          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
-        }
-      }
 
       const response = await fetch(`${apiUrl}/products/${params.id}`, {
         method: 'PATCH',
