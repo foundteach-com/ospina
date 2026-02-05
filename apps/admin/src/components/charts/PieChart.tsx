@@ -42,6 +42,7 @@ export default function PieChart({
             innerRadius={innerRadius}
             fill="#8884d8"
             dataKey={dataKey}
+            nameKey={nameKey}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
