@@ -106,22 +106,22 @@ export default function ProvidersPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Nombre
+                  CC/NIT
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Marca Comercial
+                  RAZON SOCIAL
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Email
+                  MARCA COMERCIAL
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Teléfono
+                  CORREO
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Ciudad
+                  CELULAR
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  RUC/NIT
+                  CIUDAD
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Acciones
@@ -131,6 +131,9 @@ export default function ProvidersPage() {
             <tbody className="divide-y divide-gray-200">
               {providers.map((provider) => (
                 <tr key={provider.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {provider.taxId}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {provider.name}
                   </td>
@@ -145,9 +148,6 @@ export default function ProvidersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {provider.city}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {provider.taxId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-1">
