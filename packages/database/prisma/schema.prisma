@@ -8,42 +8,37 @@ datasource db {
 }
 
 model User {
-  id            String          @id @default(cuid())
-  email         String          @unique
-  password      String
-  name          String?
-  role          UserRole        @default(USER)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Product {
   id                  String          @id @default(cuid())
-  code                String          @unique
   name                String
   description         String?
-  brand               String?
-  measurementQuantity Decimal?
-  measurementUnit     String?         // e.g., "ml", "kg", "unidad"
-  
-  purchasePrice       Decimal         @default(0) // Precio de compra sin IVA
-  purchaseIvaPercent  Decimal         @default(19) // % de IVA compra (default 19%)
-  
-  utilityPercent      Decimal         @default(0) // % de utilidad
-  
-  salesIvaPercent     Decimal         @default(19) // % de IVA venta (default 19%)
-  
-  basePrice           Decimal         @default(0) // This will map to final selling price with IVA for compatibility
-  sku                 String?         @unique // Keeping as optional for now to avoid migration pain, but will hide from UI
-
+  sku                 String?         @unique
   categoryId          String?
-  imageUrl            String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
+  basePrice           Decimal         @default(0)
+  code                String          @unique
+  brand               String?
+  measurementQuantity Decimal?
+  measurementUnit     String?
+  purchaseIvaPercent  Decimal         @default(19)
+  purchasePrice       Decimal         @default(0)
+  salesIvaPercent     Decimal         @default(19)
+  utilityPercent      Decimal         @default(0)
+  imageUrl            String?
+  clientPricing       ClientPricing[]
   category            Category?       @relation(fields: [categoryId], references: [id])
   purchaseItems       PurchaseItem[]
   saleItems           SaleItem[]
-  clientPricing       ClientPricing[]
 }
 
 model Category {
@@ -53,23 +48,23 @@ model Category {
 }
 
 model Provider {
-  id        String     @id @default(cuid())
+  id             String     @id @default(cuid())
   name           String
-  commercialName String?
   email          String?
   phone          String?
   address        String?
-  city           String?
   taxId          String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  purchases Purchase[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  city           String?
+  commercialName String?
+  purchases      Purchase[]
 }
 
 model Purchase {
   id              String         @id @default(cuid())
   providerId      String
-  referenceNumber String // Factura, orden de compra, etc.
+  referenceNumber String
   date            DateTime
   total           Decimal
   notes           String?
@@ -80,41 +75,41 @@ model Purchase {
 }
 
 model PurchaseItem {
-  id             String   @id @default(cuid())
-  purchaseId     String
-  productId      String
-  quantity       Decimal
-  purchasePrice  Decimal // Precio de compra en este momento específico
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  purchase       Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
-  product        Product  @relation(fields: [productId], references: [id])
+  id            String   @id @default(cuid())
+  purchaseId    String
+  productId     String
+  quantity      Decimal
+  purchasePrice Decimal
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  product       Product  @relation(fields: [productId], references: [id])
+  purchase      Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 }
 
 model Client {
   id            String          @id @default(cuid())
   name          String
-  taxId         String          @unique // NIT or Cedula
+  taxId         String          @unique
   email         String?
   phone         String?
   address       String?
-  city          String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  sales         Sale[]
+  city          String?
   clientPricing ClientPricing[]
+  sales         Sale[]
 }
 
 model Sale {
   id              String     @id @default(cuid())
-  clientId        String
-  referenceNumber String? // Optional receipt/invoice number
+  referenceNumber String?
   date            DateTime
   total           Decimal
-  status          SaleStatus @default(PENDING) // PENDING, COMPLETED, CANCELLED
+  status          SaleStatus @default(PENDING)
   notes           String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+  clientId        String
   client          Client     @relation(fields: [clientId], references: [id])
   items           SaleItem[]
 }
@@ -124,20 +119,20 @@ model SaleItem {
   saleId    String
   productId String
   quantity  Int
-  salePrice Decimal // Price at the moment of sale
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  salePrice Decimal
   product   Product @relation(fields: [productId], references: [id])
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
 }
 
 model ClientPricing {
   id        String   @id @default(cuid())
-  clientId  String
   productId String
-  price     Decimal? // Specific fixed price
-  discount  Decimal? // Percentage discount
-  markup    Decimal? // Percentage markup
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  clientId  String
+  discount  Decimal?
+  markup    Decimal?
+  price     Decimal?
   client    Client   @relation(fields: [clientId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
 
