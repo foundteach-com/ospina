@@ -9,6 +9,7 @@ interface Client {
   taxId: string;
   email: string;
   phone: string;
+  city: string;
 }
 
 export default function ClientsPage() {
@@ -98,6 +99,7 @@ export default function ClientsPage() {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Identificación (NIT/CC)</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Teléfono</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ciudad</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
@@ -108,6 +110,7 @@ export default function ClientsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{client.taxId}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.email || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.phone || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.city || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-1">
                       <Link 
@@ -141,7 +144,7 @@ export default function ClientsPage() {
               ))}
               {clients.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     No hay clientes registrados
                   </td>
                 </tr>

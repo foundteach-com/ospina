@@ -15,6 +15,7 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
     email: '',
     phone: '',
     address: '',
+    city: '',
   });
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
             email: data.email || '',
             phone: data.phone || '',
             address: data.address || '',
+            city: data.city || '',
           });
         }
       } catch (error) {
@@ -147,16 +149,29 @@ export default function EditClientPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-            placeholder="Dirección física del cliente"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="Dirección física"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="Ciudad"
+            />
+          </div>
         </div>
 
         <div className="pt-4 flex justify-end gap-4">
