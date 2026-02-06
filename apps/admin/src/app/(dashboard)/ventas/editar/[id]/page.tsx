@@ -81,7 +81,12 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
             status: saleData.status,
           });
 
-          setItems(saleData.items.map((item: any) => ({
+          setItems(saleData.items.map((item: { 
+            id: string; 
+            productId: string; 
+            quantity: string; 
+            salePrice: string; 
+          }) => ({
             id: item.id,
             productId: item.productId,
             quantity: parseFloat(item.quantity),
