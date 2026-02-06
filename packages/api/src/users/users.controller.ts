@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserRole } from '@prisma/client';
@@ -7,6 +7,21 @@ import { UserRole } from '@prisma/client';
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('profile')
+  getProfile(@Request() req: { user: { userId: string } }) {
+    return this.usersService.findById(req.user.userId);
+  }
+
+  @Patch('profile')
+  updateProfile(
+    @Request() req: { user: { userId: string } },
+    @Body() data: { name?: string; email?: string; avatarUrl?: string; password?: string }
+  ) {
+    // Basic protection: users can only update their own profile here
+    // Admins can still use the /users/:id route for others
+    return this.usersService.update(req.user.userId, data);
+  }
 
   @Get()
   findAll() {
@@ -21,7 +36,7 @@ export class UsersController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() data: { name?: string; email?: string; role?: UserRole; password?: string }
+    @Body() data: { name?: string; email?: string; role?: UserRole; password?: string; avatarUrl?: string }
   ) {
     return this.usersService.update(id, data);
   }
