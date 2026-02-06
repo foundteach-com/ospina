@@ -11,9 +11,11 @@ export default function EditProviderPage({ params }: { params: Promise<{ id: str
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    commercialName: '',
     email: '',
     phone: '',
     address: '',
+    city: '',
     taxId: '',
   });
 
@@ -30,9 +32,11 @@ export default function EditProviderPage({ params }: { params: Promise<{ id: str
           const data = await response.json();
           setFormData({
             name: data.name || '',
+            commercialName: data.commercialName || '',
             email: data.email || '',
             phone: data.phone || '',
             address: data.address || '',
+            city: data.city || '',
             taxId: data.taxId || '',
           });
         }
@@ -95,17 +99,30 @@ export default function EditProviderPage({ params }: { params: Promise<{ id: str
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl p-8 space-y-6 shadow-sm">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-          <input
-            type="text"
-            name="name"
-            required
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-            placeholder="Nombre de la empresa o proveedor"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+            <input
+              type="text"
+              name="name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="Nombre de la empresa o proveedor"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Marca Comercial</label>
+            <input
+              type="text"
+              name="commercialName"
+              value={formData.commercialName}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="Marca comercial"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -133,16 +150,29 @@ export default function EditProviderPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
-            placeholder="Dirección física"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="Dirección física"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              placeholder="Ciudad"
+            />
+          </div>
         </div>
 
         <div>
