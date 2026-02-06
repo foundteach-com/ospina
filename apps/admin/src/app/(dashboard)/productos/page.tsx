@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useDialog } from '@/context/DialogContext';
 
 interface Product {
   id: string;
@@ -83,8 +84,17 @@ export default function ProductsPage() {
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
+  const { confirm, showAlert } = useDialog();
+
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar este producto?')) return;
+    const isConfirmed = await confirm({
+      title: '¿Eliminar Producto?',
+      message: 'Esta acción no se puede deshacer. El producto será borrado permanentemente.',
+      confirmText: 'Sí, eliminar',
+      type: 'danger'
+    });
+
+    if (!isConfirmed) return;
     
     try {
       const token = localStorage.getItem('access_token');
@@ -98,11 +108,19 @@ export default function ProductsPage() {
         fetchProducts();
       } else {
         const errorData = await response.json().catch(() => ({}));
-        alert(errorData.message || 'No se puede eliminar el producto porque tiene movimientos asociados (compras o ventas).');
+        showAlert({
+          title: 'No se puede eliminar',
+          message: errorData.message || 'El producto tiene movimientos asociados (compras o ventas).',
+          type: 'warning'
+        });
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error de conexión al intentar eliminar el producto.');
+      showAlert({
+        title: 'Error de conexión',
+        message: 'No pudimos comunicarnos con el servidor. Inténtalo de nuevo.',
+        type: 'danger'
+      });
     }
   };
 

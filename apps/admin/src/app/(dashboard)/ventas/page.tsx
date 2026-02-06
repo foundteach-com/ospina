@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useDialog } from '@/context/DialogContext';
 
 interface Sale {
   id: string;
@@ -42,6 +43,7 @@ const statusLabels: Record<string, string> = {
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
+  const { confirm, showAlert } = useDialog();
 
   const [userRole, setUserRole] = useState<string>('');
 
@@ -77,7 +79,14 @@ export default function SalesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar esta venta?')) return;
+    const isConfirmed = await confirm({
+      title: '¿Eliminar Venta?',
+      message: 'Esta acción borrará el registro de la venta permanentemente. ¿Deseas continuar?',
+      confirmText: 'Sí, eliminar',
+      type: 'danger'
+    });
+
+    if (!isConfirmed) return;
     
     try {
       const token = localStorage.getItem('access_token');
@@ -89,9 +98,20 @@ export default function SalesPage() {
       });
       if (response.ok) {
         fetchSales();
+      } else {
+        showAlert({
+          title: 'Error al eliminar',
+          message: 'No pudimos eliminar este registro. Verifica si tiene dependencias.',
+          type: 'danger'
+        });
       }
     } catch (error) {
       console.error('Error deleting sale:', error);
+      showAlert({
+        title: 'Error de conexión',
+        message: 'Ocurrió un problema al intentar borrar el registro.',
+        type: 'danger'
+      });
     }
   };
 

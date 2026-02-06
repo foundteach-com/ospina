@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: 'Plataforma administrativa interna',
 };
 
+import { DialogProvider } from '@/context/DialogContext';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -13,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <DialogProvider>
+          {children}
+        </DialogProvider>
+      </body>
     </html>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useDialog } from '@/context/DialogContext';
 
 interface User {
   id: string;
@@ -15,6 +16,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
+  const { confirm, showAlert } = useDialog();
 
   useEffect(() => {
     fetchUsers();
@@ -44,7 +46,14 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Está seguro de eliminar este usuario? Esta acción no se puede deshacer.')) return;
+    const isConfirmed = await confirm({
+      title: '¿Eliminar Usuario?',
+      message: 'Este usuario perderá acceso al sistema. Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+      type: 'danger'
+    });
+
+    if (!isConfirmed) return;
 
     try {
       const token = localStorage.getItem('access_token');
@@ -58,11 +67,19 @@ export default function UsersPage() {
         fetchUsers();
       } else {
         const error = await response.json();
-        alert(error.message || 'Error al eliminar usuario');
+        showAlert({
+          title: 'Error al eliminar',
+          message: error.message || 'No se pudo completar la acción.',
+          type: 'danger'
+        });
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Error de conexión');
+      showAlert({
+        title: 'Error de conexión',
+        message: 'No pudimos comunicarnos con el servidor.',
+        type: 'danger'
+      });
     }
   };
 
