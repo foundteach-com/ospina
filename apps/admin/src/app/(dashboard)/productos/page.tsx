@@ -96,9 +96,13 @@ export default function ProductsPage() {
       });
       if (response.ok) {
         fetchProducts();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.message || 'No se puede eliminar el producto porque tiene movimientos asociados (compras o ventas).');
       }
     } catch (error) {
       console.error('Error deleting product:', error);
+      alert('Error de conexión al intentar eliminar el producto.');
     }
   };
 
