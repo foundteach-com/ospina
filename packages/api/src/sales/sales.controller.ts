@@ -58,11 +58,22 @@ export class SalesController {
     @Param('id') id: string,
     @Body()
     data: {
-      status?: string;
+      clientId?: string;
+      referenceNumber?: string;
+      date?: string;
       notes?: string;
+      status?: string;
+      items?: {
+        productId: string;
+        quantity: number;
+        salePrice: number;
+      }[];
     }
   ) {
-    return this.salesService.update(id, data);
+    return this.salesService.update(id, {
+      ...data,
+      date: data.date ? new Date(data.date) : undefined,
+    });
   }
 
   @UseGuards(JwtAuthGuard)

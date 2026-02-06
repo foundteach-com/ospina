@@ -103,15 +103,41 @@ export class SalesService {
   async update(
     id: string,
     data: {
-      status?: string;
+      clientId?: string;
+      referenceNumber?: string;
+      date?: Date;
       notes?: string;
+      status?: string;
+      items?: {
+        productId: string;
+        quantity: number;
+        salePrice: number;
+      }[];
     }
   ): Promise<Sale> {
+    const total = data.items
+      ? data.items.reduce((sum, item) => sum + item.quantity * item.salePrice, 0)
+      : undefined;
+
     return this.prisma.sale.update({
       where: { id },
       data: {
+        clientId: data.clientId,
+        referenceNumber: data.referenceNumber,
+        date: data.date,
         status: data.status as any,
         notes: data.notes,
+        total,
+        ...(data.items && {
+          items: {
+            deleteMany: {},
+            create: data.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              salePrice: item.salePrice,
+            })),
+          },
+        }),
       },
       include: {
         client: true,
