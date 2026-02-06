@@ -158,6 +158,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  const [settings, setSettings] = useState<{ companyName: string; logoUrl: string | null } | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -167,8 +168,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push('/login');
     } else if (userData) {
       setUser(JSON.parse(userData) as User);
+      fetchSettings(token);
     }
   }, [router]);
+
+  const fetchSettings = async (token: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -202,11 +220,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between h-screen sticky top-0 overflow-y-auto">
         <div className="p-6">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="font-bold text-white">O</span>
+          <div className="flex items-center gap-3 mb-10 overflow-hidden">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+              {settings?.logoUrl ? (
+                <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-bold text-white text-xl">
+                  {settings?.companyName?.charAt(0) || 'O'}
+                </span>
+              )}
             </div>
-            <h2 className="text-xl font-bold tracking-tight text-gray-900">Ospina Admin</h2>
+            <h2 className="text-lg font-bold tracking-tight text-gray-900 truncate">
+              {settings?.companyName || 'Cargando...'}
+            </h2>
           </div>
 
           <nav>

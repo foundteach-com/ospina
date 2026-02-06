@@ -152,6 +152,18 @@ model CashFlow {
   updatedAt     DateTime     @updatedAt
 }
 
+model CompanySettings {
+  id              String   @id @default("singleton")
+  companyName    String   @default("Ospina Admin")
+  logoUrl        String?
+  taxId          String?
+  address        String?
+  phone          String?
+  email          String?
+  primaryColor   String   @default("#2563eb")
+  updatedAt      DateTime @updatedAt
+}
+
 enum UserRole {
   USER
   ADMIN
