@@ -16,6 +16,7 @@ import { ClientsModule } from './clients/clients.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { StorageModule } from './storage/storage.module';
 import { SettingsModule } from './settings/settings.module';
+import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { SettingsModule } from './settings/settings.module';
     DashboardModule,
     StorageModule,
     SettingsModule,
+    CotizacionesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
