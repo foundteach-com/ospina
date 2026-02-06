@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface Cotizacion {
   id: string;
@@ -132,7 +133,10 @@ export default function CotizacionesPage() {
           <h1 className="text-3xl font-bold text-gray-900">Movimientos de Cotizaciones</h1>
           <p className="text-gray-600 mt-1">Gestiona las cotizaciones de tus clientes</p>
         </div>
-        <button className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm">
+        <Link 
+          href="/cotizaciones/crear"
+          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -148,7 +152,7 @@ export default function CotizacionesPage() {
             <path d="M5 12h14" />
           </svg>
           Nueva Cotización
-        </button>
+        </Link>
       </div>
 
       {/* Summary Cards */}
