@@ -93,29 +93,45 @@ export default function AdminPage() {
         'Content-Type': 'application/json',
       };
 
-      // Fetch all dashboard data in parallel
-      const [statsRes, purchasesRes, salesRes, productsRes, clientsRes, cashFlowRes] = await Promise.all([
-        fetch(`${baseUrl}/dashboard/stats`, { headers }),
-        fetch(`${baseUrl}/dashboard/purchases-by-month?year=${purchasesYear}`, { headers }),
-        fetch(`${baseUrl}/dashboard/sales-by-month?year=${salesYear}`, { headers }),
-        fetch(`${baseUrl}/dashboard/top-products?limit=5`, { headers }),
-        fetch(`${baseUrl}/dashboard/top-clients?limit=5`, { headers }),
-        fetch(`${baseUrl}/dashboard/cash-flow-trend?months=6`, { headers }),
-      ]);
+      // Helper to handle fetch with auth check
+      const fetchWithAuth = async (url: string) => {
+        const res = await fetch(url, { headers });
+        if (res.status === 401) {
+          throw new Error('UNAUTHORIZED');
+        }
+        if (!res.ok) {
+          console.error(`Error fetching ${url}: ${res.statusText}`);
+          return []; // Return empty data or null for non-critical failures
+        }
+        return res.json();
+      };
 
-      const statsData = await statsRes.json();
-      const purchasesData = await purchasesRes.json();
-      const salesData = await salesRes.json();
-      const productsData = await productsRes.json();
-      const clientsData = await clientsRes.json();
-      const cashFlowData = await cashFlowRes.json();
+      try {
+        // Fetch all dashboard data in parallel
+        const [statsData, purchasesData, salesData, productsData, clientsData, cashFlowData] = await Promise.all([
+          fetchWithAuth(`${baseUrl}/dashboard/stats`).then(res => Array.isArray(res) ? {} : res), // Stats returns object
+          fetchWithAuth(`${baseUrl}/dashboard/purchases-by-month?year=${purchasesYear}`),
+          fetchWithAuth(`${baseUrl}/dashboard/sales-by-month?year=${salesYear}`),
+          fetchWithAuth(`${baseUrl}/dashboard/top-products?limit=5`),
+          fetchWithAuth(`${baseUrl}/dashboard/top-clients?limit=5`),
+          fetchWithAuth(`${baseUrl}/dashboard/cash-flow-trend?months=6`),
+        ]);
 
-      setStats(statsData);
-      setPurchasesByMonth(purchasesData);
-      setSalesByMonth(salesData);
-      setTopProducts(productsData);
-      setTopClients(clientsData);
-      setCashFlowTrend(cashFlowData);
+        setStats(statsData || {});
+        setPurchasesByMonth(Array.isArray(purchasesData) ? purchasesData : []);
+        setSalesByMonth(Array.isArray(salesData) ? salesData : []);
+        setTopProducts(Array.isArray(productsData) ? productsData : []);
+        setTopClients(Array.isArray(clientsData) ? clientsData : []);
+        setCashFlowTrend(Array.isArray(cashFlowData) ? cashFlowData : []);
+      } catch (error: any) {
+        if (error.message === 'UNAUTHORIZED') {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
+          router.push('/login');
+          return;
+        }
+        throw error;
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
