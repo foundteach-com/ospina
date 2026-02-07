@@ -1,0 +1,48 @@
+
+> web@1.0.0 build
+> next build
+
+   ▲ Next.js 15.5.11
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+ ✓ Compiled successfully in 838ms
+   Linting and checking validity of types ...
+
+./src/app/contacto/page.tsx
+4:15  Warning: 'Metadata' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/nosotros/page.tsx
+109:38  Warning: 'index' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/productos/page.tsx
+160:40  Warning: 'index' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+ ⚠ Mismatching @next/swc version, detected: 15.5.7 while Next.js is on 15.5.11. Please ensure these match
+   Generating static pages (0/7) ...
+   Generating static pages (1/7) 
+   Generating static pages (3/7) 
+   Generating static pages (5/7) 
+ ✓ Generating static pages (7/7)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                      167 B         106 kB
+├ ○ /_not-found                            988 B         103 kB
+├ ○ /contacto                            2.91 kB         105 kB
+├ ○ /nosotros                              167 B         106 kB
+└ ○ /productos                             167 B         106 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/18-14e6895f59bfbbff.js          46 kB
+  ├ chunks/87c73c54-24122e7b92478d00.js  54.2 kB
+  └ other shared chunks (total)          1.92 kB
+
+
+○  (Static)  prerendered as static content
+
