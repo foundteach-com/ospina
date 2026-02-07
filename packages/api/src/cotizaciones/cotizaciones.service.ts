@@ -70,6 +70,71 @@ export class CotizacionesService {
     });
   }
 
+  // Method for public quotation requests (from store, no auth required)
+  async createPublic(data: {
+    clienteNombre: string;
+    clienteEmail?: string;
+    clienteTelefono?: string;
+    empresa?: string;
+    fecha: Date;
+    notas?: string;
+    items: {
+      productId: string;
+      quantity: number;
+    }[];
+  }): Promise<Cotizacion & { items: CotizacionItem[] }> {
+    const numero = await this.generateNumero();
+
+    // Fetch actual product prices from database
+    const productIds = data.items.map(item => item.productId);
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, basePrice: true },
+    });
+
+    const priceMap = new Map(products.map(p => [p.id, Number(p.basePrice)]));
+
+    // Build items with prices and calculate total
+    const itemsWithPrices = data.items.map(item => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPrice: priceMap.get(item.productId) || 0,
+    }));
+
+    const total = itemsWithPrices.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0
+    );
+
+    // Build notes including empresa if provided
+    const notas = data.empresa 
+      ? `Empresa: ${data.empresa}\n${data.notas || ''}`
+      : data.notas;
+
+    return this.prisma.cotizacion.create({
+      data: {
+        numero,
+        clienteNombre: data.clienteNombre,
+        clienteEmail: data.clienteEmail,
+        clienteTelefono: data.clienteTelefono,
+        fecha: data.fecha,
+        validezDias: 30,
+        notas,
+        total,
+        items: {
+          create: itemsWithPrices,
+        },
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+  }
+
   async findAll(params?: {
     skip?: number;
     take?: number;

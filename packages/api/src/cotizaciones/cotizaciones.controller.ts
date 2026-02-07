@@ -40,6 +40,29 @@ export class CotizacionesController {
     });
   }
 
+  // Endpoint público para solicitudes desde la tienda (sin autenticación)
+  @Post('public')
+  createPublic(
+    @Body()
+    data: {
+      clienteNombre: string;
+      clienteEmail?: string;
+      clienteTelefono?: string;
+      empresa?: string;
+      fecha: string;
+      notas?: string;
+      items: {
+        productId: string;
+        quantity: number;
+      }[];
+    }
+  ) {
+    return this.cotizacionesService.createPublic({
+      ...data,
+      fecha: new Date(data.fecha),
+    });
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Query() query: any) {
