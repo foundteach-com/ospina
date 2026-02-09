@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
@@ -16,8 +26,20 @@ export class ProductsController {
 
   @Get()
   findAll(@Query() query: any) {
+    const whereClause: any = {};
+
+    // Filter by category if provided
+    if (query.category) {
+      whereClause.categoryId = query.category;
+    }
+
+    // If showAll=true is not passed (public store request), only show published products
+    if (query.showAll !== 'true') {
+      whereClause.isPublished = true;
+    }
+
     return this.productsService.findAll({
-      where: query.category ? { categoryId: query.category } : undefined,
+      where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
     });
   }
 

@@ -36,6 +36,7 @@ model Product {
   salesIvaPercent     Decimal         @default(19)
   utilityPercent      Decimal         @default(0)
   imageUrl            String?
+  isPublished         Boolean         @default(true)
   clientPricing       ClientPricing[]
   category            Category?       @relation(fields: [categoryId], references: [id])
   purchaseItems       PurchaseItem[]

@@ -25,7 +25,8 @@ function CreateProductForm() {
     salesIvaPercent: '19',
     categoryId: '',
     stock: '0',
-    imageUrl: ''
+    imageUrl: '',
+    isPublished: true
   });
 
   useEffect(() => {
@@ -95,7 +96,8 @@ function CreateProductForm() {
           salesIvaPercent: data.salesIvaPercent?.toString() || '19',
           categoryId: data.categoryId || '',
           stock: '0',
-          imageUrl: data.imageUrl || ''
+          imageUrl: data.imageUrl || '',
+          isPublished: data.isPublished ?? true
         });
       }
     } catch (error) {
@@ -144,6 +146,7 @@ function CreateProductForm() {
         salesIvaPercent: parseFloat(formData.salesIvaPercent),
         categoryId: formData.categoryId || null,
         imageUrl: formData.imageUrl || null,
+        isPublished: formData.isPublished,
         basePrice: sPriceWithIva, // For compatibility
       };
 
@@ -285,6 +288,25 @@ function CreateProductForm() {
               currentImageUrl={formData.imageUrl}
               onUploadSuccess={(url) => setFormData({ ...formData, imageUrl: url })}
             />
+          </div>
+          <div className="mt-6 flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Publicar en Tienda Virtual</h3>
+              <p className="text-xs text-gray-500 mt-0.5">El producto será visible para los clientes en la tienda</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, isPublished: !formData.isPublished })}
+              className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                formData.isPublished ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  formData.isPublished ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
         </div>
 

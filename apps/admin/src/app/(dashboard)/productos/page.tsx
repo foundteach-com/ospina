@@ -16,6 +16,7 @@ interface Product {
   utilityPercent: number;
   salesIvaPercent: number;
   currentStock?: number;
+  isPublished?: boolean;
 }
 
 export default function ProductsPage() {
@@ -44,7 +45,7 @@ export default function ProductsPage() {
       
       // Fetch products and inventory in parallel
       const [prodRes, invRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?showAll=true`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory`, {
@@ -124,6 +125,41 @@ export default function ProductsPage() {
     }
   };
 
+  const handleTogglePublished = async (id: string, currentState: boolean) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isPublished: !currentState }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setProducts(prev => prev.map(p => 
+          p.id === id ? { ...p, isPublished: !currentState } : p
+        ));
+        showAlert({
+          title: !currentState ? 'Producto publicado' : 'Producto oculto',
+          message: !currentState 
+            ? 'El producto ahora es visible en la tienda.' 
+            : 'El producto ya no es visible en la tienda.',
+          type: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating product:', error);
+      showAlert({
+        title: 'Error',
+        message: 'No se pudo actualizar el estado del producto.',
+        type: 'danger'
+      });
+    }
+  };
+
   if (loading) return <div className="p-8 text-white">Cargando...</div>;
 
   return (
@@ -183,6 +219,7 @@ export default function ProductsPage() {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">P. Venta + IVA</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Tienda</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
@@ -225,6 +262,21 @@ export default function ProductsPage() {
                       {(product.currentStock || 0).toLocaleString('es-CO')}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => handleTogglePublished(product.id, product.isPublished ?? true)}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        product.isPublished !== false ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                      title={product.isPublished !== false ? 'Visible en tienda - Click para ocultar' : 'Oculto - Click para publicar'}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          product.isPublished !== false ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-1">
                       <Link 
@@ -266,7 +318,7 @@ export default function ProductsPage() {
             })}
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                     {searchTerm ? `No se encontraron resultados para "${searchTerm}"` : 'No hay productos registrados'}
                   </td>
                 </tr>
