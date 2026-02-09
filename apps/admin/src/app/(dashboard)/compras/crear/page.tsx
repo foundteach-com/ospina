@@ -95,15 +95,19 @@ export default function CreatePurchasePage() {
       const newItems = [...prevItems];
       const currentItem = { ...newItems[index], [field]: value };
       
-      // Auto-calculation logic
+      // Auto-calculation logic with rounding to 2 decimals
       if (field === 'basePrice' || field === 'ivaPercent') {
-        const base = field === 'basePrice' ? Number(value) : currentItem.basePrice;
-        const iva = field === 'ivaPercent' ? Number(value) : currentItem.ivaPercent;
-        currentItem.purchasePrice = base * (1 + (iva / 100));
+        const base = field === 'basePrice' ? Number(value) : Number(currentItem.basePrice);
+        const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
+        
+        const calculatedTotal = base * (1 + (iva / 100));
+        currentItem.purchasePrice = Number(calculatedTotal.toFixed(2));
       } else if (field === 'purchasePrice') {
          const total = Number(value);
-         const iva = currentItem.ivaPercent;
-         currentItem.basePrice = total / (1 + (iva / 100));
+         const iva = Number(currentItem.ivaPercent);
+         
+         const calculatedBase = total / (1 + (iva / 100));
+         currentItem.basePrice = Number(calculatedBase.toFixed(2));
       }
 
       newItems[index] = currentItem;
@@ -115,26 +119,28 @@ export default function CreatePurchasePage() {
     const product = products.find(p => p.code.toLowerCase() === code.toLowerCase());
     
     if (product) {
-      // If code matches a product, select it similar to handleProductChange
       setItems(prevItems => {
         const newItems = [...prevItems];
-        const basePrice = parseFloat(product.basePrice);
+        // The user indicated that product.basePrice is reflecting the price WITH IVA (Gross Price)
+        // So we must calculate the net base price from it.
+        const grossPrice = parseFloat(product.basePrice);
         const ivaPercent = product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+        
+        const basePrice = grossPrice / (1 + (ivaPercent / 100));
         
         newItems[index] = { 
           ...newItems[index], 
           productId: product.id,
-          code: product.code, // Use the official code from product
-          basePrice: basePrice,
+          code: product.code, 
+          basePrice: Number(basePrice.toFixed(2)),
           ivaPercent: ivaPercent,
-          purchasePrice: basePrice * (1 + (ivaPercent / 100)),
-          reteFuentePercent: 0, // Reset or Default
-          reteIvaPercent: 0 // Reset or Default
+          purchasePrice: Number(grossPrice.toFixed(2)), // This is the total with IVA
+          reteFuentePercent: 0, 
+          reteIvaPercent: 0 
         };
         return newItems;
       });
     } else {
-      // Just update the code field if no match (allow user to keep typing)
       setItems(prevItems => {
         const newItems = [...prevItems];
         newItems[index] = { ...newItems[index], code: code };
@@ -147,16 +153,19 @@ export default function CreatePurchasePage() {
     const product = products.find(p => p.id === productId);
     setItems(prevItems => {
       const newItems = [...prevItems];
-      const basePrice = product ? parseFloat(product.basePrice) : 0; 
+      
+      const grossPrice = product ? parseFloat(product.basePrice) : 0; 
       const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+      
+      const basePrice = grossPrice / (1 + (ivaPercent / 100));
       
       newItems[index] = { 
         ...newItems[index], 
         productId,
-        code: product ? product.code : '', // Update code field based on selection
-        basePrice: basePrice,
+        code: product ? product.code : '',
+        basePrice: Number(basePrice.toFixed(2)),
         ivaPercent: ivaPercent,
-        purchasePrice: basePrice * (1 + (ivaPercent / 100)),
+        purchasePrice: Number(grossPrice.toFixed(2)),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -166,14 +175,18 @@ export default function CreatePurchasePage() {
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
+      // Ensure we use the exact values from inputs for consistency, or standard calculation?
+      // Using values from state
       const totalLine = item.quantity * item.purchasePrice;
       const baseTotalLine = item.quantity * item.basePrice;
+      
+      // IVA is difference, ensuring simple math
       const ivaTotalLine = totalLine - baseTotalLine;
 
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.subtotal += totalLine; // This is actually Total + IVA
+      acc.subtotal += totalLine; 
       acc.reteFuente += reteFuenteValue;
       acc.reteIva += reteIvaValue;
       acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
@@ -221,11 +234,7 @@ export default function CreatePurchasePage() {
 
     try {
       const token = localStorage.getItem('access_token');
-      console.log('Sending data:', {
-        ...formData,
-        items: items.filter(item => item.productId),
-      });
-
+      
       let finalInvoiceUrl = formData.invoiceUrl;
 
       if (selectedFile) {
@@ -247,7 +256,12 @@ export default function CreatePurchasePage() {
         body: JSON.stringify({
           ...formData,
           invoiceUrl: finalInvoiceUrl,
-          items: items.filter(item => item.productId),
+          items: items.filter(item => item.productId).map(item => ({
+            ...item,
+            // Ensure 2 decimals on submit as well
+            basePrice: Number(item.basePrice.toFixed(2)),
+            purchasePrice: Number(item.purchasePrice.toFixed(2))
+          })),
         }),
       });
 

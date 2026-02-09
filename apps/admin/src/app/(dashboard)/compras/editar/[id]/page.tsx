@@ -118,15 +118,19 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
            const product = availableProducts.find(p => p.id === item.productId);
            const code = product ? product.code : '';
            const productIva = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+           
+           // If we assume existing purchasePrice is CORRECT (Total + IVA), we treat Base Price as derived unless stored differently
+           // But here we can recalculate Base to ensure consistency with new logic
+           const basePrice = purchasePrice / (1 + (productIva / 100));
 
            return {
              id: item.id,
              productId: item.productId,
              code: code,
              quantity: parseFloat(item.quantity),
-             purchasePrice: purchasePrice, // Total + IVA unit price
-             ivaPercent: productIva, // Use product's current IVA or assume
-             basePrice: purchasePrice / (1 + (productIva / 100)),
+             purchasePrice: Number(purchasePrice.toFixed(2)), // Total + IVA unit price
+             ivaPercent: productIva, 
+             basePrice: Number(basePrice.toFixed(2)),
              reteFuentePercent: item.reteFuentePercent ? parseFloat(item.reteFuentePercent) : 0,
              reteIvaPercent: item.reteIvaPercent ? parseFloat(item.reteIvaPercent) : 0,
            };
@@ -152,15 +156,19 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       const newItems = [...prevItems];
       const currentItem = { ...newItems[index], [field]: value };
       
-      // Auto-calculation logic
+      // Auto-calculation logic with rounding to 2 decimals
       if (field === 'basePrice' || field === 'ivaPercent') {
-        const base = field === 'basePrice' ? Number(value) : (currentItem.basePrice || 0);
-        const iva = field === 'ivaPercent' ? Number(value) : (currentItem.ivaPercent || 0);
-        currentItem.purchasePrice = base * (1 + (iva / 100));
+        const base = field === 'basePrice' ? Number(value) : Number(currentItem.basePrice);
+        const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
+        
+        const calculatedTotal = base * (1 + (iva / 100));
+        currentItem.purchasePrice = Number(calculatedTotal.toFixed(2));
       } else if (field === 'purchasePrice') {
          const total = Number(value);
-         const iva = currentItem.ivaPercent || 0;
-         currentItem.basePrice = total / (1 + (iva / 100));
+         const iva = Number(currentItem.ivaPercent);
+         
+         const calculatedBase = total / (1 + (iva / 100));
+         currentItem.basePrice = Number(calculatedBase.toFixed(2));
       }
 
       newItems[index] = currentItem;
@@ -174,16 +182,19 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     if (product) {
       setItems(prevItems => {
         const newItems = [...prevItems];
-        const basePrice = parseFloat(product.basePrice);
+        // Treating product.basePrice as Gross Price (Total with IVA) per user feedback
+        const grossPrice = parseFloat(product.basePrice);
         const ivaPercent = product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+        
+        const basePrice = grossPrice / (1 + (ivaPercent / 100));
         
         newItems[index] = { 
           ...newItems[index], 
           productId: product.id,
           code: product.code,
-          basePrice: basePrice,
+          basePrice: Number(basePrice.toFixed(2)),
           ivaPercent: ivaPercent,
-          purchasePrice: basePrice * (1 + (ivaPercent / 100)),
+          purchasePrice: Number(grossPrice.toFixed(2)),
           reteFuentePercent: 0, // Reset default
           reteIvaPercent: 0 // Reset default
         };
@@ -203,17 +214,18 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     setItems(prevItems => {
       const newItems = [...prevItems];
     
-      // Map product defaults
-      const basePrice = product ? parseFloat(product.basePrice) : 0;
+      const grossPrice = product ? parseFloat(product.basePrice) : 0; 
       const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+      
+      const basePrice = grossPrice / (1 + (ivaPercent / 100));
       
       newItems[index] = { 
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: basePrice,
+        basePrice: Number(basePrice.toFixed(2)),
         ivaPercent: ivaPercent,
-        purchasePrice: basePrice * (1 + (ivaPercent / 100)),
+        purchasePrice: Number(grossPrice.toFixed(2)),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -303,7 +315,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           items: items.filter(item => item.productId).map(item => ({
             productId: item.productId,
             quantity: item.quantity,
-            purchasePrice: item.purchasePrice,
+            purchasePrice: Number(item.purchasePrice.toFixed(2)),
             reteFuentePercent: item.reteFuentePercent,
             reteIvaPercent: item.reteIvaPercent,
           })),
