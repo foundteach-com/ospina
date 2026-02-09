@@ -24,6 +24,8 @@ interface PurchaseItem {
   basePrice: number;
   ivaPercent: number;
   purchasePrice: number; // This will be the Total Cost (Base + IVA)
+  reteFuentePercent: number;
+  reteIvaPercent: number;
 }
 
 export default function CreatePurchasePage() {
@@ -37,10 +39,11 @@ export default function CreatePurchasePage() {
     referenceNumber: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
+    invoiceUrl: '', 
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([
-    { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 },
+    { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 },
   ]);
 
   useEffect(() => {
@@ -79,7 +82,7 @@ export default function CreatePurchasePage() {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
+    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -123,7 +126,9 @@ export default function CreatePurchasePage() {
           code: product.code, // Use the official code from product
           basePrice: basePrice,
           ivaPercent: ivaPercent,
-          purchasePrice: basePrice * (1 + (ivaPercent / 100))
+          purchasePrice: basePrice * (1 + (ivaPercent / 100)),
+          reteFuentePercent: 0, // Reset or Default
+          reteIvaPercent: 0 // Reset or Default
         };
         return newItems;
       });
@@ -150,15 +155,33 @@ export default function CreatePurchasePage() {
         code: product ? product.code : '', // Update code field based on selection
         basePrice: basePrice,
         ivaPercent: ivaPercent,
-        purchasePrice: basePrice * (1 + (ivaPercent / 100))
+        purchasePrice: basePrice * (1 + (ivaPercent / 100)),
+        reteFuentePercent: 0,
+        reteIvaPercent: 0
       };
       return newItems;
     });
   };
 
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+  const calculateTotals = () => {
+    return items.reduce((acc, item) => {
+      const totalLine = item.quantity * item.purchasePrice;
+      const baseTotalLine = item.quantity * item.basePrice;
+      const ivaTotalLine = totalLine - baseTotalLine;
+
+      const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
+      const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
+
+      acc.subtotal += totalLine; // This is actually Total + IVA
+      acc.reteFuente += reteFuenteValue;
+      acc.reteIva += reteIvaValue;
+      acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
+      
+      return acc;
+    }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
   };
+
+  const totals = calculateTotals();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,6 +189,11 @@ export default function CreatePurchasePage() {
 
     try {
       const token = localStorage.getItem('access_token');
+      console.log('Sending data:', {
+        ...formData,
+        items: items.filter(item => item.productId),
+      });
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/purchases`, {
         method: 'POST',
         headers: {
@@ -181,7 +209,9 @@ export default function CreatePurchasePage() {
       if (response.ok) {
         router.push('/compras');
       } else {
-        alert('Error al crear la compra');
+        const errorData = await response.json();
+        console.error('Error creating purchase:', errorData);
+        alert(`Error al crear la compra: ${errorData.message || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error('Error creating purchase:', error);
@@ -262,6 +292,19 @@ export default function CreatePurchasePage() {
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
+
+             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Factura URL (PDF)
+              </label>
+              <input
+                type="text" 
+                value={formData.invoiceUrl}
+                onChange={(e) => setFormData({ ...formData, invoiceUrl: e.target.value })}
+                placeholder="URL del documento"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
           </div>
         </div>
 
@@ -281,8 +324,8 @@ export default function CreatePurchasePage() {
           <div className="space-y-4">
             {items.map((item, index) => (
               <div key={index} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="col-span-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
                     Código
                   </label>
                   <input
@@ -295,13 +338,13 @@ export default function CreatePurchasePage() {
                 </div>
 
                 <div className="col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
                     Producto
                   </label>
                   <select
                     value={item.productId}
                     onChange={(e) => handleProductChange(index, e.target.value)}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                     required
                   >
                     <option value="">Seleccionar producto</option>
@@ -314,7 +357,7 @@ export default function CreatePurchasePage() {
                 </div>
 
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
                     Cant.
                   </label>
                   <input
@@ -329,7 +372,7 @@ export default function CreatePurchasePage() {
                 </div>
 
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
                     Costo Base
                   </label>
                   <input
@@ -344,7 +387,7 @@ export default function CreatePurchasePage() {
                 </div>
 
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
                     % IVA
                   </label>
                   <input
@@ -358,8 +401,36 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
+                 <div className="col-span-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    % ReteFte
+                  </label>
+                  <input
+                    type="number"
+                    value={item.reteFuentePercent || 0}
+                    onChange={(e) => updateItem(index, 'reteFuentePercent', parseFloat(e.target.value))}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
+
+                 <div className="col-span-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    % ReteIVA
+                  </label>
+                  <input
+                    type="number"
+                    value={item.reteIvaPercent || 0}
+                    onChange={(e) => updateItem(index, 'reteIvaPercent', parseFloat(e.target.value))}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
+
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
                     Total + IVA
                   </label>
                   <input
@@ -391,10 +462,24 @@ export default function CreatePurchasePage() {
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex justify-end">
-              <div className="text-right">
-                <div className="text-sm text-gray-500 mb-1">Total</div>
-                <div className="text-2xl font-bold text-green-600">
-                  ${calculateTotal().toLocaleString('es-CO')}
+              <div className="text-right space-y-2">
+                 <div className="flex justify-between gap-8 text-sm text-gray-600">
+                  <span>Subtotal (Base + IVA)</span>
+                  <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                 <div className="flex justify-between gap-8 text-sm text-red-600">
+                  <span>ReteFuente</span>
+                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                 <div className="flex justify-between gap-8 text-sm text-red-600">
+                  <span>ReteIVA</span>
+                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="pt-2 border-t border-gray-200">
+                    <div className="text-sm text-gray-500 mb-1">Total a Pagar</div>
+                    <div className="text-2xl font-bold text-green-600">
+                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
                 </div>
               </div>
             </div>

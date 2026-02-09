@@ -11,10 +11,13 @@ export class PurchasesService {
     referenceNumber: string;
     date: Date;
     notes?: string;
+    invoiceUrl?: string;
     items: {
       productId: string;
       quantity: number;
       purchasePrice: number;
+      reteFuentePercent?: number;
+      reteIvaPercent?: number;
     }[];
   }): Promise<Purchase & { items: PurchaseItem[] }> {
     // Calculate total from items
@@ -30,12 +33,15 @@ export class PurchasesService {
         referenceNumber: data.referenceNumber,
         date: data.date,
         notes: data.notes,
+        invoiceUrl: data.invoiceUrl,
         total,
         items: {
           create: data.items.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
             purchasePrice: item.purchasePrice,
+            reteFuentePercent: item.reteFuentePercent || 0,
+            reteIvaPercent: item.reteIvaPercent || 0,
           })),
         },
       },
@@ -94,10 +100,13 @@ export class PurchasesService {
       referenceNumber?: string;
       date?: Date;
       notes?: string;
+      invoiceUrl?: string;
       items?: {
         productId: string;
         quantity: number;
         purchasePrice: number;
+        reteFuentePercent?: number;
+        reteIvaPercent?: number;
       }[];
     }
   ): Promise<Purchase> {
@@ -118,7 +127,8 @@ export class PurchasesService {
         referenceNumber: data.referenceNumber,
         date: data.date,
         notes: data.notes,
-        total,
+        invoiceUrl: data.invoiceUrl,
+        ...(total !== undefined && { total }),
         ...(data.items && {
           items: {
             deleteMany: {},
@@ -126,6 +136,8 @@ export class PurchasesService {
               productId: item.productId,
               quantity: item.quantity,
               purchasePrice: item.purchasePrice,
+              reteFuentePercent: item.reteFuentePercent || 0,
+              reteIvaPercent: item.reteIvaPercent || 0,
             })),
           },
         }),

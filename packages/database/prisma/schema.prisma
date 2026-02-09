@@ -72,6 +72,7 @@ model Purchase {
   date            DateTime
   total           Decimal
   notes           String?
+  invoiceUrl      String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   provider        Provider       @relation(fields: [providerId], references: [id])
@@ -84,6 +85,8 @@ model PurchaseItem {
   productId     String
   quantity      Decimal
   purchasePrice Decimal
+  reteFuentePercent Decimal @default(0)
+  reteIvaPercent    Decimal @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   product       Product  @relation(fields: [productId], references: [id])

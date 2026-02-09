@@ -25,10 +25,13 @@ export class PurchasesController {
       referenceNumber: string;
       date: string;
       notes?: string;
+      invoiceUrl?: string; // Added field
       items: {
         productId: string;
         quantity: number;
         purchasePrice: number;
+        reteFuentePercent?: number; // Added field
+        reteIvaPercent?: number; // Added field
       }[];
     }
   ) {
@@ -62,10 +65,13 @@ export class PurchasesController {
       referenceNumber?: string;
       date?: string;
       notes?: string;
+      invoiceUrl?: string; // Added field
       items?: {
         productId: string;
         quantity: number;
         purchasePrice: number;
+        reteFuentePercent?: number; // Added field
+        reteIvaPercent?: number; // Added field
       }[];
     }
   ) {

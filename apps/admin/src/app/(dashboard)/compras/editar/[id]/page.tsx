@@ -25,6 +25,8 @@ interface PurchaseItem {
   basePrice: number;
   ivaPercent: number;
   purchasePrice: number;
+  reteFuentePercent: number;
+  reteIvaPercent: number;
 }
 
 export default function EditPurchasePage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,6 +42,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     referenceNumber: '',
     date: '',
     notes: '',
+    invoiceUrl: '', 
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([]);
@@ -100,6 +103,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           referenceNumber: data.referenceNumber,
           date: new Date(data.date).toISOString().split('T')[0],
           notes: data.notes || '',
+          invoiceUrl: data.invoiceUrl || '',
         });
         
         // Use provided products or state
@@ -108,20 +112,22 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         // Post-process items to calculate basePrice and ivaPercent if missing
         const itemsWithCalculatedData = data.items.map((item: any) => {
            const purchasePrice = parseFloat(item.purchasePrice);
-           const iva = 19; // Default assumption for existing records
            
-           // Find product code
+           // Find product to guess IVA if not stored (which is not, except via product default)
            const product = availableProducts.find(p => p.id === item.productId);
            const code = product ? product.code : '';
+           const productIva = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
 
            return {
              id: item.id,
              productId: item.productId,
              code: code,
              quantity: parseFloat(item.quantity),
-             purchasePrice: purchasePrice,
-             ivaPercent: iva,
-             basePrice: purchasePrice / (1 + (iva / 100))
+             purchasePrice: purchasePrice, // Total + IVA unit price
+             ivaPercent: productIva, // Use product's current IVA or assume
+             basePrice: purchasePrice / (1 + (productIva / 100)),
+             reteFuentePercent: item.reteFuentePercent ? parseFloat(item.reteFuentePercent) : 0,
+             reteIvaPercent: item.reteIvaPercent ? parseFloat(item.reteIvaPercent) : 0,
            };
         });
 
@@ -133,7 +139,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
+    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -176,7 +182,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           code: product.code,
           basePrice: basePrice,
           ivaPercent: ivaPercent,
-          purchasePrice: basePrice * (1 + (ivaPercent / 100))
+          purchasePrice: basePrice * (1 + (ivaPercent / 100)),
+          reteFuentePercent: 0, // Reset default
+          reteIvaPercent: 0 // Reset default
         };
         return newItems;
       });
@@ -204,15 +212,33 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         code: product ? product.code : '',
         basePrice: basePrice,
         ivaPercent: ivaPercent,
-        purchasePrice: basePrice * (1 + (ivaPercent / 100))
+        purchasePrice: basePrice * (1 + (ivaPercent / 100)),
+        reteFuentePercent: 0,
+        reteIvaPercent: 0
       };
       return newItems;
     });
   };
 
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+  const calculateTotals = () => {
+    return items.reduce((acc, item) => {
+      const totalLine = item.quantity * item.purchasePrice;
+      const baseTotalLine = item.quantity * item.basePrice;
+      const ivaTotalLine = totalLine - baseTotalLine;
+
+      const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
+      const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
+
+      acc.subtotal += totalLine; // This is actually Total + IVA
+      acc.reteFuente += reteFuenteValue;
+      acc.reteIva += reteIvaValue;
+      acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
+      
+      return acc;
+    }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
   };
+  
+  const totals = calculateTotals();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,6 +258,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
             productId: item.productId,
             quantity: item.quantity,
             purchasePrice: item.purchasePrice,
+            reteFuentePercent: item.reteFuentePercent,
+            reteIvaPercent: item.reteIvaPercent,
           })),
         }),
       });
@@ -305,6 +333,25 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
+             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Factura URL (PDF)
+              </label>
+              <input
+                type="text" 
+                value={formData.invoiceUrl}
+                onChange={(e) => setFormData({ ...formData, invoiceUrl: e.target.value })}
+                placeholder="URL del documento"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+               {formData.invoiceUrl && (
+                  <div className="mt-2">
+                    <a href={formData.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-sm">
+                      Ver documento actual
+                    </a>
+                  </div>
+                )}
+            </div>
           </div>
         </div>
 
@@ -323,8 +370,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           <div className="space-y-4">
             {items.map((item, index) => (
               <div key={index} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="col-span-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
                     Código
                   </label>
                   <input
@@ -336,7 +383,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   />
                 </div>
                 <div className="col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Producto</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Producto</label>
                   <select
                     value={item.productId}
                     onChange={(e) => handleProductChange(index, e.target.value)}
@@ -348,7 +395,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   </select>
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cant.</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Cant.</label>
                   <input
                     type="number"
                     value={item.quantity}
@@ -359,7 +406,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Costo Base</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Costo Base</label>
                   <input
                     type="number"
                     value={item.basePrice || 0}
@@ -370,7 +417,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">% IVA</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">% IVA</label>
                   <input
                     type="number"
                     value={item.ivaPercent || 0}
@@ -380,8 +427,35 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     step="0.01"
                   />
                 </div>
+                 <div className="col-span-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    % ReteFte
+                  </label>
+                  <input
+                    type="number"
+                    value={item.reteFuentePercent || 0}
+                    onChange={(e) => updateItem(index, 'reteFuentePercent', parseFloat(e.target.value))}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
+
+                 <div className="col-span-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                    % ReteIVA
+                  </label>
+                  <input
+                    type="number"
+                    value={item.reteIvaPercent || 0}
+                    onChange={(e) => updateItem(index, 'reteIvaPercent', parseFloat(e.target.value))}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Total + IVA</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Total + IVA</label>
                   <input
                     type="number"
                     value={item.purchasePrice || 0}
@@ -401,9 +475,29 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
               </div>
             ))}
           </div>
-          <div className="mt-6 pt-6 border-t border-gray-200 text-right">
-            <div className="text-sm text-gray-500 mb-1">Total Actualizado</div>
-            <div className="text-3xl font-bold text-green-600">${calculateTotal().toLocaleString('es-CO')}</div>
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex justify-end">
+              <div className="text-right space-y-2">
+                 <div className="flex justify-between gap-8 text-sm text-gray-600">
+                  <span>Subtotal (Base + IVA)</span>
+                  <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                 <div className="flex justify-between gap-8 text-sm text-red-600">
+                  <span>ReteFuente</span>
+                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                 <div className="flex justify-between gap-8 text-sm text-red-600">
+                  <span>ReteIVA</span>
+                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="pt-2 border-t border-gray-200">
+                    <div className="text-sm text-gray-500 mb-1">Total a Pagar</div>
+                    <div className="text-2xl font-bold text-green-600">
+                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
