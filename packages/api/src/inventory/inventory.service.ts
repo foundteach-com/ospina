@@ -160,10 +160,17 @@ export class InventoryService {
       _sum: { quantity: true },
     });
 
+    // Get total internal movements
+    const internalMovements = await this.prisma.internalMovementItem.aggregate({
+      where: { productId },
+      _sum: { quantity: true },
+    });
+
     const totalPurchased = purchases._sum.quantity || 0;
     const totalSold = sales._sum.quantity || 0;
+    const totalInternal = internalMovements._sum.quantity || 0;
 
-    return Number(totalPurchased) - Number(totalSold);
+    return Number(totalPurchased) - Number(totalSold) - Number(totalInternal);
   }
 
   async getLowStockProducts(threshold = 10): Promise<InventoryItem[]> {

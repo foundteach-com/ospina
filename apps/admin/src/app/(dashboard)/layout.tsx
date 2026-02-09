@@ -97,6 +97,7 @@ const menuItems = [
     ),
     children: [
       { name: 'Movimientos de Ventas', href: '/ventas' },
+      { name: 'Movimientos Internos', href: '/movimientos-internos' },
       { name: 'Clientes', href: '/clientes' },
     ],
   },

@@ -42,6 +42,7 @@ model Product {
   purchaseItems       PurchaseItem[]
   saleItems           SaleItem[]
   cotizacionItems     CotizacionItem[]
+  internalMovements   InternalMovementItem[]
 }
 
 model Category {
@@ -216,4 +217,30 @@ model CotizacionItem {
   unitPrice    Decimal
   cotizacion   Cotizacion @relation(fields: [cotizacionId], references: [id], onDelete: Cascade)
   product      Product    @relation(fields: [productId], references: [id])
+}
+
+model InternalMovement {
+  id          String               @id @default(cuid())
+  date        DateTime
+  type        InternalMovementType
+  description String?
+  total       Decimal              @default(0)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  items       InternalMovementItem[]
+}
+
+model InternalMovementItem {
+  id                 String           @id @default(cuid())
+  internalMovementId String
+  productId          String
+  quantity           Int
+  unitPrice          Decimal?
+  internalMovement   InternalMovement @relation(fields: [internalMovementId], references: [id], onDelete: Cascade)
+  product            Product          @relation(fields: [productId], references: [id])
+}
+
+enum InternalMovementType {
+  OWNER_WITHDRAWAL
+  INTERNAL_USE
 }

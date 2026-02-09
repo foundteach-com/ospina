@@ -17,6 +17,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { StorageModule } from './storage/storage.module';
 import { SettingsModule } from './settings/settings.module';
 import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
+import { InternalMovementsModule } from './internal-movements/internal-movements.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
     StorageModule,
     SettingsModule,
     CotizacionesModule,
+    InternalMovementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
