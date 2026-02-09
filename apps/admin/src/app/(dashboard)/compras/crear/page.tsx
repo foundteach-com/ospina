@@ -13,6 +13,7 @@ interface Product {
   name: string;
   code: string;
   basePrice: string;
+  purchasePrice: string;
   purchaseIvaPercent: string;
   unit: string;
 }
@@ -121,12 +122,12 @@ export default function CreatePurchasePage() {
     if (product) {
       setItems(prevItems => {
         const newItems = [...prevItems];
-        // The user indicated that product.basePrice is reflecting the price WITH IVA (Gross Price)
-        // So we must calculate the net base price from it.
-        const grossPrice = parseFloat(product.basePrice);
+        // Use purchasePrice as the Base Cost (Net) directly
+        const basePrice = parseFloat(product.purchasePrice);
         const ivaPercent = product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
         
-        const basePrice = grossPrice / (1 + (ivaPercent / 100));
+        // Calculate Total (Gross) from Base + IVA
+        const totalWithIva = basePrice * (1 + (ivaPercent / 100));
         
         newItems[index] = { 
           ...newItems[index], 
@@ -134,7 +135,7 @@ export default function CreatePurchasePage() {
           code: product.code, 
           basePrice: Number(basePrice.toFixed(2)),
           ivaPercent: ivaPercent,
-          purchasePrice: Number(grossPrice.toFixed(2)), // This is the total with IVA
+          purchasePrice: Number(totalWithIva.toFixed(2)), // This is the total with IVA
           reteFuentePercent: 0, 
           reteIvaPercent: 0 
         };
@@ -154,10 +155,10 @@ export default function CreatePurchasePage() {
     setItems(prevItems => {
       const newItems = [...prevItems];
       
-      const grossPrice = product ? parseFloat(product.basePrice) : 0; 
+      const basePrice = product ? parseFloat(product.purchasePrice) : 0; 
       const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
       
-      const basePrice = grossPrice / (1 + (ivaPercent / 100));
+      const totalWithIva = basePrice * (1 + (ivaPercent / 100));
       
       newItems[index] = { 
         ...newItems[index], 
@@ -165,7 +166,7 @@ export default function CreatePurchasePage() {
         code: product ? product.code : '',
         basePrice: Number(basePrice.toFixed(2)),
         ivaPercent: ivaPercent,
-        purchasePrice: Number(grossPrice.toFixed(2)),
+        purchasePrice: Number(totalWithIva.toFixed(2)),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };

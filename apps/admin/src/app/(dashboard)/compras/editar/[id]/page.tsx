@@ -14,6 +14,7 @@ interface Product {
   name: string;
   code: string;
   basePrice: string;
+  purchasePrice: string;
   purchaseIvaPercent?: string;
 }
 
@@ -182,11 +183,12 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     if (product) {
       setItems(prevItems => {
         const newItems = [...prevItems];
-        // Treating product.basePrice as Gross Price (Total with IVA) per user feedback
-        const grossPrice = parseFloat(product.basePrice);
+        // Use purchasePrice as the Base Cost (Net) directly
+        const basePrice = parseFloat(product.purchasePrice);
         const ivaPercent = product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
         
-        const basePrice = grossPrice / (1 + (ivaPercent / 100));
+        // Calculate Total (Gross) from Base + IVA
+        const totalWithIva = basePrice * (1 + (ivaPercent / 100));
         
         newItems[index] = { 
           ...newItems[index], 
@@ -194,7 +196,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           code: product.code,
           basePrice: Number(basePrice.toFixed(2)),
           ivaPercent: ivaPercent,
-          purchasePrice: Number(grossPrice.toFixed(2)),
+          purchasePrice: Number(totalWithIva.toFixed(2)),
           reteFuentePercent: 0, // Reset default
           reteIvaPercent: 0 // Reset default
         };
@@ -214,10 +216,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     setItems(prevItems => {
       const newItems = [...prevItems];
     
-      const grossPrice = product ? parseFloat(product.basePrice) : 0; 
+      const basePrice = product ? parseFloat(product.purchasePrice) : 0; 
       const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
       
-      const basePrice = grossPrice / (1 + (ivaPercent / 100));
+      const totalWithIva = basePrice * (1 + (ivaPercent / 100));
       
       newItems[index] = { 
         ...newItems[index], 
@@ -225,7 +227,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         code: product ? product.code : '',
         basePrice: Number(basePrice.toFixed(2)),
         ivaPercent: ivaPercent,
-        purchasePrice: Number(grossPrice.toFixed(2)),
+        purchasePrice: Number(totalWithIva.toFixed(2)),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
