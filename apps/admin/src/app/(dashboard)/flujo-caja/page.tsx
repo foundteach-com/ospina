@@ -21,6 +21,12 @@ interface Summary {
   balance: number;
 }
 
+const getTodayLocal = () => {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split('T')[0];
+};
+
 export default function CashFlowPage() {
   const [records, setRecords] = useState<CashFlowRecord[]>([]);
   const [summary, setSummary] = useState<Summary>({ totalIncome: 0, totalExpense: 0, balance: 0 });
@@ -45,7 +51,7 @@ export default function CashFlowPage() {
   
   // Form state
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayLocal(),
     receiptNumber: '',
     provider: '',
     description: '',
@@ -209,7 +215,7 @@ export default function CashFlowPage() {
 
   const getFormattedDataForExport = () => {
     return records.map(r => ({
-      Fecha: new Date(r.date).toLocaleDateString('es-CO'),
+      Fecha: new Date(r.date).toLocaleDateString('es-CO', { timeZone: 'UTC' }),
       'N° Recibo': r.receiptNumber,
       Proveedor: r.provider,
       Descripción: r.description,
@@ -275,7 +281,7 @@ export default function CashFlowPage() {
 
      const tableColumn = ["Fecha", "N° Recibo", "Proveedor", "Descripción", "Tipo", "Monto"];
      const tableRows = records.map(record => [
-       new Date(record.date).toLocaleDateString('es-CO'),
+       new Date(record.date).toLocaleDateString('es-CO', { timeZone: 'UTC' }),
        record.receiptNumber,
        record.provider,
        record.description,
@@ -299,7 +305,7 @@ export default function CashFlowPage() {
   const handleNewRecord = () => {
     setEditingRecord(null);
     setFormData({
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayLocal(),
       receiptNumber: '',
       provider: '',
       description: '',
@@ -480,7 +486,7 @@ export default function CashFlowPage() {
                     } transition-colors hover:bg-opacity-80`}
                   >
                     <td className="px-6 py-4 text-sm">
-                      {new Date(record.date).toLocaleDateString('es-CO')}
+                      {new Date(record.date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
                     </td>
                     <td className="px-6 py-4 text-sm font-mono">{record.receiptNumber}</td>
                     <td className="px-6 py-4 text-sm font-medium">{record.provider}</td>
