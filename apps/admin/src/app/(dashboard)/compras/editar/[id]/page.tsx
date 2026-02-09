@@ -14,12 +14,15 @@ interface Product {
   name: string;
   code: string;
   basePrice: string;
+  purchaseIvaPercent?: string;
 }
 
 interface PurchaseItem {
   id?: string;
   productId: string;
   quantity: number;
+  basePrice: number;
+  ivaPercent: number;
   purchasePrice: number;
 }
 
@@ -90,12 +93,22 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           date: new Date(data.date).toISOString().split('T')[0],
           notes: data.notes || '',
         });
-        setItems(data.items.map((item: { id: string; productId: string; quantity: string; purchasePrice: string }) => ({
-          id: item.id,
-          productId: item.productId,
-          quantity: parseFloat(item.quantity),
-          purchasePrice: parseFloat(item.purchasePrice),
-        })));
+        
+        // Post-process items to calculate basePrice and ivaPercent if missing
+        const itemsWithCalculatedData = data.items.map((item: any) => {
+           const purchasePrice = parseFloat(item.purchasePrice);
+           const iva = 19; // Default assumption for existing records
+           return {
+             id: item.id,
+             productId: item.productId,
+             quantity: parseFloat(item.quantity),
+             purchasePrice: purchasePrice,
+             ivaPercent: iva,
+             basePrice: purchasePrice / (1 + (iva / 100))
+           };
+        });
+
+        setItems(itemsWithCalculatedData);
       }
     } catch (error) {
       console.error('Error fetching purchase:', error);
@@ -103,7 +116,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, purchasePrice: 0 }]);
+    setItems([...items, { productId: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -113,7 +126,20 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
   const updateItem = (index: number, field: keyof PurchaseItem, value: string | number) => {
     setItems(prevItems => {
       const newItems = [...prevItems];
-      newItems[index] = { ...newItems[index], [field]: value };
+      const currentItem = { ...newItems[index], [field]: value };
+      
+      // Auto-calculation logic
+      if (field === 'basePrice' || field === 'ivaPercent') {
+        const base = field === 'basePrice' ? Number(value) : (currentItem.basePrice || 0);
+        const iva = field === 'ivaPercent' ? Number(value) : (currentItem.ivaPercent || 0);
+        currentItem.purchasePrice = base * (1 + (iva / 100));
+      } else if (field === 'purchasePrice') {
+         const total = Number(value);
+         const iva = currentItem.ivaPercent || 0;
+         currentItem.basePrice = total / (1 + (iva / 100));
+      }
+
+      newItems[index] = currentItem;
       return newItems;
     });
   };
@@ -122,10 +148,17 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     const product = products.find(p => p.id === productId);
     setItems(prevItems => {
       const newItems = [...prevItems];
+    
+      // Map product defaults
+      const basePrice = product ? parseFloat(product.basePrice) : 0;
+      const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+      
       newItems[index] = { 
         ...newItems[index], 
         productId,
-        purchasePrice: product ? parseFloat(product.basePrice) : 0
+        basePrice: basePrice,
+        ivaPercent: ivaPercent,
+        purchasePrice: basePrice * (1 + (ivaPercent / 100))
       };
       return newItems;
     });
@@ -244,16 +277,16 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           <div className="space-y-4">
             {items.map((item, index) => (
               <div key={index} className="grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="col-span-5">
+                <div className="col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Producto</label>
                   <select
                     value={item.productId}
                     onChange={(e) => handleProductChange(index, e.target.value)}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
                     required
                   >
-                    <option value="">Seleccionar producto</option>
-                    {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
+                    <option value="">Seleccionar</option>
+                    {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
                 <div className="col-span-2">
@@ -262,31 +295,54 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     type="number"
                     value={item.quantity}
                     onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
                     required
                     step="0.01"
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Costo</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Costo Base</label>
                   <input
                     type="number"
-                    value={item.purchasePrice}
-                    onChange={(e) => updateItem(index, 'purchasePrice', parseFloat(e.target.value))}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
+                    value={item.basePrice || 0}
+                    onChange={(e) => updateItem(index, 'basePrice', parseFloat(e.target.value))}
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
+                    required
+                    step="0.01"
+                  />
+                </div>
+                <div className="col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">% IVA</label>
+                  <input
+                    type="number"
+                    value={item.ivaPercent || 0}
+                    onChange={(e) => updateItem(index, 'ivaPercent', parseFloat(e.target.value))}
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
                     required
                     step="0.01"
                   />
                 </div>
                 <div className="col-span-2">
-                  <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Total + IVA</label>
+                  <input
+                    type="number"
+                    value={item.purchasePrice || 0}
+                    onChange={(e) => updateItem(index, 'purchasePrice', parseFloat(e.target.value))}
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
+                    required
+                    step="0.01"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold text-sm">
                     ${(item.quantity * item.purchasePrice).toLocaleString('es-CO')}
                   </div>
                 </div>
-                <div className="col-span-1 flex justify-end">
+                <div className="col-span-12 flex justify-end">
                   {items.length > 1 && (
-                    <button type="button" onClick={() => removeItem(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                      Eliminar
                     </button>
                   )}
                 </div>

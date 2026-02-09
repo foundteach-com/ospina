@@ -13,13 +13,16 @@ interface Product {
   name: string;
   code: string;
   basePrice: string;
+  purchaseIvaPercent: string;
   unit: string;
 }
 
 interface PurchaseItem {
   productId: string;
   quantity: number;
-  purchasePrice: number;
+  basePrice: number;
+  ivaPercent: number;
+  purchasePrice: number; // This will be the Total Cost (Base + IVA)
 }
 
 export default function CreatePurchasePage() {
@@ -36,7 +39,7 @@ export default function CreatePurchasePage() {
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([
-    { productId: '', quantity: 1, purchasePrice: 0 },
+    { productId: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 },
   ]);
 
   useEffect(() => {
@@ -75,7 +78,7 @@ export default function CreatePurchasePage() {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, purchasePrice: 0 }]);
+    setItems([...items, { productId: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -85,7 +88,24 @@ export default function CreatePurchasePage() {
   const updateItem = (index: number, field: keyof PurchaseItem, value: string | number) => {
     setItems(prevItems => {
       const newItems = [...prevItems];
-      newItems[index] = { ...newItems[index], [field]: value };
+      const currentItem = { ...newItems[index], [field]: value };
+      
+      // Auto-calculation logic
+      if (field === 'basePrice' || field === 'ivaPercent') {
+        const base = field === 'basePrice' ? Number(value) : currentItem.basePrice;
+        const iva = field === 'ivaPercent' ? Number(value) : currentItem.ivaPercent;
+        currentItem.purchasePrice = base * (1 + (iva / 100));
+      } else if (field === 'purchasePrice') {
+        // If total price changes, we probably keep IVA fixed and update base? 
+        // Or just let it be. Let's infer base price from total assuming fixed IVA for now?
+        // Actually, usually user enters Base + IVA -> Total. If they edit Total, maybe we should update Base?
+        // Let's keep it simple: Editing Total updates Base based on current IVA.
+         const total = Number(value);
+         const iva = currentItem.ivaPercent;
+         currentItem.basePrice = total / (1 + (iva / 100));
+      }
+
+      newItems[index] = currentItem;
       return newItems;
     });
   };
@@ -94,10 +114,31 @@ export default function CreatePurchasePage() {
     const product = products.find(p => p.id === productId);
     setItems(prevItems => {
       const newItems = [...prevItems];
+      const basePrice = product ? parseFloat(product.basePrice) : 0; // assuming product.basePrice is actually purchasePrice from Product model? No, let's check Product model.
+      // In create/page.tsx, Product interface has basePrice. In DB Product has purchasePrice (which is base) and purchaseIvaPercent.
+      // So product.basePrice mapped here likely refers to that.
+      
+      // Let's assume the API returns 'purchasePrice' as 'basePrice' property or we need to check how it maps.
+      // Looking at fetchProducts in create/page.tsx:
+      // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`...
+      
+      // The previous file content of create/page.tsx defined Product interface with basePrice: string.
+      // But standard product listing return usually matches DB fields unless transformed.
+      // Let's assume we need to map correctly. 
+      // If product has purchasePrice and purchaseIvaPercent.
+      
+      const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+      // If the API returns product.purchasePrice as the cost.
+      // In CreateProductForm, formData.purchasePrice is stored.
+      
+      // Let's use the values if available.
+      
       newItems[index] = { 
         ...newItems[index], 
         productId,
-        purchasePrice: product ? parseFloat(product.basePrice) : 0
+        basePrice: basePrice,
+        ivaPercent: ivaPercent,
+        purchasePrice: basePrice * (1 + (ivaPercent / 100))
       };
       return newItems;
     });
@@ -228,7 +269,7 @@ export default function CreatePurchasePage() {
           <div className="space-y-4">
             {items.map((item, index) => (
               <div key={index} className="grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="col-span-5">
+                <div className="col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Producto
                   </label>
@@ -257,22 +298,52 @@ export default function CreatePurchasePage() {
                     onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
                     min="0.01"
                     step="0.01"
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                     required
                   />
                 </div>
 
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio Compra
+                    Costo Base
                   </label>
                   <input
                     type="number"
-                    value={item.purchasePrice}
+                    value={item.basePrice || 0}
+                    onChange={(e) => updateItem(index, 'basePrice', parseFloat(e.target.value))}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    % IVA
+                  </label>
+                  <input
+                    type="number"
+                    value={item.ivaPercent || 0}
+                    onChange={(e) => updateItem(index, 'ivaPercent', parseFloat(e.target.value))}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Total + IVA
+                  </label>
+                  <input
+                    type="number"
+                    value={item.purchasePrice || 0}
                     onChange={(e) => updateItem(index, 'purchasePrice', parseFloat(e.target.value))}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                     required
                   />
                 </div>
@@ -281,19 +352,20 @@ export default function CreatePurchasePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Subtotal
                   </label>
-                  <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold">
+                  <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold text-sm">
                     ${(item.quantity * item.purchasePrice).toLocaleString('es-CO')}
                   </div>
                 </div>
 
-                <div className="col-span-1 flex justify-end">
+                <div className="col-span-12 flex justify-end">
                   {items.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
-                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                      className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                      Eliminar
                     </button>
                   )}
                 </div>
