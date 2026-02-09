@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-  interface Purchase {
+interface Purchase {
   id: string;
   date: string;
   referenceNumber: string;
   total: string;
+  invoiceUrl?: string; // Added field
   provider: {
     id: string;
     name: string;
@@ -52,7 +53,8 @@ export default function PurchasesPage() {
         purchase.provider.name.toLowerCase().includes(search) ||
         (purchase.provider.taxId || '').toLowerCase().includes(search) ||
         (purchase.provider.email || '').toLowerCase().includes(search) ||
-        (purchase.provider.phone || '').toLowerCase().includes(search)
+        (purchase.provider.phone || '').toLowerCase().includes(search) ||
+        (purchase.referenceNumber || '').toLowerCase().includes(search)
       );
     });
     setFilteredPurchases(filtered);
@@ -79,10 +81,12 @@ export default function PurchasesPage() {
   };
 
   const handleExport = () => {
-    const headers = ['NIT', 'Marca Comercial', 'Correo', 'Celular', 'Productos', 'Total'];
+    const headers = ['Fecha', 'Ref', 'NIT', 'Marca Comercial', 'Correo', 'Celular', 'Productos', 'Total'];
     const csvContent = [
       headers.join(','),
       ...filteredPurchases.map(p => [
+        new Date(p.date).toISOString().split('T')[0],
+        p.referenceNumber,
         p.provider.taxId || 'N/A',
         p.provider.name,
         p.provider.email || 'N/A',
@@ -173,11 +177,11 @@ export default function PurchasesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">NIT</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca Comercial</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Correo</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">NIT / Proveedor</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Referencia</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Celular</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Productos</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Doc.</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
@@ -185,24 +189,33 @@ export default function PurchasesPage() {
             <tbody className="divide-y divide-gray-200">
               {filteredPurchases.map((purchase) => (
                 <tr key={purchase.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                    {purchase.provider.taxId || 'N/A'}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(purchase.date).toLocaleDateString('es-CO')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold uppercase">
-                    {purchase.provider.name}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-bold text-gray-900 uppercase">{purchase.provider.name}</div>
+                    <div className="text-xs text-gray-500 font-mono">{purchase.provider.taxId || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <a href={`mailto:${purchase.provider.email}`} className="hover:text-blue-600 transition-colors">
-                      {purchase.provider.email || 'N/A'}
-                    </a>
+                    {purchase.referenceNumber}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {purchase.provider.phone || 'N/A'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    <span className="px-2 py-1 bg-gray-100 rounded-md text-xs font-medium">
-                      {purchase.items.length} ítem(s)
-                    </span>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {purchase.invoiceUrl ? (
+                      <a 
+                        href={purchase.invoiceUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        title="Ver Factura PDF"
+                      >
+                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      </a>
+                    ) : (
+                      <span className="text-gray-300">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-bold">
                     ${parseFloat(purchase.total).toLocaleString('es-CO')}
