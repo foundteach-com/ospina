@@ -20,6 +20,7 @@ interface Product {
 interface PurchaseItem {
   id?: string;
   productId: string;
+  code: string;
   quantity: number;
   basePrice: number;
   ivaPercent: number;
@@ -45,7 +46,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchProviders(), fetchProducts(), fetchPurchaseData()]);
+      // Need to load products first to match codes when loading purchase data
+      const [providersData, productsData] = await Promise.all([fetchProviders(), fetchProducts()]);
+      await fetchPurchaseData(productsData); // Pass products to helper
       setLoading(false);
     };
     loadData();
@@ -58,7 +61,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
-        setProviders(await response.json());
+        const data = await response.json();
+        setProviders(data);
+        return data;
       }
     } catch (error) {
       console.error('Error fetching providers:', error);
@@ -72,14 +77,17 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
-        setProducts(await response.json());
+        const data = await response.json();
+        setProducts(data);
+        return data; // Return for immediate use
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      return [];
     }
   };
 
-  const fetchPurchaseData = async () => {
+  const fetchPurchaseData = async (loadedProducts?: Product[]) => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/purchases/${id}`, {
@@ -94,13 +102,22 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           notes: data.notes || '',
         });
         
+        // Use provided products or state
+        const availableProducts = loadedProducts || products;
+
         // Post-process items to calculate basePrice and ivaPercent if missing
         const itemsWithCalculatedData = data.items.map((item: any) => {
            const purchasePrice = parseFloat(item.purchasePrice);
            const iva = 19; // Default assumption for existing records
+           
+           // Find product code
+           const product = availableProducts.find(p => p.id === item.productId);
+           const code = product ? product.code : '';
+
            return {
              id: item.id,
              productId: item.productId,
+             code: code,
              quantity: parseFloat(item.quantity),
              purchasePrice: purchasePrice,
              ivaPercent: iva,
@@ -116,7 +133,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
+    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -144,6 +161,34 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     });
   };
 
+  const handleCodeChange = (index: number, code: string) => {
+    const product = products.find(p => p.code.toLowerCase() === code.toLowerCase());
+    
+    if (product) {
+      setItems(prevItems => {
+        const newItems = [...prevItems];
+        const basePrice = parseFloat(product.basePrice);
+        const ivaPercent = product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+        
+        newItems[index] = { 
+          ...newItems[index], 
+          productId: product.id,
+          code: product.code,
+          basePrice: basePrice,
+          ivaPercent: ivaPercent,
+          purchasePrice: basePrice * (1 + (ivaPercent / 100))
+        };
+        return newItems;
+      });
+    } else {
+      setItems(prevItems => {
+        const newItems = [...prevItems];
+        newItems[index] = { ...newItems[index], code: code };
+        return newItems;
+      });
+    }
+  };
+
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
     setItems(prevItems => {
@@ -156,6 +201,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       newItems[index] = { 
         ...newItems[index], 
         productId,
+        code: product ? product.code : '',
         basePrice: basePrice,
         ivaPercent: ivaPercent,
         purchasePrice: basePrice * (1 + (ivaPercent / 100))
@@ -276,7 +322,19 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           </div>
           <div className="space-y-4">
             {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div key={index} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Código
+                  </label>
+                  <input
+                    type="text"
+                    value={item.code || ''}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    placeholder="Código"
+                  />
+                </div>
                 <div className="col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Producto</label>
                   <select
@@ -289,8 +347,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
+                <div className="col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cant.</label>
                   <input
                     type="number"
                     value={item.quantity}
@@ -333,16 +391,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     step="0.01"
                   />
                 </div>
-                <div className="col-span-2">
-                  <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold text-sm">
-                    ${(item.quantity * item.purchasePrice).toLocaleString('es-CO')}
-                  </div>
-                </div>
-                <div className="col-span-12 flex justify-end">
+                <div className="col-span-1 flex justify-center items-end pb-2">
                   {items.length > 1 && (
-                    <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                      Eliminar
+                    <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-2" title="Eliminar">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
                   )}
                 </div>

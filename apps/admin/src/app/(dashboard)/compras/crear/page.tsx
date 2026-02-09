@@ -19,6 +19,7 @@ interface Product {
 
 interface PurchaseItem {
   productId: string;
+  code: string;
   quantity: number;
   basePrice: number;
   ivaPercent: number;
@@ -39,7 +40,7 @@ export default function CreatePurchasePage() {
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([
-    { productId: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 },
+    { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 },
   ]);
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function CreatePurchasePage() {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
+    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -96,10 +97,6 @@ export default function CreatePurchasePage() {
         const iva = field === 'ivaPercent' ? Number(value) : currentItem.ivaPercent;
         currentItem.purchasePrice = base * (1 + (iva / 100));
       } else if (field === 'purchasePrice') {
-        // If total price changes, we probably keep IVA fixed and update base? 
-        // Or just let it be. Let's infer base price from total assuming fixed IVA for now?
-        // Actually, usually user enters Base + IVA -> Total. If they edit Total, maybe we should update Base?
-        // Let's keep it simple: Editing Total updates Base based on current IVA.
          const total = Number(value);
          const iva = currentItem.ivaPercent;
          currentItem.basePrice = total / (1 + (iva / 100));
@@ -110,32 +107,47 @@ export default function CreatePurchasePage() {
     });
   };
 
+  const handleCodeChange = (index: number, code: string) => {
+    const product = products.find(p => p.code.toLowerCase() === code.toLowerCase());
+    
+    if (product) {
+      // If code matches a product, select it similar to handleProductChange
+      setItems(prevItems => {
+        const newItems = [...prevItems];
+        const basePrice = parseFloat(product.basePrice);
+        const ivaPercent = product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
+        
+        newItems[index] = { 
+          ...newItems[index], 
+          productId: product.id,
+          code: product.code, // Use the official code from product
+          basePrice: basePrice,
+          ivaPercent: ivaPercent,
+          purchasePrice: basePrice * (1 + (ivaPercent / 100))
+        };
+        return newItems;
+      });
+    } else {
+      // Just update the code field if no match (allow user to keep typing)
+      setItems(prevItems => {
+        const newItems = [...prevItems];
+        newItems[index] = { ...newItems[index], code: code };
+        return newItems;
+      });
+    }
+  };
+
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
     setItems(prevItems => {
       const newItems = [...prevItems];
-      const basePrice = product ? parseFloat(product.basePrice) : 0; // assuming product.basePrice is actually purchasePrice from Product model? No, let's check Product model.
-      // In create/page.tsx, Product interface has basePrice. In DB Product has purchasePrice (which is base) and purchaseIvaPercent.
-      // So product.basePrice mapped here likely refers to that.
-      
-      // Let's assume the API returns 'purchasePrice' as 'basePrice' property or we need to check how it maps.
-      // Looking at fetchProducts in create/page.tsx:
-      // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`...
-      
-      // The previous file content of create/page.tsx defined Product interface with basePrice: string.
-      // But standard product listing return usually matches DB fields unless transformed.
-      // Let's assume we need to map correctly. 
-      // If product has purchasePrice and purchaseIvaPercent.
-      
+      const basePrice = product ? parseFloat(product.basePrice) : 0; 
       const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
-      // If the API returns product.purchasePrice as the cost.
-      // In CreateProductForm, formData.purchasePrice is stored.
-      
-      // Let's use the values if available.
       
       newItems[index] = { 
         ...newItems[index], 
         productId,
+        code: product ? product.code : '', // Update code field based on selection
         basePrice: basePrice,
         ivaPercent: ivaPercent,
         purchasePrice: basePrice * (1 + (ivaPercent / 100))
@@ -268,7 +280,20 @@ export default function CreatePurchasePage() {
 
           <div className="space-y-4">
             {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div key={index} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Código
+                  </label>
+                  <input
+                    type="text"
+                    value={item.code || ''}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    placeholder="Código"
+                  />
+                </div>
+
                 <div className="col-span-3">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Producto
@@ -276,21 +301,21 @@ export default function CreatePurchasePage() {
                   <select
                     value={item.productId}
                     onChange={(e) => handleProductChange(index, e.target.value)}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                     required
                   >
                     <option value="">Seleccionar producto</option>
                     {products.map((product) => (
                       <option key={product.id} value={product.id}>
-                        {product.name} ({product.code})
+                        {product.name}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="col-span-2">
+                <div className="col-span-1">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Cantidad
+                    Cant.
                   </label>
                   <input
                     type="number"
@@ -348,26 +373,17 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Subtotal
-                  </label>
-                  <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold text-sm">
-                    ${(item.quantity * item.purchasePrice).toLocaleString('es-CO')}
-                  </div>
-                </div>
-
-                <div className="col-span-12 flex justify-end">
-                  {items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                      Eliminar
-                    </button>
-                  )}
+                <div className="col-span-1 flex justify-center items-end pb-2">
+                    {items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(index)}
+                        className="text-red-500 hover:text-red-700 p-2"
+                        title="Eliminar"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                      </button>
+                    )}
                 </div>
               </div>
             ))}
