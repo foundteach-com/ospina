@@ -81,6 +81,34 @@ async function main() {
     });
     console.log(`✅ Usuario Jefe creado exitosamente con ID: ${bossUser.id}`);
   }
+
+  // --- Crear Categorías ---
+  const categories = [
+    'ASEO INSTITUCIONAL',
+    'CAFETERIA Y ALIMENTOS',
+    'PAPELERIA',
+    'TECNOLOGIA Y CONSUMIBLES',
+    'MOBILIARIO DE OFICINA',
+    'REPUESTOS Y SERVICIOS MOTOCICLETAS',
+    'FERRETERIA',
+  ];
+
+  console.log('📦 Verificando categorías...');
+
+  for (const catName of categories) {
+    const existingCat = await prisma.category.findFirst({
+      where: { name: catName },
+    });
+
+    if (!existingCat) {
+      await prisma.category.create({
+        data: { name: catName },
+      });
+      console.log(`✅ Categoría creada: ${catName}`);
+    } else {
+      console.log(`ℹ️ Categoría ya existe: ${catName}`);
+    }
+  }
 }
 
 main()
