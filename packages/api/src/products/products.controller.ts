@@ -35,6 +35,7 @@ export class ProductsController {
 
     // If showAll=true is not passed (public store request), only show published products
     if (query.showAll !== 'true') {
+      console.log('Filtrando solo productos publicados');
       whereClause.isPublished = true;
     }
 

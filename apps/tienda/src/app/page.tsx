@@ -33,12 +33,13 @@ export default function TiendaPage() {
     const fetchData = async () => {
       try {
         const [prodRes, catRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/categories`)
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, { cache: 'no-store' }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/categories`, { cache: 'no-store' })
         ]);
 
         if (prodRes.ok) {
           const data = await prodRes.json();
+          console.log('Productos cargados:', data);
           setProducts(data);
         }
         if (catRes.ok) {
