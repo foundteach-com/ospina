@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -36,6 +36,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
     providerId: '',
@@ -240,12 +241,56 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
   
   const totals = calculateTotals();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/storage/upload?folder=invoices`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
       const token = localStorage.getItem('access_token');
+
+      let finalInvoiceUrl = formData.invoiceUrl;
+
+      if (selectedFile) {
+        try {
+          finalInvoiceUrl = await uploadFile(selectedFile);
+        } catch (error) {
+          alert('Error al subir la factura. Por favor intente de nuevo.');
+          setSaving(false);
+          return;
+        }
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/purchases/${id}`, {
         method: 'PATCH',
         headers: {
@@ -254,6 +299,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         },
         body: JSON.stringify({
           ...formData,
+          invoiceUrl: finalInvoiceUrl,
           items: items.filter(item => item.productId).map(item => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -333,20 +379,27 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
-             <div>
+             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Factura URL (PDF)
               </label>
               <input
-                type="text" 
-                value={formData.invoiceUrl}
-                onChange={(e) => setFormData({ ...formData, invoiceUrl: e.target.value })}
-                placeholder="URL del documento"
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                type="file" 
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100"
               />
+              <p className="mt-1 text-sm text-gray-500">{formData.invoiceUrl ? 'Subir un nuevo archivo para reemplazar el actual.' : 'Sube el archivo PDF de la factura.'}</p>
+
                {formData.invoiceUrl && (
                   <div className="mt-2">
-                    <a href={formData.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-sm">
+                    <a href={formData.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-sm flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                       Ver documento actual
                     </a>
                   </div>

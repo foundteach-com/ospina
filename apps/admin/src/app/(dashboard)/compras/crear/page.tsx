@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Provider {
@@ -33,6 +33,7 @@ export default function CreatePurchasePage() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
     providerId: '',
@@ -183,7 +184,38 @@ export default function CreatePurchasePage() {
 
   const totals = calculateTotals();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/storage/upload?folder=invoices`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -194,6 +226,18 @@ export default function CreatePurchasePage() {
         items: items.filter(item => item.productId),
       });
 
+      let finalInvoiceUrl = formData.invoiceUrl;
+
+      if (selectedFile) {
+        try {
+          finalInvoiceUrl = await uploadFile(selectedFile);
+        } catch (error) {
+          alert('Error al subir la factura. Por favor intente de nuevo.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/purchases`, {
         method: 'POST',
         headers: {
@@ -202,6 +246,7 @@ export default function CreatePurchasePage() {
         },
         body: JSON.stringify({
           ...formData,
+          invoiceUrl: finalInvoiceUrl,
           items: items.filter(item => item.productId),
         }),
       });
@@ -293,17 +338,22 @@ export default function CreatePurchasePage() {
               />
             </div>
 
-             <div>
+             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Factura URL (PDF)
+                Factura Electrónica (PDF)
               </label>
               <input
-                type="text" 
-                value={formData.invoiceUrl}
-                onChange={(e) => setFormData({ ...formData, invoiceUrl: e.target.value })}
-                placeholder="URL del documento"
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                type="file" 
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100"
               />
+              <p className="mt-1 text-sm text-gray-500">Sube el archivo PDF de la factura.</p>
             </div>
           </div>
         </div>
