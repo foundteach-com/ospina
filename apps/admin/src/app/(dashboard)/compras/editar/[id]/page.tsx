@@ -393,32 +393,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
-             <div className="col-span-1 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Factura URL (PDF)
-              </label>
-              <input
-                type="file" 
-                accept=".pdf"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-700
-                  hover:file:bg-blue-100"
-              />
-              <p className="mt-1 text-sm text-gray-500">{formData.invoiceUrl ? 'Subir un nuevo archivo para reemplazar el actual.' : 'Sube el archivo PDF de la factura.'}</p>
 
-               {formData.invoiceUrl && (
-                  <div className="mt-2">
-                    <a href={formData.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-sm flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                      Ver documento actual
-                    </a>
-                  </div>
-                )}
-            </div>
           </div>
         </div>
 
@@ -565,6 +540,41 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Factura / Soporte</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Factura URL (PDF)
+              </label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100"
+              />
+              <p className="mt-1 text-sm text-gray-500">{formData.invoiceUrl ? 'Subir un nuevo archivo para reemplazar el actual.' : 'Sube el archivo PDF de la factura.'}</p>
+            </div>
+
+            {formData.invoiceUrl && (
+              <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden h-[600px] bg-gray-50">
+                <iframe
+                  src={formData.invoiceUrl}
+                  className="w-full h-full"
+                  title="Previsualización de Factura"
+                />
+              </div>
+            )}
           </div>
         </div>
 

@@ -352,24 +352,6 @@ export default function CreatePurchasePage() {
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>
-
-             <div className="col-span-1 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Factura Electrónica (PDF)
-              </label>
-              <input
-                type="file" 
-                accept=".pdf"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-blue-50 file:text-blue-700
-                  hover:file:bg-blue-100"
-              />
-              <p className="mt-1 text-sm text-gray-500">Sube el archivo PDF de la factura.</p>
-            </div>
           </div>
         </div>
 
@@ -548,6 +530,41 @@ export default function CreatePurchasePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Factura / Soporte</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Factura Electrónica (PDF)
+              </label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100"
+              />
+              <p className="mt-1 text-sm text-gray-500">Sube el archivo PDF de la factura.</p>
+            </div>
+
+            {selectedFile && (
+              <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden h-[600px] bg-gray-50">
+                <iframe
+                  src={URL.createObjectURL(selectedFile)}
+                  className="w-full h-full"
+                  title="Previsualización de Factura"
+                />
+              </div>
+            )}
           </div>
         </div>
 
