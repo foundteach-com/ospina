@@ -517,8 +517,17 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
               </div>
             ))}
           </div>
+
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex justify-end">
+            <div className="flex justify-between items-end">
+              <button
+                type="button"
+                onClick={addItem}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                Agregar Producto
+              </button>
               <div className="text-right space-y-2">
                  <div className="flex justify-between gap-8 text-sm text-gray-600">
                   <span>Subtotal (Base + IVA)</span>
