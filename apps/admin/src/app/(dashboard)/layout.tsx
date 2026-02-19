@@ -122,9 +122,7 @@ const menuItems = [
         <polyline points="10 9 9 9 8 9" />
       </svg>
     ),
-    children: [
-      { name: 'Movimientos de Cotizaciones', href: '/cotizaciones' },
-    ],
+    children: [{ name: 'Movimientos de Cotizaciones', href: '/cotizaciones' }],
   },
   {
     name: 'Flujo de Caja',
@@ -185,6 +183,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<{ companyName: string; logoUrl: string | null } | null>(null);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -200,7 +199,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const fetchSettings = async (token: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`, {
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/settings`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -208,6 +215,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
+        setLogoError(false); // Reset error state on new data
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -248,8 +256,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-6">
           <div className="flex items-center gap-3 mb-10 overflow-hidden">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-              {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              {settings?.logoUrl && !logoError ? (
+                <img
+                  src={settings.logoUrl}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                  onError={() => setLogoError(true)}
+                />
               ) : (
                 <span className="font-bold text-white text-xl">
                   {settings?.companyName?.charAt(0) || 'O'}
@@ -349,8 +362,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <div className="p-6 border-t border-gray-200">
-          <Link 
-            href="/perfil" 
+          <Link
+            href="/perfil"
             className="flex items-center gap-3 mb-4 px-2 hover:bg-gray-50 p-2 rounded-xl transition-all cursor-pointer group"
             title="Editar Perfil"
           >

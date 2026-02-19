@@ -33,13 +33,21 @@ export default function ProfilePage() {
         const token = localStorage.getItem('access_token');
         const userData = localStorage.getItem('user');
         
+        let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+          const hostname = window.location.hostname;
+          if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+            apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+          }
+        }
+
         if (userData) {
           const user = JSON.parse(userData);
           setIsAdmin(user.role === 'ADMIN');
         }
 
         // Fetch User Profile
-        const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
+        const userRes = await fetch(`${apiUrl}/users/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -54,7 +62,7 @@ export default function ProfilePage() {
         }
 
         // Fetch Company Settings if Admin
-        const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`, {
+        const settingsRes = await fetch(`${apiUrl}/settings`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -87,7 +95,15 @@ export default function ProfilePage() {
       const payload: { name: string; email: string; avatarUrl: string; password?: string } = { ...formData };
       if (!payload.password) delete payload.password;
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/users/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +134,16 @@ export default function ProfilePage() {
     setSavingCompany(true);
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`, {
+      
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/settings`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
