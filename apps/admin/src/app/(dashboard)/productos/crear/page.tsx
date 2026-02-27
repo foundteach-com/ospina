@@ -115,8 +115,8 @@ function CreateProductForm() {
 
   const pIvaValue = pPrice * (pIvaP / 100);
   const pPriceWithIva = pPrice + pIvaValue;
-  const utilityValue = pPriceWithIva * (uP / 100);
-  const sellingPrice = pPriceWithIva + utilityValue;
+  const utilityValue = pPrice * (uP / 100);
+  const sellingPrice = pPrice + utilityValue;
   const sIvaValue = sellingPrice * (sIvaP / 100);
   const sPriceWithIva = sellingPrice + sIvaValue;
 
