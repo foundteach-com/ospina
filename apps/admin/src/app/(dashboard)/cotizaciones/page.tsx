@@ -32,8 +32,11 @@ interface Summary {
 
 export default function CotizacionesPage() {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
+  const [filteredCotizaciones, setFilteredCotizaciones] = useState<Cotizacion[]>([]);
   const [summary, setSummary] = useState<Summary>({ total: 0, pendientes: 0, aprobadas: 0, rechazadas: 0 });
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'fecha', direction: 'desc' });
 
   useEffect(() => {
     fetchCotizaciones();
@@ -51,12 +54,69 @@ export default function CotizacionesPage() {
       if (response.ok) {
         const data = await response.json();
         setCotizaciones(data);
+        setFilteredCotizaciones(data);
       }
     } catch (error) {
       console.error('Error fetching cotizaciones:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    let filtered = cotizaciones.filter(c => 
+      (c.clienteNombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.numero || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (sortConfig !== null) {
+      filtered.sort((a, b) => {
+        let aValue: any = a[sortConfig.key as keyof Cotizacion];
+        let bValue: any = b[sortConfig.key as keyof Cotizacion];
+
+        if (sortConfig.key === 'fecha') {
+          aValue = new Date(a.fecha).getTime();
+          bValue = new Date(b.fecha).getTime();
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    setFilteredCotizaciones(filtered);
+  }, [searchTerm, cotizaciones, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: string) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return (
+        <svg className="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return sortConfig.direction === 'asc' ? (
+      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
   };
 
   const fetchSummary = async () => {
@@ -128,31 +188,44 @@ export default function CotizacionesPage() {
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Movimientos de Cotizaciones</h1>
           <p className="text-gray-600 mt-1">Gestiona las cotizaciones de tus clientes</p>
         </div>
-        <Link 
-          href="/cotizaciones/crear"
-          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="flex gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-80">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por cliente o número..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
+            />
+          </div>
+          <Link 
+            href="/cotizaciones/crear"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 whitespace-nowrap"
           >
-            <path d="M12 5v14" />
-            <path d="M5 12h14" />
-          </svg>
-          Nueva Cotización
-        </Link>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Nueva Cotización
+          </Link>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -269,13 +342,48 @@ export default function CotizacionesPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Número</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Cliente</th>
+                <th 
+                  className="text-left py-4 px-6 text-sm font-semibold text-gray-600 cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('numero')}
+                >
+                  <div className="flex items-center">
+                    Número {getSortIcon('numero')}
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-4 px-6 text-sm font-semibold text-gray-600 cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('clienteNombre')}
+                >
+                  <div className="flex items-center">
+                    Cliente {getSortIcon('clienteNombre')}
+                  </div>
+                </th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Contacto</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Fecha</th>
+                <th 
+                  className="text-left py-4 px-6 text-sm font-semibold text-gray-600 cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('fecha')}
+                >
+                  <div className="flex items-center">
+                    Fecha {getSortIcon('fecha')}
+                  </div>
+                </th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Items</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Total</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Estado</th>
+                <th 
+                  className="text-left py-4 px-6 text-sm font-semibold text-gray-600 cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('total')}
+                >
+                  <div className="flex items-center">
+                    Total {getSortIcon('total')}
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-4 px-6 text-sm font-semibold text-gray-600 cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('estado')}
+                >
+                  <div className="flex items-center">
+                    Estado {getSortIcon('estado')}
+                  </div>
+                </th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Acciones</th>
               </tr>
             </thead>
@@ -289,7 +397,7 @@ export default function CotizacionesPage() {
                     </div>
                   </td>
                 </tr>
-              ) : cotizaciones.length === 0 ? (
+              ) : filteredCotizaciones.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
@@ -310,13 +418,13 @@ export default function CotizacionesPage() {
                         <line x1="16" x2="8" y1="13" y2="13" />
                         <line x1="16" x2="8" y1="17" y2="17" />
                       </svg>
-                      <p>No hay cotizaciones registradas</p>
+                      <p>{searchTerm ? `No se encontraron resultados para "${searchTerm}"` : 'No hay cotizaciones registradas'}</p>
                       <p className="text-sm">Crea tu primera cotización haciendo clic en &quot;Nueva Cotización&quot;</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                cotizaciones.map((cotizacion) => (
+                filteredCotizaciones.map((cotizacion) => (
                   <tr key={cotizacion.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-6 font-medium text-gray-900">{cotizacion.numero}</td>
                     <td className="py-4 px-6 text-gray-700">{cotizacion.clienteNombre}</td>

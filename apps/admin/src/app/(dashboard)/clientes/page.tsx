@@ -14,7 +14,10 @@ interface Client {
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
 
   const [userRole, setUserRole] = useState<string>('');
 
@@ -41,12 +44,65 @@ export default function ClientsPage() {
       if (response.ok) {
         const data = await response.json();
         setClients(data);
+        setFilteredClients(data);
       }
     } catch (error) {
       console.error('Error fetching clients:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    let filtered = clients.filter(c => 
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.taxId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    if (sortConfig !== null) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof Client] || '';
+        const bValue = b[sortConfig.key as keyof Client] || '';
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    setFilteredClients(filtered);
+  }, [searchTerm, clients, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: string) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return (
+        <svg className="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return sortConfig.direction === 'asc' ? (
+      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
   };
 
   const handleDelete = async (id: string) => {
@@ -72,22 +128,48 @@ export default function ClientsPage() {
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Clientes
           </h1>
-          <p className="text-gray-500 mt-2">Gestiona tus clientes comerciales (Personas y Empresas)</p>
+          <p className="text-gray-500 mt-1">Gestiona tus clientes comerciales (Personas y Empresas)</p>
         </div>
-        {userRole !== 'VIEWER' && (
-          <Link
-            href="/clientes/crear"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            Agregar Cliente
-          </Link>
-        )}
+        <div className="flex gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-80">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por nombre, NIT o correo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
+            />
+          </div>
+          {userRole !== 'VIEWER' && (
+            <Link
+              href="/clientes/crear"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 whitespace-nowrap"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              Agregar
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -95,16 +177,51 @@ export default function ClientsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CC/NIT</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">RAZON SOCIAL</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CORREO</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CELULAR</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ciudad</th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('taxId')}
+                >
+                  <div className="flex items-center">
+                    CC/NIT {getSortIcon('taxId')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('name')}
+                >
+                  <div className="flex items-center">
+                    RAZON SOCIAL {getSortIcon('name')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('email')}
+                >
+                  <div className="flex items-center">
+                    CORREO {getSortIcon('email')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('phone')}
+                >
+                  <div className="flex items-center">
+                    CELULAR {getSortIcon('phone')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('city')}
+                >
+                  <div className="flex items-center">
+                    Ciudad {getSortIcon('city')}
+                  </div>
+                </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{client.taxId}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{client.name}</td>
@@ -145,7 +262,7 @@ export default function ClientsPage() {
               {clients.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    No hay clientes registrados
+                    {searchTerm ? `No se encontraron resultados para "${searchTerm}"` : 'No hay clientes registrados'}
                   </td>
                 </tr>
               )}

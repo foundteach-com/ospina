@@ -31,6 +31,7 @@ export default function PurchasesPage() {
   const [filteredPurchases, setFilteredPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
 
   const [userRole, setUserRole] = useState<string>('');
 
@@ -47,7 +48,7 @@ export default function PurchasesPage() {
   }, []);
 
   useEffect(() => {
-    const filtered = purchases.filter(purchase => {
+    let filtered = purchases.filter(purchase => {
       const search = searchTerm.toLowerCase();
       return (
         purchase.provider.name.toLowerCase().includes(search) ||
@@ -57,8 +58,66 @@ export default function PurchasesPage() {
         (purchase.referenceNumber || '').toLowerCase().includes(search)
       );
     });
+
+    if (sortConfig !== null) {
+      filtered.sort((a, b) => {
+        let aValue: any = a[sortConfig.key as keyof Purchase];
+        let bValue: any = b[sortConfig.key as keyof Purchase];
+
+        if (sortConfig.key === 'provider') {
+          aValue = a.provider.name || '';
+          bValue = b.provider.name || '';
+        }
+
+        if (sortConfig.key === 'total') {
+          aValue = parseFloat(a.total);
+          bValue = parseFloat(b.total);
+        }
+
+        if (sortConfig.key === 'date') {
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
     setFilteredPurchases(filtered);
-  }, [searchTerm, purchases]);
+  }, [searchTerm, purchases, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: string) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return (
+        <svg className="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return sortConfig.direction === 'asc' ? (
+      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
+  };
 
   const fetchPurchases = async () => {
     try {
@@ -177,12 +236,40 @@ export default function PurchasesPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">NIT / Proveedor</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Referencia</th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('date')}
+                >
+                  <div className="flex items-center">
+                    Fecha {getSortIcon('date')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('provider')}
+                >
+                  <div className="flex items-center">
+                    NIT / Proveedor {getSortIcon('provider')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('referenceNumber')}
+                >
+                  <div className="flex items-center">
+                    Referencia {getSortIcon('referenceNumber')}
+                  </div>
+                </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Celular</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Doc.</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                <th 
+                  className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('total')}
+                >
+                  <div className="flex items-center justify-end">
+                    Total {getSortIcon('total')}
+                  </div>
+                </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
