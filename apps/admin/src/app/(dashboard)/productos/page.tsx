@@ -228,8 +228,8 @@ export default function ProductsPage() {
                 const purchasePrice = Number(product.purchasePrice || 0);
                 const purchaseIva = purchasePrice * (Number(product.purchaseIvaPercent || 0) / 100);
                 const costWithIva = purchasePrice + purchaseIva;
-                const utilityValue = costWithIva * (Number(product.utilityPercent || 0) / 100);
-                const sellingPrice = costWithIva + utilityValue;
+                const utilityValue = purchasePrice * (Number(product.utilityPercent || 0) / 100);
+                const sellingPrice = purchasePrice + utilityValue;
                 const salesIvaValue = sellingPrice * (Number(product.salesIvaPercent || 0) / 100);
                 const finalPrice = sellingPrice + salesIvaValue;
 
