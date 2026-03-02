@@ -11,6 +11,7 @@ interface SaleItem {
     name: string;
     code: string;
     unit: string;
+    salesIvaPercent: string;
   };
 }
 
@@ -59,8 +60,27 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
     fetchSaleDetails();
   }, [id]);
 
-  if (loading) return <div className="p-8 text-white text-center">Cargando detalles de la venta...</div>;
-  if (!sale) return <div className="p-8 text-white text-center">Venta no encontrada</div>;
+  if (loading) return <div className="p-8 text-gray-900 text-center">Cargando detalles de la venta...</div>;
+  if (!sale) return <div className="p-8 text-gray-900 text-center">Venta no encontrada</div>;
+
+  const calculateBreakdown = () => {
+    return sale.items.reduce((acc, item) => {
+      const quantity = parseFloat(item.quantity.toString());
+      const totalLine = quantity * parseFloat(item.salePrice);
+      const ivaPerc = parseFloat(item.product.salesIvaPercent || '19');
+      
+      const baseLine = totalLine / (1 + (ivaPerc / 100));
+      const ivaLine = totalLine - baseLine;
+      
+      acc.subtotalBase += baseLine;
+      acc.ivaTotal += ivaLine;
+      acc.totalGross += totalLine;
+      
+      return acc;
+    }, { subtotalBase: 0, ivaTotal: 0, totalGross: 0 });
+  };
+
+  const breakdown = calculateBreakdown();
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -130,9 +150,19 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
                  sale.status === 'CANCELLED' ? 'Cancelada' : 'Pendiente'}
               </span>
             </div>
-            <div className="pt-4 border-t border-gray-200">
-              <div className="text-xs text-gray-500 mb-1">Total de la Venta</div>
-              <div className="text-3xl font-bold text-green-600">${parseFloat(sale.total).toLocaleString('es-CO')}</div>
+            <div className="pt-4 border-t border-gray-200 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subtotal (Base)</span>
+                <span className="text-gray-900 font-medium">${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">IVA</span>
+                <span className="text-gray-900 font-medium">${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="pt-2 border-t border-gray-100">
+                <div className="text-xs text-gray-500 mb-1">Total de la Venta</div>
+                <div className="text-3xl font-bold text-green-600">${breakdown.totalGross.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -169,11 +199,23 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr className="bg-gray-50">
-              <td colSpan={4} className="px-6 py-4 text-right text-sm font-medium text-gray-500">Total Final</td>
+          <tfoot className="bg-gray-50 border-t border-gray-200">
+            <tr>
+              <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal (Base)</td>
+              <td className="px-6 py-2 text-right text-sm font-semibold text-gray-900">
+                ${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            <tr>
+              <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase">IVA</td>
+              <td className="px-6 py-2 text-right text-sm font-semibold text-gray-900">
+                ${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            <tr className="bg-green-50/50">
+              <td colSpan={4} className="px-6 py-4 text-right text-sm font-bold text-gray-900 uppercase">Total Final</td>
               <td className="px-6 py-4 text-right text-xl font-bold text-green-600">
-                ${parseFloat(sale.total).toLocaleString('es-CO')}
+                ${breakdown.totalGross.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
               </td>
             </tr>
           </tfoot>

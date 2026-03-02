@@ -176,24 +176,23 @@ export default function CreatePurchasePage() {
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
-      // Ensure we use the exact values from inputs for consistency, or standard calculation?
-      // Using values from state
       const totalLine = item.quantity * item.purchasePrice;
       const baseTotalLine = item.quantity * item.basePrice;
       
-      // IVA is difference, ensuring simple math
       const ivaTotalLine = totalLine - baseTotalLine;
 
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
+      acc.base += baseTotalLine;
+      acc.iva += ivaTotalLine;
       acc.subtotal += totalLine; 
       acc.reteFuente += reteFuenteValue;
       acc.reteIva += reteIvaValue;
       acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
       
       return acc;
-    }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
+    }, { base: 0, iva: 0, subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
   };
 
   const totals = calculateTotals();
@@ -520,8 +519,12 @@ export default function CreatePurchasePage() {
               </button>
               <div className="text-right space-y-2">
                  <div className="flex justify-between gap-8 text-sm text-gray-600">
-                  <span>Subtotal (Base + IVA)</span>
-                  <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>Subtotal (Base)</span>
+                  <span>${totals.base.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                 <div className="flex justify-between gap-8 text-sm text-gray-600">
+                  <span>IVA</span>
+                  <span>${totals.iva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteFuente</span>

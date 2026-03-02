@@ -8,12 +8,14 @@ interface Product {
   name: string;
   code: string;
   basePrice: string;
+  salesIvaPercent: string;
 }
 
 interface CotizacionItem {
   productId: string;
   quantity: number;
   unitPrice: number;
+  ivaPercent: number;
 }
 
 export default function CreateCotizacionPage() {
@@ -31,7 +33,7 @@ export default function CreateCotizacionPage() {
   });
 
   const [items, setItems] = useState<CotizacionItem[]>([
-    { productId: '', quantity: 1, unitPrice: 0 },
+    { productId: '', quantity: 1, unitPrice: 0, ivaPercent: 19 },
   ]);
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function CreateCotizacionPage() {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, unitPrice: 0 }]);
+    setItems([...items, { productId: '', quantity: 1, unitPrice: 0, ivaPercent: 19 }]);
   };
 
   const removeItem = (index: number) => {
@@ -77,14 +79,24 @@ export default function CreateCotizacionPage() {
       newItems[index] = { 
         ...newItems[index], 
         productId,
-        unitPrice: product ? parseFloat(product.basePrice) : 0
+        unitPrice: product ? parseFloat(product.basePrice) : 0,
+        ivaPercent: product ? parseFloat(product.salesIvaPercent || '19') : 19
       };
       return newItems;
     });
   };
 
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const calculateTotals = () => {
+    return items.reduce((acc, item) => {
+      const totalLine = item.quantity * item.unitPrice;
+      const baseLine = totalLine / (1 + (item.ivaPercent / 100));
+      const ivaLine = totalLine - baseLine;
+      
+      acc.base += baseLine;
+      acc.iva += ivaLine;
+      acc.total += totalLine;
+      return acc;
+    }, { base: 0, iva: 0, total: 0 });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,7 +113,7 @@ export default function CreateCotizacionPage() {
         },
         body: JSON.stringify({
           ...formData,
-          items: items.filter(item => item.productId),
+          items: items.filter(item => item.productId).map(({ ivaPercent: _, ...rest }) => rest),
         }),
       });
 
@@ -310,10 +322,20 @@ export default function CreateCotizacionPage() {
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex justify-end">
-              <div className="text-right">
-                <div className="text-sm text-gray-500 mb-1">Total Cotización</div>
-                <div className="text-2xl font-bold text-green-600">
-                  ${calculateTotal().toLocaleString('es-CO')}
+              <div className="text-right space-y-2">
+                <div className="flex justify-between gap-8 text-sm text-gray-500">
+                  <span>Subtotal (Base)</span>
+                  <span>${calculateTotals().base.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between gap-8 text-sm text-gray-500">
+                  <span>IVA</span>
+                  <span>${calculateTotals().iva.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="text-sm text-gray-500 mb-1 font-bold">Total Cotización</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    ${calculateTotals().total.toLocaleString('es-CO')}
+                  </div>
                 </div>
               </div>
             </div>

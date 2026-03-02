@@ -14,6 +14,7 @@ interface Product {
   name: string;
   code: string;
   basePrice: string;
+  salesIvaPercent: string;
   unit: string;
 }
 
@@ -21,6 +22,7 @@ interface SaleItem {
   productId: string;
   quantity: number;
   salePrice: number;
+  ivaPercent: number;
   availableStock?: number;
 }
 
@@ -39,7 +41,7 @@ export default function CreateSalePage() {
   });
 
   const [items, setItems] = useState<SaleItem[]>([
-    { productId: '', quantity: 1, salePrice: 0, availableStock: 0 },
+    { productId: '', quantity: 1, salePrice: 0, ivaPercent: 19, availableStock: 0 },
   ]);
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function CreateSalePage() {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, salePrice: 0, availableStock: 0 }]);
+    setItems([...items, { productId: '', quantity: 1, salePrice: 0, ivaPercent: 19, availableStock: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -123,14 +125,24 @@ export default function CreateSalePage() {
         ...newItems[index], 
         productId,
         availableStock: stock,
-        salePrice: product ? parseFloat(product.basePrice) : 0
+        salePrice: product ? parseFloat(product.basePrice) : 0,
+        ivaPercent: product ? parseFloat(product.salesIvaPercent || '19') : 19
       };
       return newItems;
     });
   };
 
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+  const calculateTotals = () => {
+    return items.reduce((acc, item) => {
+      const totalLine = item.quantity * item.salePrice;
+      const baseLine = totalLine / (1 + (item.ivaPercent / 100));
+      const ivaLine = totalLine - baseLine;
+      
+      acc.base += baseLine;
+      acc.iva += ivaLine;
+      acc.total += totalLine;
+      return acc;
+    }, { base: 0, iva: 0, total: 0 });
   };
 
   const validateStock = () => {
@@ -167,7 +179,7 @@ export default function CreateSalePage() {
         body: JSON.stringify({
           ...formData,
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          items: items.filter(item => item.productId).map(({ availableStock: _, ...rest }) => rest),
+          items: items.filter(item => item.productId).map(({ availableStock: _, ivaPercent: __, ...rest }) => rest),
         }),
       });
 
@@ -363,10 +375,20 @@ export default function CreateSalePage() {
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="flex justify-end">
-              <div className="text-right">
-                <div className="text-sm text-gray-500 mb-1">Total</div>
-                <div className="text-2xl font-bold text-green-600">
-                  ${calculateTotal().toLocaleString('es-CO')}
+              <div className="text-right space-y-2">
+                <div className="flex justify-between gap-8 text-sm text-gray-500">
+                  <span>Subtotal (Base)</span>
+                  <span>${calculateTotals().base.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between gap-8 text-sm text-gray-500">
+                  <span>IVA</span>
+                  <span>${calculateTotals().iva.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="text-sm text-gray-500 mb-1 font-bold">Total Final</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    ${calculateTotals().total.toLocaleString('es-CO')}
+                  </div>
                 </div>
               </div>
             </div>

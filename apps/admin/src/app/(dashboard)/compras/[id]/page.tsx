@@ -7,10 +7,13 @@ interface PurchaseItem {
   id: string;
   quantity: number;
   purchasePrice: string;
+  reteFuentePercent: string;
+  reteIvaPercent: string;
   product: {
     name: string;
     code: string;
     unit: string;
+    purchaseIvaPercent: string;
   };
 }
 
@@ -59,8 +62,43 @@ export default function PurchaseDetailsPage({ params }: { params: Promise<{ id: 
     fetchPurchaseDetails();
   }, [id]);
 
-  if (loading) return <div className="p-8 text-white text-center">Cargando detalles de la compra...</div>;
-  if (!purchase) return <div className="p-8 text-white text-center">Compra no encontrada</div>;
+  if (loading) return <div className="p-8 text-gray-900 text-center">Cargando detalles de la compra...</div>;
+  if (!purchase) return <div className="p-8 text-gray-900 text-center">Compra no encontrada</div>;
+
+  const calculateBreakdown = () => {
+    return purchase.items.reduce((acc, item) => {
+      const quantity = parseFloat(item.quantity.toString());
+      const totalLine = quantity * parseFloat(item.purchasePrice);
+      const ivaPerc = parseFloat(item.product.purchaseIvaPercent || '19');
+      
+      const baseLine = totalLine / (1 + (ivaPerc / 100));
+      const ivaLine = totalLine - baseLine;
+      
+      const rfPerc = parseFloat(item.reteFuentePercent || '0');
+      const riPerc = parseFloat(item.reteIvaPercent || '0');
+      
+      const rfValue = baseLine * (rfPerc / 100);
+      const riValue = ivaLine * (riPerc / 100);
+      
+      acc.subtotalBase += baseLine;
+      acc.ivaTotal += ivaLine;
+      acc.reteFuenteTotal += rfValue;
+      acc.reteIvaTotal += riValue;
+      acc.totalBruto += totalLine;
+      acc.totalNeto += (totalLine - rfValue - riValue);
+      
+      return acc;
+    }, { 
+      subtotalBase: 0, 
+      ivaTotal: 0, 
+      reteFuenteTotal: 0, 
+      reteIvaTotal: 0, 
+      totalBruto: 0,
+      totalNeto: 0 
+    });
+  };
+
+  const breakdown = calculateBreakdown();
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -120,9 +158,31 @@ export default function PurchaseDetailsPage({ params }: { params: Promise<{ id: 
               <div className="text-xs text-gray-500 mb-1">Fecha de Compra</div>
               <div className="text-gray-900">{new Date(purchase.date).toLocaleDateString('es-CO')}</div>
             </div>
-            <div className="pt-4 border-t border-gray-200">
-              <div className="text-xs text-gray-500 mb-1">Total Pagado</div>
-              <div className="text-3xl font-bold text-blue-600">${parseFloat(purchase.total).toLocaleString('es-CO')}</div>
+            <div className="pt-4 border-t border-gray-200 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subtotal (Base)</span>
+                <span className="text-gray-900 font-medium">${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">IVA</span>
+                <span className="text-gray-900 font-medium">${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+              </div>
+              {(breakdown.reteFuenteTotal > 0 || breakdown.reteIvaTotal > 0) && (
+                <>
+                  <div className="flex justify-between text-sm text-red-600">
+                    <span>Retefuente</span>
+                    <span>- ${breakdown.reteFuenteTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-red-600">
+                    <span>ReteIVA</span>
+                    <span>- ${breakdown.reteIvaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </>
+              )}
+              <div className="pt-2 border-t border-gray-100">
+                <div className="text-xs text-gray-500 mb-1">Total a Pagar</div>
+                <div className="text-3xl font-bold text-blue-600">${breakdown.totalNeto.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -158,11 +218,39 @@ export default function PurchaseDetailsPage({ params }: { params: Promise<{ id: 
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr className="bg-gray-50">
-              <td colSpan={4} className="px-6 py-4 text-right text-sm font-medium text-gray-500">Total de la Factura</td>
+          <tfoot className="bg-gray-50 border-t border-gray-200">
+            <tr>
+              <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal (Base)</td>
+              <td className="px-6 py-2 text-right text-sm font-semibold text-gray-900">
+                ${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            <tr>
+              <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase">IVA</td>
+              <td className="px-6 py-2 text-right text-sm font-semibold text-gray-900">
+                ${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+            {breakdown.reteFuenteTotal > 0 && (
+              <tr>
+                <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-red-500 uppercase">Retefuente</td>
+                <td className="px-6 py-2 text-right text-sm font-semibold text-red-600">
+                  - ${breakdown.reteFuenteTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            )}
+            {breakdown.reteIvaTotal > 0 && (
+              <tr>
+                <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-red-500 uppercase">ReteIVA</td>
+                <td className="px-6 py-2 text-right text-sm font-semibold text-red-600">
+                  - ${breakdown.reteIvaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                </td>
+              </tr>
+            )}
+            <tr className="bg-blue-50/50">
+              <td colSpan={4} className="px-6 py-4 text-right text-sm font-bold text-gray-900 uppercase">Total de la Factura</td>
               <td className="px-6 py-4 text-right text-xl font-bold text-blue-600">
-                ${parseFloat(purchase.total).toLocaleString('es-CO')}
+                ${breakdown.totalNeto.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
               </td>
             </tr>
           </tfoot>
