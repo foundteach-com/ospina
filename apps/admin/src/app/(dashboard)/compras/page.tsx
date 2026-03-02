@@ -305,7 +305,7 @@ export default function PurchasesPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-bold">
-                    ${parseFloat(purchase.total).toLocaleString('es-CO')}
+                    ${parseFloat(purchase.total).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-1">

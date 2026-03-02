@@ -177,7 +177,7 @@ export default function ProductMovementsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                    ${movement.price.toLocaleString('es-CO')}
+                    ${movement.price.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
                     {balances[index]}
@@ -204,7 +204,7 @@ export default function ProductMovementsPage() {
               {movements
                 .filter(m => m.type === 'PURCHASE')
                 .reduce((sum, m) => sum + m.quantity, 0)
-                .toLocaleString('es-CO')}
+                .toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div className="bg-white border border-blue-200 rounded-2xl p-6 shadow-sm">
@@ -213,13 +213,13 @@ export default function ProductMovementsPage() {
               {movements
                 .filter(m => m.type === 'SALE')
                 .reduce((sum, m) => sum + m.quantity, 0)
-                .toLocaleString('es-CO')}
+                .toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div className="bg-white border border-purple-200 rounded-2xl p-6 shadow-sm">
             <div className="text-purple-600 text-sm font-medium mb-2">Stock Actual</div>
             <div className="text-3xl font-bold text-gray-900">
-              {balances[0]?.toLocaleString('es-CO') || 0}
+              {balances[0]?.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 0}
             </div>
           </div>
         </div>

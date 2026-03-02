@@ -165,10 +165,10 @@ export default function InventoryPage() {
                       {item.unit}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-medium">
-                      ${item.basePrice.toLocaleString('es-CO')}
+                      ${item.basePrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                      {item.currentStock.toLocaleString('es-CO')}
+                      {item.currentStock.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span

@@ -137,7 +137,7 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
           <div className="space-y-4">
             <div>
               <div className="text-xs text-gray-500 mb-1">Fecha</div>
-              <div className="text-gray-900">{new Date(sale.date).toLocaleString('es-CO')}</div>
+              <div className="text-gray-900">{new Date(sale.date).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             </div>
             <div>
               <div className="text-xs text-gray-500 mb-1">Estado</div>
@@ -153,15 +153,15 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="pt-4 border-t border-gray-200 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Subtotal (Base)</span>
-                <span className="text-gray-900 font-medium">${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                <span className="text-gray-900 font-medium">${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">IVA</span>
-                <span className="text-gray-900 font-medium">${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                <span className="text-gray-900 font-medium">${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="pt-2 border-t border-gray-100">
                 <div className="text-xs text-gray-500 mb-1">Total de la Venta</div>
-                <div className="text-3xl font-bold text-green-600">${breakdown.totalGross.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</div>
+                <div className="text-3xl font-bold text-green-600">${breakdown.totalGross.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </div>
             </div>
           </div>
@@ -191,10 +191,10 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
                   <div className="text-gray-900 font-medium">{item.product.name}</div>
                   <div className="text-xs text-gray-500 capitalize">{item.product.unit}</div>
                 </td>
-                <td className="px-6 py-4 text-right text-gray-900">{parseFloat(item.quantity.toString()).toLocaleString('es-CO')}</td>
-                <td className="px-6 py-4 text-right text-gray-900">${parseFloat(item.salePrice).toLocaleString('es-CO')}</td>
+                <td className="px-6 py-4 text-right text-gray-900">{parseFloat(item.quantity.toString()).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td className="px-6 py-4 text-right text-gray-900">${parseFloat(item.salePrice).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td className="px-6 py-4 text-right text-green-600 font-medium">
-                  ${(parseFloat(item.quantity.toString()) * parseFloat(item.salePrice)).toLocaleString('es-CO')}
+                  ${(parseFloat(item.quantity.toString()) * parseFloat(item.salePrice)).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
               </tr>
             ))}
@@ -203,19 +203,19 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
             <tr>
               <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal (Base)</td>
               <td className="px-6 py-2 text-right text-sm font-semibold text-gray-900">
-                ${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                ${breakdown.subtotalBase.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
             </tr>
             <tr>
               <td colSpan={4} className="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase">IVA</td>
               <td className="px-6 py-2 text-right text-sm font-semibold text-gray-900">
-                ${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                ${breakdown.ivaTotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
             </tr>
             <tr className="bg-green-50/50">
               <td colSpan={4} className="px-6 py-4 text-right text-sm font-bold text-gray-900 uppercase">Total Final</td>
               <td className="px-6 py-4 text-right text-xl font-bold text-green-600">
-                ${breakdown.totalGross.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                ${breakdown.totalGross.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
             </tr>
           </tfoot>

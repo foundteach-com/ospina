@@ -378,7 +378,7 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
                     Subtotal
                   </label>
                   <div className="px-2 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold text-sm">
-                    ${(item.quantity * item.salePrice).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                    ${(item.quantity * item.salePrice).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
 
@@ -402,7 +402,7 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
               <div className="text-right">
                 <div className="text-sm text-gray-500 mb-1">Total</div>
                 <div className="text-2xl font-bold text-green-600">
-                  ${calculateTotal().toLocaleString('es-CO')}
+                  ${calculateTotal().toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
             </div>

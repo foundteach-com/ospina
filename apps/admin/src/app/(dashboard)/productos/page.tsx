@@ -353,7 +353,7 @@ export default function ProductsPage() {
                       {product.brand || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-bold">
-                      ${finalPrice.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      ${finalPrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                     <span className={`font-bold ${
@@ -361,7 +361,7 @@ export default function ProductsPage() {
                       (product.currentStock || 0) < 10 ? 'text-yellow-600' : 
                       'text-gray-900'
                     }`}>
-                      {(product.currentStock || 0).toLocaleString('es-CO')}
+                      {(product.currentStock || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">

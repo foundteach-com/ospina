@@ -275,9 +275,9 @@ export default function CashFlowPage() {
      doc.text(`Generado: ${new Date().toLocaleDateString('es-CO')}`, 14, 30);
      
      // Summary
-     doc.text(`Ingresos: $${summary.totalIncome.toLocaleString()}`, 14, 40);
-     doc.text(`Gastos: $${summary.totalExpense.toLocaleString()}`, 80, 40);
-     doc.text(`Balance: $${summary.balance.toLocaleString()}`, 140, 40);
+     doc.text(`Ingresos: $${summary.totalIncome.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 14, 40);
+     doc.text(`Gastos: $${summary.totalExpense.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 80, 40);
+     doc.text(`Balance: $${summary.balance.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 140, 40);
 
      const tableColumn = ["Fecha", "N° Recibo", "Proveedor", "Descripción", "Tipo", "Monto"];
      const tableRows = records.map(record => [
@@ -286,7 +286,7 @@ export default function CashFlowPage() {
        record.provider,
        record.description,
        record.type === 'INCOME' ? 'Ingreso' : 'Egreso',
-       `$${record.amount.toLocaleString()}`
+       `$${record.amount.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
      ]);
 
      autoTable(doc, {
@@ -337,16 +337,16 @@ export default function CashFlowPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
           <h3 className="text-gray-500 font-medium mb-1">Total Ingresos</h3>
-          <p className="text-3xl font-bold text-green-600">${summary.totalIncome.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-green-600">${summary.totalIncome.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm">
           <h3 className="text-gray-500 font-medium mb-1">Total Gastos</h3>
-          <p className="text-3xl font-bold text-red-600">${summary.totalExpense.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-red-600">${summary.totalExpense.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         <div className={`p-6 rounded-2xl border shadow-sm ${summary.balance >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
           <h3 className="text-gray-500 font-medium mb-1">Diferencia</h3>
           <p className={`text-3xl font-bold ${summary.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            ${summary.balance.toLocaleString()}
+            ${summary.balance.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -492,7 +492,7 @@ export default function CashFlowPage() {
                     <td className="px-6 py-4 text-sm font-medium">{record.provider}</td>
                     <td className="px-6 py-4 text-sm opacity-80">{record.description}</td>
                     <td className="px-6 py-4 text-sm font-bold text-right">
-                      {record.type === 'INCOME' ? '+' : '-'}${record.amount.toLocaleString()}
+                      {record.type === 'INCOME' ? '+' : '-'}${record.amount.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex gap-2 justify-end">

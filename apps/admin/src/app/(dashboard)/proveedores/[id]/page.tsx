@@ -115,7 +115,7 @@ export default function ProviderDetailsPage({ params }: { params: Promise<{ id: 
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div className="text-gray-500 text-sm mb-1">Total Comprado</div>
           <div className="mt-4">
-            <div className="text-3xl font-bold text-blue-600">${totalPurchases.toLocaleString('es-CO')}</div>
+            <div className="text-3xl font-bold text-blue-600">${totalPurchases.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <p className="text-gray-500 text-sm mt-1">{provider.purchases?.length || 0} compras realizadas</p>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function ProviderDetailsPage({ params }: { params: Promise<{ id: 
                     {purchase.referenceNumber}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-medium">
-                    ${parseFloat(purchase.total).toLocaleString('es-CO')}
+                    ${parseFloat(purchase.total).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <Link

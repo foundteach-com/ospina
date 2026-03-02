@@ -274,7 +274,7 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Precio Compra</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${purchasePrice.toLocaleString('es-CO')}
+                    ${purchasePrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
@@ -284,13 +284,13 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Valor IVA</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${purchaseIvaValue.toLocaleString('es-CO')}
+                    ${purchaseIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-blue-600 uppercase mb-1 font-bold">Compra + IVA</p>
                   <p className="text-base text-blue-600 font-bold">
-                    ${purchasePriceWithIva.toLocaleString('es-CO')}
+                    ${purchasePriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -309,7 +309,7 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Valor Utilidad</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${utilityValue.toLocaleString('es-CO')}
+                    ${utilityValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="col-span-2">
@@ -317,7 +317,7 @@ export default function ProductDetailPage() {
                     Precio de Venta (Neto)
                   </p>
                   <p className="text-base text-indigo-600 font-bold">
-                    ${sellingPrice.toLocaleString('es-CO')}
+                    ${sellingPrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Valor IVA Venta</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${salesIvaValue.toLocaleString('es-CO')}
+                    ${salesIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="col-span-2">
@@ -344,7 +344,7 @@ export default function ProductDetailPage() {
                     Precio de Venta Final (+IVA)
                   </p>
                   <p className="text-2xl text-green-600 font-bold">
-                    ${sellingPriceWithIva.toLocaleString('es-CO')}
+                    ${sellingPriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -368,7 +368,7 @@ export default function ProductDetailPage() {
                     : 'text-blue-600'
               }`}
             >
-              {(product.currentStock || 0).toLocaleString('es-CO')}
+              {(product.currentStock || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-gray-500 text-sm">unidades en inventario</p>
             <div className="mt-6 pt-6 border-t border-gray-100">
