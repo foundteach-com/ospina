@@ -277,8 +277,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <nav>
             <ul className="space-y-1">
               {menuItems.map((item) => {
-                // Hide "Usuarios" tab for specific user
-                if (item.name === 'Usuarios' && user.name === 'LUIS FERNANDO OSPINA SUAREZ') {
+                // Only show "Usuarios" for ADMIN role
+                if (item.name === 'Usuarios' && user.role !== 'ADMIN') {
                   return null;
                 }
                 if (item.children) {
