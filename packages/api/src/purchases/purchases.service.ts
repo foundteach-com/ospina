@@ -20,11 +20,28 @@ export class PurchasesService {
       reteIvaPercent?: number;
     }[];
   }): Promise<Purchase & { items: PurchaseItem[] }> {
-    // Calculate total from items
-    const total = data.items.reduce(
-      (sum, item) => sum + item.quantity * item.purchasePrice,
-      0
-    );
+    // Calculate net total from items (Gross - Retentions)
+    const productIds = data.items.map((i) => i.productId);
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+    });
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    const total = data.items.reduce((sum, item) => {
+      const product = productMap.get(item.productId);
+      const ivaPerc = product?.purchaseIvaPercent
+        ? Number(product.purchaseIvaPercent)
+        : 19;
+
+      const totalLine = item.quantity * item.purchasePrice;
+      const baseLine = totalLine / (1 + ivaPerc / 100);
+      const ivaLine = totalLine - baseLine;
+
+      const rfValue = baseLine * ((item.reteFuentePercent || 0) / 100);
+      const riValue = ivaLine * ((item.reteIvaPercent || 0) / 100);
+
+      return sum + (totalLine - rfValue - riValue);
+    }, 0);
 
     // Create purchase with items in a transaction
     return this.prisma.purchase.create({
@@ -110,13 +127,30 @@ export class PurchasesService {
       }[];
     }
   ): Promise<Purchase> {
-    // If items are updated, recalculate total
+    // If items are updated, recalculate net total
     let total: number | undefined;
     if (data.items) {
-      total = data.items.reduce(
-        (sum, item) => sum + item.quantity * item.purchasePrice,
-        0
-      );
+      const productIds = data.items.map((i) => i.productId);
+      const products = await this.prisma.product.findMany({
+        where: { id: { in: productIds } },
+      });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      total = data.items.reduce((sum, item) => {
+        const product = productMap.get(item.productId);
+        const ivaPerc = product?.purchaseIvaPercent
+          ? Number(product.purchaseIvaPercent)
+          : 19;
+
+        const totalLine = item.quantity * item.purchasePrice;
+        const baseLine = totalLine / (1 + ivaPerc / 100);
+        const ivaLine = totalLine - baseLine;
+
+        const rfValue = baseLine * ((item.reteFuentePercent || 0) / 100);
+        const riValue = ivaLine * ((item.reteIvaPercent || 0) / 100);
+
+        return sum + (totalLine - rfValue - riValue);
+      }, 0);
     }
 
     // Update purchase
