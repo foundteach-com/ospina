@@ -71,12 +71,18 @@ model Purchase {
   referenceNumber String
   date            DateTime
   total           Decimal
+  status          PurchaseStatus @default(PENDING)
   notes           String?
   invoiceUrl      String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   provider        Provider       @relation(fields: [providerId], references: [id])
   items           PurchaseItem[]
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
 }
 
 model PurchaseItem {

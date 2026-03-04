@@ -23,7 +23,8 @@ interface Purchase {
   referenceNumber: string;
   total: string;
   notes?: string;
-  invoiceUrl?: string; // Added field
+  invoiceUrl?: string;
+  status: 'PENDING' | 'PAID';
   provider: {
     name: string;
     taxId?: string;
@@ -157,6 +158,16 @@ export default function PurchaseDetailsPage({ params }: { params: Promise<{ id: 
             <div>
               <div className="text-xs text-gray-500 mb-1">Fecha de Compra</div>
               <div className="text-gray-900">{new Date(purchase.date).toLocaleDateString('es-CO')}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Estado de Pago</div>
+              <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                purchase.status === 'PAID' 
+                  ? 'bg-green-100 text-green-700 border border-green-200' 
+                  : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+              }`}>
+                {purchase.status === 'PAID' ? 'PAGADA' : 'PENDIENTE'}
+              </span>
             </div>
             <div className="pt-4 border-t border-gray-200 space-y-2">
               <div className="flex justify-between text-sm">

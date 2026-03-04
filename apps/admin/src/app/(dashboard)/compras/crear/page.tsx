@@ -42,6 +42,7 @@ export default function CreatePurchasePage() {
     date: new Date().toISOString().split('T')[0],
     notes: '',
     invoiceUrl: '', 
+    status: 'PENDING',
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([
@@ -350,6 +351,20 @@ export default function CreatePurchasePage() {
                 placeholder="Opcional"
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Estado de Pago
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+              >
+                <option value="PENDING">Pendiente</option>
+                <option value="PAID">Pagada</option>
+              </select>
             </div>
           </div>
         </div>

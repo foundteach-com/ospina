@@ -25,7 +25,8 @@ export class PurchasesController {
       referenceNumber: string;
       date: string;
       notes?: string;
-      invoiceUrl?: string; // Added field
+      invoiceUrl?: string;
+      status?: string;
       items: {
         productId: string;
         quantity: number;
@@ -65,7 +66,8 @@ export class PurchasesController {
       referenceNumber?: string;
       date?: string;
       notes?: string;
-      invoiceUrl?: string; // Added field
+      invoiceUrl?: string;
+      status?: string;
       items?: {
         productId: string;
         quantity: number;

@@ -45,6 +45,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     date: '',
     notes: '',
     invoiceUrl: '', 
+    status: 'PENDING',
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([]);
@@ -106,6 +107,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           date: new Date(data.date).toISOString().split('T')[0],
           notes: data.notes || '',
           invoiceUrl: data.invoiceUrl || '',
+          status: data.status || 'PENDING',
         });
         
         // Use provided products or state
@@ -392,6 +394,17 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Estado de Pago</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+              >
+                <option value="PENDING">Pendiente</option>
+                <option value="PAID">Pagada</option>
+              </select>
             </div>
 
           </div>

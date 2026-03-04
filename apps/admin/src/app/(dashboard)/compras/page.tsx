@@ -8,7 +8,8 @@ interface Purchase {
   date: string;
   referenceNumber: string;
   total: string;
-  invoiceUrl?: string; // Added field
+  invoiceUrl?: string;
+  status: 'PENDING' | 'PAID';
   provider: {
     id: string;
     name: string;
@@ -166,6 +167,26 @@ export default function PurchasesPage() {
     document.body.removeChild(link);
   };
 
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const newStatus = currentStatus === 'PENDING' ? 'PAID' : 'PENDING';
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/purchases/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (response.ok) {
+        fetchPurchases();
+      }
+    } catch (error) {
+      console.error('Error toggling status:', error);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('¿Está seguro de eliminar esta compra?')) return;
     
@@ -261,6 +282,7 @@ export default function PurchasesPage() {
                   </div>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Celular</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Doc.</th>
                 <th 
                   className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
@@ -288,6 +310,18 @@ export default function PurchasesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {purchase.provider.phone || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => handleToggleStatus(purchase.id, purchase.status)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                        purchase.status === 'PAID'
+                          ? 'bg-green-100 text-green-700 border border-green-200'
+                          : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                      }`}
+                    >
+                      {purchase.status === 'PAID' ? 'PAGADA' : 'PENDIENTE'}
+                    </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {purchase.invoiceUrl ? (
