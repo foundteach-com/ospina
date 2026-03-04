@@ -11,6 +11,8 @@ export class SalesService {
     referenceNumber?: string;
     date: Date;
     notes?: string;
+    paymentType?: string;
+    paymentMethod?: string;
     items: {
       productId: string;
       quantity: number;
@@ -43,6 +45,8 @@ export class SalesService {
         referenceNumber: data.referenceNumber,
         date: data.date,
         notes: data.notes,
+        paymentType: data.paymentType as any,
+        paymentMethod: data.paymentMethod as any,
         total,
         items: {
           create: data.items.map((item) => ({
@@ -108,6 +112,8 @@ export class SalesService {
       date?: Date;
       notes?: string;
       status?: string;
+      paymentType?: string;
+      paymentMethod?: string;
       items?: {
         productId: string;
         quantity: number;
@@ -126,6 +132,8 @@ export class SalesService {
         referenceNumber: data.referenceNumber,
         date: data.date,
         status: data.status as any,
+        paymentType: data.paymentType as any,
+        paymentMethod: data.paymentMethod as any,
         notes: data.notes,
         total,
         ...(data.items && {

@@ -113,12 +113,27 @@ model Client {
   sales         Sale[]
 }
 
+enum PaymentType {
+  CONTADO
+  CREDITO
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  CONSIGNACION
+  TRANSFERENCIA
+  DATAFONO
+  OTRO
+}
+
 model Sale {
   id              String     @id @default(cuid())
   referenceNumber String?
   date            DateTime
   total           Decimal
   status          SaleStatus @default(PENDING)
+  paymentType     PaymentType @default(CONTADO)
+  paymentMethod   PaymentMethod @default(EFECTIVO)
   notes           String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt

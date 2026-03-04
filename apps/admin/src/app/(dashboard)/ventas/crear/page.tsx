@@ -38,6 +38,8 @@ export default function CreateSalePage() {
     referenceNumber: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
+    paymentType: 'CONTADO',
+    paymentMethod: 'EFECTIVO',
   });
 
   const [items, setItems] = useState<SaleItem[]>([
@@ -266,6 +268,39 @@ export default function CreateSalePage() {
                 placeholder="Opcional"
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Forma de Pago *
+              </label>
+              <select
+                value={formData.paymentType}
+                onChange={(e) => setFormData({ ...formData, paymentType: e.target.value })}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+                required
+              >
+                <option value="CONTADO">Contado</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medio de Pago *
+              </label>
+              <select
+                value={formData.paymentMethod}
+                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+                required
+              >
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia</option>
+                <option value="CONSIGNACION">Consignación</option>
+                <option value="DATAFONO">Datáfono</option>
+                <option value="OTRO">Otro</option>
+              </select>
             </div>
           </div>
         </div>

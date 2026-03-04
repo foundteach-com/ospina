@@ -25,6 +25,8 @@ export class SalesController {
       referenceNumber?: string;
       date: string;
       notes?: string;
+      paymentType?: string;
+      paymentMethod?: string;
       items: {
         productId: string;
         quantity: number;
@@ -63,6 +65,8 @@ export class SalesController {
       date?: string;
       notes?: string;
       status?: string;
+      paymentType?: string;
+      paymentMethod?: string;
       items?: {
         productId: string;
         quantity: number;
