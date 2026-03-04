@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+import { useDialog } from '@/context/DialogContext';
+
 interface Provider {
   id: string;
   name: string;
@@ -12,6 +14,9 @@ interface Provider {
   address: string;
   city: string;
   taxId: string;
+  _count?: {
+    purchases: number;
+  };
 }
 
 export default function ProvidersPage() {
@@ -22,6 +27,7 @@ export default function ProvidersPage() {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
 
   const [userRole, setUserRole] = useState<string>('');
+  const { confirm, showAlert } = useDialog();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -109,7 +115,14 @@ export default function ProvidersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this provider?')) return;
+    const isConfirmed = await confirm({
+      title: '¿Eliminar Proveedor?',
+      message: 'Esta acción borrará el registro del proveedor permanentemente. ¿Deseas continuar?',
+      confirmText: 'Sí, eliminar',
+      type: 'danger'
+    });
+
+    if (!isConfirmed) return;
 
     try {
       const token = localStorage.getItem('access_token');
@@ -121,13 +134,29 @@ export default function ProvidersPage() {
       });
       if (response.ok) {
         fetchProviders();
+        showAlert({
+          title: 'Proveedor eliminado',
+          message: 'El registro ha sido borrado correctamente.',
+          type: 'success'
+        });
+      } else {
+        showAlert({
+          title: 'Error al eliminar',
+          message: 'No pudimos eliminar este proveedor. Verifica si tiene compras asociadas.',
+          type: 'danger'
+        });
       }
     } catch (error) {
       console.error('Error deleting provider:', error);
+      showAlert({
+        title: 'Error de conexión',
+        message: 'Ocurrió un problema al intentar borrar el registro.',
+        type: 'danger'
+      });
     }
   };
 
-  if (loading) return <div className="p-8 text-white">Loading...</div>;
+  if (loading) return <div className="p-8 text-gray-900 text-center">Cargando proveedores...</div>;
 
   return (
     <div className="p-8">
@@ -226,6 +255,9 @@ export default function ProvidersPage() {
                     CIUDAD {getSortIcon('city')}
                   </div>
                 </th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Compras
+                </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
@@ -233,24 +265,28 @@ export default function ProvidersPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredProviders.map((provider) => (
-                <tr key={provider.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={provider.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {provider.taxId}
+                    {provider.taxId || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {provider.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {provider.commercialName}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-bold text-gray-900 uppercase">{provider.name}</div>
+                    <div className="text-xs text-gray-400">{provider.address || '-'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {provider.email}
+                    {provider.commercialName || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {provider.phone}
+                    {provider.email || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {provider.city}
+                    {provider.phone || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {provider.city || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-blue-600">
+                    {provider._count?.purchases || 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-1">
@@ -259,20 +295,7 @@ export default function ProvidersPage() {
                         title="Ver Detalles"
                         className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z" /><circle cx="12" cy="12" r="3" /></svg>
                       </Link>
                       {userRole !== 'VIEWER' && (
                         <>
@@ -281,41 +304,14 @@ export default function ProvidersPage() {
                             title="Editar"
                             className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                              <path d="m15 5 4 4" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                           </Link>
                           <button
                             onClick={() => handleDelete(provider.id)}
                             title="Eliminar"
                             className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                           </button>
                         </>
                       )}

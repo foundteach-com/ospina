@@ -152,7 +152,7 @@ export default function ProviderDetailsPage({ params }: { params: Promise<{ id: 
               {provider.purchases?.map((purchase) => (
                 <tr key={purchase.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(purchase.date).toLocaleDateString('es-CO')}
+                    {new Date(purchase.date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                     {purchase.referenceNumber}

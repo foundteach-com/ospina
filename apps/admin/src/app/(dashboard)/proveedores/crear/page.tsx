@@ -36,11 +36,12 @@ export default function CreateProviderPage() {
         router.push('/proveedores');
         router.refresh();
       } else {
-        alert('Error creating provider');
+        const error = await response.json();
+        alert(`Error al crear proveedor: ${error.message || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error('Error creating provider:', error);
-      alert('Error creating provider');
+      alert('Error de conexión al crear el proveedor');
     } finally {
       setLoading(false);
     }

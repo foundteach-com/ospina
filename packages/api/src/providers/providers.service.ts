@@ -12,6 +12,11 @@ export class ProvidersService {
 
   findAll() {
     return this.prisma.provider.findMany({
+      include: {
+        _count: {
+          select: { purchases: true }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -19,6 +24,15 @@ export class ProvidersService {
   findOne(id: string) {
     return this.prisma.provider.findUnique({
       where: { id },
+      include: {
+        purchases: {
+          orderBy: { date: 'desc' },
+          take: 10,
+        },
+        _count: {
+          select: { purchases: true }
+        }
+      }
     });
   }
 
