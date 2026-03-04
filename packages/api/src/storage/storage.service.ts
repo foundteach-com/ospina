@@ -1,69 +1,69 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class StorageService {
-  private supabase?: SupabaseClient;
-  private bucketName: string;
+  private uploadDir: string;
+  private publicBaseUrl: string;
 
   constructor(private configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>('SUPABASE_KEY');
-    this.bucketName = this.configService.get<string>('SUPABASE_BUCKET') || 'media';
+    // En Railway se monta el volumen en /app/uploads
+    // En local usamos ./uploads relativo al proceso
+    this.uploadDir =
+      this.configService.get<string>('UPLOAD_DIR') ||
+      path.join(process.cwd(), 'uploads');
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('Supabase credentials not found. Storage service may not work.');
-    } else {
-      this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.publicBaseUrl =
+      this.configService.get<string>('PUBLIC_API_URL') ||
+      `http://localhost:${this.configService.get<string>('PORT') || 4000}`;
+
+    // Asegurarse de que el directorio base exista
+    if (!fs.existsSync(this.uploadDir)) {
+      fs.mkdirSync(this.uploadDir, { recursive: true });
     }
   }
 
-  async uploadFile(file: Express.Multer.File, folder: string = 'uploads'): Promise<string> {
-    if (!this.supabase) {
-      throw new InternalServerErrorException('Storage service not configured');
+  async uploadFile(
+    file: Express.Multer.File,
+    folder: string = 'uploads',
+  ): Promise<string> {
+    try {
+      const folderPath = path.join(this.uploadDir, folder);
+
+      // Crear subcarpeta si no existe
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath, { recursive: true });
+      }
+
+      const fileExt = path.extname(file.originalname);
+      const fileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}${fileExt}`;
+      const filePath = path.join(folderPath, fileName);
+
+      // Escribir el buffer al disco
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Retornar la URL pública
+      const publicUrl = `${this.publicBaseUrl}/uploads/${folder}/${fileName}`;
+      return publicUrl;
+    } catch (error) {
+      console.error('Error saving file to disk:', error);
+      throw new InternalServerErrorException('No se pudo guardar el archivo');
     }
-
-    const { originalname, buffer, mimetype } = file;
-    const fileExt = originalname.split('.').pop();
-    const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-    const filePath = `${folder}/${fileName}`;
-
-    const { data, error } = await this.supabase.storage
-      .from(this.bucketName)
-      .upload(filePath, buffer, {
-        contentType: mimetype,
-        upsert: false,
-      });
-
-    if (error) {
-      console.error('Error uploading to Supabase:', error);
-      throw new InternalServerErrorException(`Upload failed: ${error.message}`);
-    }
-
-    const { data: publicUrlData } = this.supabase.storage
-      .from(this.bucketName)
-      .getPublicUrl(filePath);
-
-    return publicUrlData.publicUrl;
   }
 
   async deleteFile(fileUrl: string): Promise<void> {
-    if (!this.supabase) return;
+    try {
+      // Extraer la ruta relativa de la URL
+      const urlPath = fileUrl.replace(/^https?:\/\/[^/]+\/uploads\//, '');
+      const filePath = path.join(this.uploadDir, urlPath);
 
-    // Extract path from public URL
-    // URL format: https://[project].supabase.co/storage/v1/object/public/[bucket]/[path]
-    const urlParts = fileUrl.split(`/public/${this.bucketName}/`);
-    if (urlParts.length < 2) return;
-
-    const filePath = urlParts[1];
-
-    const { error } = await this.supabase.storage
-      .from(this.bucketName)
-      .remove([filePath]);
-
-    if (error) {
-      console.error('Error deleting from Supabase:', error);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
     }
   }
 }
