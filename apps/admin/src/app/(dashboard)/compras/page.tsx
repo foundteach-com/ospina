@@ -299,7 +299,7 @@ export default function PurchasesPage() {
               {filteredPurchases.map((purchase) => (
                 <tr key={purchase.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(purchase.date).toLocaleDateString('es-CO')}
+                    {new Date(purchase.date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-bold text-gray-900 uppercase">{purchase.provider.name}</div>

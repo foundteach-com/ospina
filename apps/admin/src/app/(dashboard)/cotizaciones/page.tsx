@@ -435,7 +435,7 @@ export default function CotizacionesPage() {
                       </div>
                     </td>
                     <td className="py-4 px-6 text-gray-700">
-                      {new Date(cotizacion.fecha).toLocaleDateString('es-CO')}
+                      {new Date(cotizacion.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
                     </td>
                     <td className="py-4 px-6 text-gray-700">{cotizacion.items?.length || 0}</td>
                     <td className="py-4 px-6 font-semibold text-gray-900">

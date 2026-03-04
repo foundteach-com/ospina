@@ -137,7 +137,9 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
           <div className="space-y-4">
             <div>
               <div className="text-xs text-gray-500 mb-1">Fecha</div>
-              <div className="text-gray-900">{new Date(sale.date).toLocaleString('es-CO')}</div>
+              <div className="text-gray-900">
+                {new Date(sale.date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
+              </div>
             </div>
             <div>
               <div className="text-xs text-gray-500 mb-1">Estado</div>
