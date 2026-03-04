@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface Client {
   id: string;
@@ -13,17 +14,25 @@ interface Product {
   id: string;
   name: string;
   code: string;
-  basePrice: string;
-  salesIvaPercent: string;
-  unit: string;
+  basePrice: string | number;
+  purchasePrice?: string | number;
+  utilityPercent?: string | number;
+  salesIvaPercent: string | number;
+  measurementUnit?: string;
 }
 
 interface SaleItem {
   productId: string;
+  searchStr: string;
+  name: string;
+  code: string;
+  unit: string;
   quantity: number;
-  salePrice: number;
+  unitPriceNet: number;
+  discountPercent: number;
   ivaPercent: number;
   availableStock?: number;
+  showDropdown?: boolean;
 }
 
 export default function CreateSalePage() {
@@ -44,13 +53,43 @@ export default function CreateSalePage() {
   });
 
   const [items, setItems] = useState<SaleItem[]>([
-    { productId: '', quantity: 1, salePrice: 0, ivaPercent: 19, availableStock: 0 },
+    { 
+      productId: '', 
+      searchStr: '', 
+      name: '', 
+      code: '', 
+      unit: '',
+      quantity: 1, 
+      unitPriceNet: 0, 
+      discountPercent: 0, 
+      ivaPercent: 19, 
+      availableStock: 0,
+      showDropdown: false
+    },
   ]);
+
+  const dropdownRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     fetchClients();
     fetchProducts();
     fetchInventory();
+
+    const handleClickOutside = (event: MouseEvent) => {
+      setItems((prevItems) =>
+        prevItems.map((item, index) => {
+          if (item.showDropdown && dropdownRefs.current[index] && !dropdownRefs.current[index]?.contains(event.target as Node)) {
+            return { ...item, showDropdown: false };
+          }
+          return item;
+        })
+      );
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const fetchClients = async () => {
@@ -102,15 +141,39 @@ export default function CreateSalePage() {
     }
   };
 
+  const calculateNetSalePrice = (product: Product) => {
+    const purchase = parseFloat(product.purchasePrice?.toString() || '0');
+    const utility = parseFloat(product.utilityPercent?.toString() || '0');
+    if (purchase > 0 && utility > 0) {
+      return purchase * (1 + (utility / 100));
+    }
+    return parseFloat(product.basePrice?.toString() || '0');
+  };
+
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, salePrice: 0, ivaPercent: 19, availableStock: 0 }]);
+    setItems([
+      ...items, 
+      { 
+        productId: '', 
+        searchStr: '', 
+        name: '', 
+        code: '', 
+        unit: '',
+        quantity: 1, 
+        unitPriceNet: 0, 
+        discountPercent: 0, 
+        ivaPercent: 19, 
+        availableStock: 0,
+        showDropdown: false
+      }
+    ]);
   };
 
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof SaleItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof SaleItem, value: any) => {
     setItems(prevItems => {
       const newItems = [...prevItems];
       newItems[index] = { ...newItems[index], [field]: value };
@@ -118,18 +181,33 @@ export default function CreateSalePage() {
     });
   };
 
-  const handleProductChange = (index: number, productId: string) => {
-    const product = products.find(p => p.id === productId);
-    const stock = inventory[productId] || 0;
+  const handleSearchChange = (index: number, value: string) => {
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = { ...newItems[index], searchStr: value, showDropdown: true };
+      
+      // Auto-select if exactly one code or exact name match might be too aggressive,
+      // User can click from dropdown.
+      return newItems;
+    });
+  };
+
+  const selectProduct = (index: number, product: Product) => {
+    const stock = inventory[product.id] || 0;
     
     setItems(prevItems => {
       const newItems = [...prevItems];
       newItems[index] = { 
         ...newItems[index], 
-        productId,
+        productId: product.id,
+        searchStr: product.code, // Show code in search input box
+        name: product.name,
+        code: product.code,
+        unit: product.measurementUnit || 'UND',
         availableStock: stock,
-        salePrice: product ? parseFloat(product.basePrice) : 0,
-        ivaPercent: product ? parseFloat(product.salesIvaPercent || '19') : 19
+        unitPriceNet: calculateNetSalePrice(product),
+        ivaPercent: parseFloat(product.salesIvaPercent?.toString() || '19'),
+        showDropdown: false
       };
       return newItems;
     });
@@ -137,15 +215,22 @@ export default function CreateSalePage() {
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
-      const totalLine = item.quantity * item.salePrice;
-      const baseLine = totalLine / (1 + (item.ivaPercent / 100));
-      const ivaLine = totalLine - baseLine;
+      const unitDiscounted = item.unitPriceNet * (1 - (item.discountPercent / 100));
+      const netLine = item.quantity * unitDiscounted;
+      const ivaLine = netLine * (item.ivaPercent / 100);
+      const totalLine = netLine + ivaLine;
       
-      acc.base += baseLine;
-      acc.iva += ivaLine;
+      acc.base += netLine;
+      
+      const ivaKey = item.ivaPercent.toString();
+      if (!acc.ivaBreakdown[ivaKey]) {
+        acc.ivaBreakdown[ivaKey] = 0;
+      }
+      acc.ivaBreakdown[ivaKey] += ivaLine;
+      
       acc.total += totalLine;
       return acc;
-    }, { base: 0, iva: 0, total: 0 });
+    }, { base: 0, ivaBreakdown: {} as Record<string, number>, total: 0 });
   };
 
   const validateStock = () => {
@@ -153,8 +238,7 @@ export default function CreateSalePage() {
       if (item.productId) {
         const stock = inventory[item.productId] || 0;
         if (item.quantity > stock) {
-          const product = products.find(p => p.id === item.productId);
-          alert(`Stock insuficiente para ${product?.name}. Disponible: ${stock}`);
+          alert(`Stock insuficiente para ${item.name}. Disponible: ${stock}`);
           return false;
         }
       }
@@ -173,6 +257,18 @@ export default function CreateSalePage() {
 
     try {
       const token = localStorage.getItem('access_token');
+      
+      const validItems = items.filter(item => item.productId).map(item => {
+        const unitDiscounted = item.unitPriceNet * (1 - (item.discountPercent / 100));
+        const salePriceWithIva = unitDiscounted * (1 + (item.ivaPercent / 100));
+        
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          salePrice: Number(salePriceWithIva.toFixed(2)) // Sending Total Unit Price with IVA for backend consistency
+        };
+      });
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sales`, {
         method: 'POST',
         headers: {
@@ -181,8 +277,7 @@ export default function CreateSalePage() {
         },
         body: JSON.stringify({
           ...formData,
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          items: items.filter(item => item.productId).map(({ availableStock: _, ivaPercent: __, ...rest }) => rest),
+          items: validItems,
         }),
       });
 
@@ -200,9 +295,14 @@ export default function CreateSalePage() {
     }
   };
 
+  const totals = calculateTotals();
+
   return (
     <div className="p-8">
-      <div className="mb-8">
+      <div className="flex items-center gap-4 mb-8">
+        <Link href="/ventas" className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </Link>
         <h1 className="text-3xl font-bold text-gray-900">
           Nueva Venta
         </h1>
@@ -258,19 +358,6 @@ export default function CreateSalePage() {
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Observaciones
-              </label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Detalles adicionales de la venta..."
-                rows={3}
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors resize-none"
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Estado de Pago *
@@ -318,10 +405,23 @@ export default function CreateSalePage() {
                 <option value="OTRO">Otro</option>
               </select>
             </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Observaciones
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Detalles adicionales de la venta..."
+                rows={3}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm overflow-visible">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Productos</h2>
             <button
@@ -334,111 +434,202 @@ export default function CreateSalePage() {
             </button>
           </div>
 
+          {/* Table Header Wrapper for visual alignment (optional) */}
+          <div className="hidden lg:grid grid-cols-12 gap-2 px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <div className="col-span-3">Buscar Prod. (Cód/Desc)</div>
+            <div className="col-span-2">Descripción</div>
+            <div className="col-span-1">IVA %</div>
+            <div className="col-span-1">U.M.</div>
+            <div className="col-span-1">Cant.</div>
+            <div className="col-span-1">P. Unit. (Sin IVA)</div>
+            <div className="col-span-1">Dcto %</div>
+            <div className="col-span-1">V. Total (c/ IVA)</div>
+            <div className="col-span-1 text-center">Acción</div>
+          </div>
+
           <div className="space-y-4">
             {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="col-span-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Producto
-                  </label>
-                  <select
-                    value={item.productId}
-                    onChange={(e) => handleProductChange(index, e.target.value)}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
-                    required
-                  >
-                    <option value="">Seleccionar producto</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} ({product.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div key={index} className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-2 items-start bg-gray-50 p-4 rounded-xl border border-gray-100 relative">
+                
+                {/* 1. Buscar (Código / Descripción) */}
+                <div className="col-span-1 lg:col-span-3">
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">Buscar (Cód/Desc)</label>
+                  <div className="relative" ref={(el) => { dropdownRefs.current[index] = el; }}>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={item.searchStr}
+                        onChange={(e) => handleSearchChange(index, e.target.value)}
+                        placeholder="Escriba para buscar..."
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm pl-8"
+                      />
+                      <svg className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stock Disp.
-                  </label>
-                  <div className={`px-4 py-2 bg-white border rounded-lg font-medium ${
-                    item.availableStock && item.availableStock < 10 
-                      ? 'border-red-200 text-red-600 bg-red-50' 
-                      : 'border-gray-200 text-gray-700'
-                  }`}>
-                    {item.productId ? (item.availableStock || 0) : '-'}
+                    {item.showDropdown && item.searchStr.trim().length > 0 && (
+                      <div className="absolute z-50 w-[300px] mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        {products
+                          .filter(p => p.code.toLowerCase().includes(item.searchStr.toLowerCase()) || p.name.toLowerCase().includes(item.searchStr.toLowerCase()))
+                          .map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => selectProduct(index, p)}
+                              className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0"
+                            >
+                              <div className="text-sm font-medium text-gray-900">{p.name}</div>
+                              <div className="text-xs text-gray-500 font-mono">Cód: {p.code} | Stock: {inventory[p.id] || 0}</div>
+                            </div>
+                        ))}
+                        {products.filter(p => p.code.toLowerCase().includes(item.searchStr.toLowerCase()) || p.name.toLowerCase().includes(item.searchStr.toLowerCase())).length === 0 && (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">No hay coincidencias</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Cantidad
-                  </label>
+                {/* 2. Descripción */}
+                <div className="col-span-1 lg:col-span-2">
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">Descripción</label>
+                  <input
+                    type="text"
+                    value={item.name}
+                    readOnly
+                    placeholder="Auto-relleno"
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 text-sm focus:outline-none"
+                  />
+                </div>
+
+                {/* 3. IVA */}
+                <div className="col-span-1">
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">IVA %</label>
+                  <input
+                    type="number"
+                    value={item.ivaPercent}
+                    onChange={(e) => updateItem(index, 'ivaPercent', parseFloat(e.target.value))}
+                    min="0"
+                    step="0.1"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
+
+                {/* 4. U.M. */}
+                <div className="col-span-1">
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">U.M.</label>
+                  <input
+                    type="text"
+                    value={item.unit}
+                    readOnly
+                    placeholder="UND"
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 focus:outline-none text-sm"
+                  />
+                </div>
+
+                {/* 5. Cantidad */}
+                <div className="col-span-1">
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">Cant. <span className="font-normal text-[10px] ml-1">(Stock: {item.availableStock || 0})</span></label>
                   <input
                     type="number"
                     value={item.quantity}
                     onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
                     min="0.01"
                     step="0.01"
-                    max={item.availableStock}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
-                    required
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   />
+                  {/* Pequeño aviso de stock en desktop */}
+                  <div className="hidden lg:block text-[9px] text-gray-400 mt-1 pl-1">Stock: {item.availableStock || 0}</div>
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio Venta
-                  </label>
+                {/* 6. Precio Unitario (Sin IVA) */}
+                <div className="col-span-1">
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">P. Unitario (Sin IVA)</label>
                   <input
                     type="number"
-                    value={item.salePrice}
-                    onChange={(e) => updateItem(index, 'salePrice', parseFloat(e.target.value))}
+                    value={item.unitPriceNet}
+                    onChange={(e) => updateItem(index, 'unitPriceNet', parseFloat(e.target.value))}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
-                    required
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   />
                 </div>
 
+                {/* 7. Descuento (%) */}
                 <div className="col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Subtotal
-                  </label>
-                  <div className="px-2 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold text-sm">
-                    ${(item.quantity * item.salePrice).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">Dcto (%)</label>
+                  <input
+                    type="number"
+                    value={item.discountPercent}
+                    onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value))}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
+
+                {/* 8. Valor Total (Con IVA) */}
+                <div className="col-span-1">
+                  <label className="block lg:hidden text-xs font-medium text-gray-700 mb-1">V. Total (c/ IVA)</label>
+                  <div className="w-full px-2 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 font-semibold text-sm h-[38px] flex items-center shadow-inner line-clamp-1 overflow-hidden" title={`SubTotal (Neto + IVA)`}>
+                    {(() => {
+                      const discounted = item.unitPriceNet * (1 - (item.discountPercent / 100));
+                      const net = item.quantity * discounted;
+                      const iva = net * (item.ivaPercent / 100);
+                      const t = net + iva;
+                      return `$${t.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    })()}
                   </div>
                 </div>
 
-                <div className="col-span-1 flex justify-end">
+                {/* 9. Acción Eliminar */}
+                <div className="col-span-1 flex justify-center items-start lg:mt-1">
                   {items.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
+                      title="Eliminar línea"
                       className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
                   )}
                 </div>
+
               </div>
             ))}
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex justify-end">
-              <div className="text-right space-y-2">
-                <div className="flex justify-between gap-8 text-sm text-gray-500">
-                  <span>Subtotal (Base)</span>
-                  <span>${calculateTotals().base.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <div className="flex justify-between items-start">
+              <button
+                type="button"
+                onClick={addItem}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                Agregar Producto
+              </button>
+
+              <div className="text-right space-y-2 w-full md:w-1/3 min-w-[300px]">
+                <div className="flex justify-between gap-8 text-sm text-gray-500 pb-1 border-b border-gray-100">
+                  <span>Valor Neto (Sin IVA)</span>
+                  <span>${totals.base.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex justify-between gap-8 text-sm text-gray-500">
-                  <span>IVA</span>
-                  <span>${calculateTotals().iva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="text-sm text-gray-500 mb-1 font-bold">Total Final</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    ${calculateTotals().total.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                
+                {/* Desglose de IVA */}
+                {Object.entries(totals.ivaBreakdown).map(([percent, value]) => (
+                  <div key={percent} className="flex justify-between gap-8 text-sm text-gray-500 pb-1 border-b border-gray-100">
+                    <span>IVA ({percent}%)</span>
+                    <span>${value.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                ))}
+
+                <div className="pt-2">
+                  <div className="flex justify-between items-end gap-8">
+                    <span className="text-base font-bold text-gray-800">Total a Pagar</span>
+                    <span className="text-3xl font-bold text-green-600">
+                      ${totals.total.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
                   </div>
                 </div>
               </div>
