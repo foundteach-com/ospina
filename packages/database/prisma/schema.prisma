@@ -141,6 +141,7 @@ model Sale {
   paymentType     PaymentType @default(CONTADO)
   paymentMethod   PaymentMethod @default(EFECTIVO)
   notes           String?
+  documentUrl     String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   clientId        String

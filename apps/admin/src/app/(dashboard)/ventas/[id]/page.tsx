@@ -22,6 +22,7 @@ interface Sale {
   total: string;
   status: string;
   notes?: string;
+  documentUrl?: string;
   client: {
     name: string;
     taxId: string;
@@ -228,6 +229,30 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Notas / Observaciones</h2>
           <p className="text-gray-700 italic">{sale.notes}</p>
+        </div>
+      )}
+
+      {sale.documentUrl && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Documento / Soporte</h2>
+            <a
+              href={sale.documentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-xs font-medium transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+              Abrir en nueva pestaña
+            </a>
+          </div>
+          <div className="border border-gray-200 rounded-xl overflow-hidden h-[600px] bg-gray-50">
+            <iframe
+              src={sale.documentUrl}
+              className="w-full h-full"
+              title="Documento de soporte de venta"
+            />
+          </div>
         </div>
       )}
     </div>

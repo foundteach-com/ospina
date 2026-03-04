@@ -41,6 +41,7 @@ export default function CreateSalePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
     clientId: '',
@@ -246,6 +247,26 @@ export default function CreateSalePage() {
     return true;
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const fileFormData = new FormData();
+    fileFormData.append('file', file);
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/storage/upload?folder=invoices`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: fileFormData,
+    });
+    if (!response.ok) throw new Error('Upload failed');
+    const data = await response.json();
+    return data.url;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -254,6 +275,17 @@ export default function CreateSalePage() {
     }
 
     setLoading(true);
+
+    let documentUrl: string | undefined = undefined;
+    if (selectedFile) {
+      try {
+        documentUrl = await uploadFile(selectedFile);
+      } catch {
+        alert('Error al subir el documento. Por favor intente de nuevo.');
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const token = localStorage.getItem('access_token');
@@ -277,6 +309,7 @@ export default function CreateSalePage() {
         },
         body: JSON.stringify({
           ...formData,
+          documentUrl,
           items: validItems,
         }),
       });
@@ -634,6 +667,39 @@ export default function CreateSalePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Sección PDF */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Documento / Soporte</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Adjuntar documento (PDF)
+              </label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100"
+              />
+              <p className="mt-1 text-xs text-gray-400">Opcional. Adjunta la remisión, orden de pedido u otro soporte en PDF.</p>
+            </div>
+            {selectedFile && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <div className="text-sm text-blue-800 font-medium truncate">{selectedFile.name}</div>
+                <button type="button" onClick={() => setSelectedFile(null)} className="ml-auto text-blue-400 hover:text-red-500 transition-colors shrink-0" title="Quitar archivo">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
