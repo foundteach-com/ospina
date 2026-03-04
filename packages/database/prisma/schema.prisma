@@ -113,6 +113,11 @@ model Client {
   sales         Sale[]
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
 enum PaymentType {
   CONTADO
   CREDITO
@@ -132,6 +137,7 @@ model Sale {
   date            DateTime
   total           Decimal
   status          SaleStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
   paymentType     PaymentType @default(CONTADO)
   paymentMethod   PaymentMethod @default(EFECTIVO)
   notes           String?

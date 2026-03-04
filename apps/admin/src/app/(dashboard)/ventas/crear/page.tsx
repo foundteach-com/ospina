@@ -38,6 +38,7 @@ export default function CreateSalePage() {
     referenceNumber: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
+    paymentStatus: 'PENDING',
     paymentType: 'CONTADO',
     paymentMethod: 'EFECTIVO',
   });
@@ -257,17 +258,32 @@ export default function CreateSalePage() {
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notas
+                Observaciones
               </label>
-              <input
-                type="text"
+              <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Opcional"
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                placeholder="Detalles adicionales de la venta..."
+                rows={3}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors resize-none"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Estado de Pago *
+              </label>
+              <select
+                value={formData.paymentStatus}
+                onChange={(e) => setFormData({ ...formData, paymentStatus: e.target.value })}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+                required
+              >
+                <option value="PENDING">Pendiente</option>
+                <option value="PAID">Pagado</option>
+              </select>
             </div>
 
             <div>

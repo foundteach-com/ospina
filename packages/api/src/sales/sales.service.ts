@@ -11,6 +11,7 @@ export class SalesService {
     referenceNumber?: string;
     date: Date;
     notes?: string;
+    paymentStatus?: string;
     paymentType?: string;
     paymentMethod?: string;
     items: {
@@ -45,6 +46,7 @@ export class SalesService {
         referenceNumber: data.referenceNumber,
         date: data.date,
         notes: data.notes,
+        paymentStatus: data.paymentStatus as any,
         paymentType: data.paymentType as any,
         paymentMethod: data.paymentMethod as any,
         total,
@@ -112,6 +114,7 @@ export class SalesService {
       date?: Date;
       notes?: string;
       status?: string;
+      paymentStatus?: string;
       paymentType?: string;
       paymentMethod?: string;
       items?: {
@@ -132,6 +135,7 @@ export class SalesService {
         referenceNumber: data.referenceNumber,
         date: data.date,
         status: data.status as any,
+        paymentStatus: data.paymentStatus as any,
         paymentType: data.paymentType as any,
         paymentMethod: data.paymentMethod as any,
         notes: data.notes,
