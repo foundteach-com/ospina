@@ -271,20 +271,19 @@ export default function ContactoPage() {
         </div>
       </section>
 
-      {/* Map Placeholder */}
-      <section className="h-96 bg-gray-200 relative">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-700">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-            </div>
-            <h3 className="font-bold text-gray-900 mb-2">OSPINA Comercializadora</h3>
-            <p className="text-gray-600">Cra. 14 #24A - 18, Yopal, Casanare</p>
-          </div>
-        </div>
+      {/* Google Maps Embed */}
+      <section className="h-96 relative w-full bg-gray-100 border-t border-gray-200">
+        <iframe 
+          title="Ubicación OSPINA Comercializadora"
+          src="https://maps.google.com/maps?width=100%25&amp;height=100%25&amp;hl=es&amp;q=Cra.%2014%20%2324A%20-%2018,%20Yopal,%20Casanare+(OSPINA%20Comercializadora)&amp;t=&amp;z=17&amp;ie=UTF8&amp;iwloc=B&amp;output=embed"
+          width="100%" 
+          height="100%" 
+          style={{ border: 0 }} 
+          allowFullScreen={false} 
+          loading="lazy" 
+          referrerPolicy="no-referrer-when-downgrade"
+          className="grayscale-0 hover:grayscale-0 transition-all duration-500"
+        ></iframe>
       </section>
     </>
   );
