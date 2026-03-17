@@ -103,7 +103,7 @@ export default function ContactoPage() {
                     <div>
                       <h3 className="font-semibold text-gray-900">{info.title}</h3>
                       {info.link ? (
-                        <a href={info.link} className="text-gray-600 hover:text-blue-700 transition-colors">
+                        <a href={info.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-700 transition-colors">
                           {info.description}
                         </a>
                       ) : (
