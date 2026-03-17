@@ -182,7 +182,10 @@ export default function Footer() {
         <div className="container-custom py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-500 text-sm text-center md:text-left">
-              © {currentYear} OSPINA Comercializadora y Suministros. Todos los derechos reservados.
+              © {currentYear} OSPINA Comercializadora y Suministros S.A.S <span className="mx-2">•</span> 
+              <a href="https://www.foundteach.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">FoundTeach</a> 
+              <span className="mx-2">•</span> 
+              <a href="https://www.mannez.com/manuel-antonio-martinez-sogamoso" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Manuel Antonio Martínez Sogamoso</a>
             </p>
             <div className="flex gap-6 text-sm">
               <a href="#" className="text-gray-500 hover:text-white transition-colors">Política de Privacidad</a>
