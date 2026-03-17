@@ -16,26 +16,37 @@ export default function Header() {
   return (
     <>
       {/* Top Bar */}
-      <div className="bg-blue-900 text-white py-2 text-sm hidden sm:block border-b border-blue-800">
-        <div className="container-custom flex justify-between items-center text-[13px] font-medium tracking-wide">
+      <div className="bg-blue-900 text-white py-2.5 text-sm hidden sm:block border-b border-blue-800">
+        <div className="container-custom flex justify-between items-center text-[12px] font-medium tracking-wide">
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2 opacity-90">
               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
               Yopal, Casanare
             </span>
-            <span className="opacity-90 hover:opacity-100 transition-opacity cursor-default hidden md:flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              Soporte: +57 (310) 000 0000
+            <span className="opacity-95 hover:opacity-100 transition-opacity cursor-default flex items-center gap-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              Soporte: <span className="text-white font-bold tracking-normal">322 7790154</span>
             </span>
           </div>
           <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center gap-4 opacity-80">
-              <a href="#" className="hover:text-blue-200 transition-colors">FB</a>
-              <a href="#" className="hover:text-blue-200 transition-colors">IG</a>
-              <a href="#" className="hover:text-blue-200 transition-colors">LI</a>
+            <div className="hidden lg:flex items-center gap-4">
+              <a href="#" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="Facebook">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+              </a>
+              <a href="#" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="Instagram">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
+              </a>
+              <a href="#" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="LinkedIn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+              </a>
             </div>
-            <div className="h-4 w-px bg-blue-700 mx-2 hidden lg:block"></div>
-            <span className="opacity-90">Lunes - Sábado: 8am - 6pm</span>
+            <div className="h-4 w-px bg-blue-700/50 mx-1 hidden lg:block"></div>
+            <div className="flex items-center gap-2 opacity-90">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-300"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>
+                <span className="hidden xl:inline">Lun - Vie:</span> 8am-12pm | 2pm-6pm <span className="mx-1.5 opacity-40">•</span> <span className="hidden xl:inline">Sáb:</span> 8am-12pm
+              </span>
+            </div>
           </div>
         </div>
       </div>
