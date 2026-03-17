@@ -138,18 +138,17 @@ export default function ContactoPage() {
               {/* Schedule */}
               <div className="mt-8 p-6 bg-gray-50 rounded-2xl">
                 <h3 className="font-semibold text-gray-900 mb-4">Horario de Atención</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Lunes - Viernes</span>
-                    <span className="font-medium text-gray-900">8:00 AM - 12:00 PM | 2:00 PM - 6:00 PM</span>
+                <div className="space-y-3 text-sm mt-3">
+                  <div className="grid grid-cols-[100px_1fr] md:grid-cols-[120px_1fr] gap-4 items-start pb-2 border-b border-gray-200">
+                    <span className="text-gray-600 font-medium pt-0.5">Lunes - Viernes</span>
+                    <div className="font-medium text-gray-900 flex flex-col gap-1">
+                      <span>8:00 AM - 12:00 PM</span>
+                      <span>2:00 PM - 6:00 PM</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Sábados</span>
+                  <div className="grid grid-cols-[100px_1fr] md:grid-cols-[120px_1fr] gap-4 items-center">
+                    <span className="text-gray-600 font-medium">Sábados</span>
                     <span className="font-medium text-gray-900">8:00 AM - 12:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Domingos</span>
-                    <span className="font-medium text-gray-900">Cerrado</span>
                   </div>
                 </div>
               </div>
