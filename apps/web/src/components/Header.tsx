@@ -67,17 +67,17 @@ export default function Header() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-4 group">
               <div className="relative">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 rounded-2xl flex items-center justify-center shadow-xl group-hover:shadow-blue-200/50 transition-all duration-500 overflow-hidden">
-                  <span className="text-white font-black text-2xl relative z-10">O</span>
-                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-lg border-4 border-white flex items-center justify-center shadow-lg">
-                  <div className="w-1 h-1 bg-white rounded-full"></div>
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-blue-100 transition-all duration-500 overflow-hidden border border-gray-100 p-1">
+                  <img 
+                    src="/img/logo.jpg" 
+                    alt="OSPINA Logo" 
+                    className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-700"
+                  />
                 </div>
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-gray-900 tracking-tighter leading-none group-hover:text-blue-700 transition-colors">OSPINA</span>
-                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mt-1 ml-0.5">Comercializadora</span>
+                <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mt-1.5 leading-tight">Comercializador y Suministros</span>
               </div>
             </Link>
 
