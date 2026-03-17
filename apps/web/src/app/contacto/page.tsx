@@ -57,7 +57,15 @@ export default function ContactoPage() {
     setSending(true);
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        } else {
+          apiUrl = 'http://localhost:3001';
+        }
+      }
       const response = await fetch(`${apiUrl}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

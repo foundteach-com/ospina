@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, UseGuards } from '@nestjs/common';
 import { ContactService } from './contact.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('contact')
 export class ContactController {
@@ -13,11 +14,13 @@ export class ContactController {
     return this.contactService.createNotification(data);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.contactService.getNotifications();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/read')
   markAsRead(@Param('id') id: string) {
     return this.contactService.markAsRead(id);

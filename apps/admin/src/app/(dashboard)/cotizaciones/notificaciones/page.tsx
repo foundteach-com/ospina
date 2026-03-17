@@ -24,7 +24,17 @@ export default function NotificacionesPage() {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/contact`, {
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        } else {
+          apiUrl = 'http://localhost:3001';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/contact`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -45,7 +55,17 @@ export default function NotificacionesPage() {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/contact/${id}/read`, {
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        } else {
+          apiUrl = 'http://localhost:3001';
+        }
+      }
+
+      const response = await fetch(`${apiUrl}/contact/${id}/read`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
