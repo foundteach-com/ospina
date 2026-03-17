@@ -122,7 +122,10 @@ const menuItems = [
         <polyline points="10 9 9 9 8 9" />
       </svg>
     ),
-    children: [{ name: 'Movimientos de Cotizaciones', href: '/cotizaciones' }],
+    children: [
+      { name: 'Movimientos de Cotizaciones', href: '/cotizaciones' },
+      { name: 'Notificaciones', href: '/cotizaciones/notificaciones' }
+    ],
   },
   {
     name: 'Flujo de Caja',

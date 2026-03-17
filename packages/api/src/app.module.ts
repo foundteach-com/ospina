@@ -18,6 +18,7 @@ import { StorageModule } from './storage/storage.module';
 import { SettingsModule } from './settings/settings.module';
 import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
 import { InternalMovementsModule } from './internal-movements/internal-movements.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { InternalMovementsModule } from './internal-movements/internal-movements
     SettingsModule,
     CotizacionesModule,
     InternalMovementsModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -275,3 +275,14 @@ enum InternalMovementType {
   OWNER_WITHDRAWAL
   INTERNAL_USE
 }
+
+model ContactNotification {
+  id        String   @id @default(cuid())
+  nombre    String
+  empresa   String?
+  email     String
+  telefono  String
+  mensaje   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

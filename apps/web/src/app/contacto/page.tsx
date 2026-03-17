@@ -56,14 +56,27 @@ export default function ContactoPage() {
     e.preventDefault();
     setSending(true);
     
-    // Simular envío
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setSending(false);
-    setSent(true);
-    setFormData({ nombre: '', empresa: '', email: '', telefono: '', mensaje: '' });
-    
-    setTimeout(() => setSent(false), 5000);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error enviando formulario');
+      }
+
+      setSent(true);
+      setFormData({ nombre: '', empresa: '', email: '', telefono: '', mensaje: '' });
+      setTimeout(() => setSent(false), 5000);
+    } catch (error) {
+      console.error('Error al enviar mensaje:', error);
+      alert('Hubo un problema al enviar tu mensaje. Por favor intenta de nuevo.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
