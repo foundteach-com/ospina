@@ -19,10 +19,15 @@ export default function Header() {
       <div className="bg-blue-900 text-white py-2.5 text-sm hidden sm:block border-b border-blue-800">
         <div className="container-custom flex justify-between items-center text-[12px] font-medium tracking-wide">
           <div className="flex items-center gap-6">
-            <span className="flex items-center gap-2 opacity-90">
-              <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
+            <a 
+              href="https://maps.google.com/?q=Cra.+14+%2324A+-+18,+Yopal,+Casanare" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 opacity-90 hover:opacity-100 hover:text-blue-300 transition-all group/loc"
+            >
+              <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse group-hover/loc:bg-blue-300"></span>
               Yopal, Casanare
-            </span>
+            </a>
             <a 
               href="https://wa.me/573227790154" 
               target="_blank" 
@@ -35,14 +40,14 @@ export default function Header() {
           </div>
           <div className="flex items-center gap-6">
             <div className="hidden lg:flex items-center gap-4">
-              <a href="#" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="Facebook">
+              <a href="https://www.linkedin.com/company/ospina-comercializadora-y-suministros/" target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="LinkedIn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+              </a>
+              <a href="https://www.facebook.com/ospina.comercializadora.y.suministros" target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="Facebook">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
               </a>
-              <a href="#" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="Instagram">
+              <a href="https://www.instagram.com/ospinacs/" target="_blank" rel="noopener noreferrer" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="Instagram">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
-              </a>
-              <a href="#" className="opacity-80 hover:opacity-100 hover:text-blue-300 transition-all duration-300 transform hover:scale-110" title="LinkedIn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>
               </a>
             </div>
             <div className="h-4 w-px bg-blue-700/50 mx-1 hidden lg:block"></div>
