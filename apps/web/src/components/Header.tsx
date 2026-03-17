@@ -14,7 +14,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-gray-200/50">
+    <header className="relative w-full z-50 glass border-b border-gray-100 bg-white/95">
       <div className="container-custom">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
