@@ -100,12 +100,14 @@ export default function Header() {
               <div className="hidden sm:flex items-center h-10 w-px bg-gray-200 mx-1"></div>
               
               <div className="hidden md:block">
-                <Link
-                  href="/contacto"
-                  className="px-8 py-3.5 bg-blue-700 text-white text-sm font-bold rounded-2xl hover:bg-blue-800 transition-all duration-500 shadow-[0_10px_20px_-5px_rgba(29,78,216,0.3)] hover:shadow-[0_15px_25px_-5px_rgba(29,78,216,0.4)] hover:-translate-y-0.5"
+                <a
+                  href="https://wa.me/573227790154?text=Hola,%20me%20gustaría%20solicitar%20una%20cotización."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-8 py-3.5 bg-blue-700 text-white text-sm font-bold rounded-2xl hover:bg-blue-800 transition-all duration-500 shadow-[0_10px_20px_-5px_rgba(29,78,216,0.3)] hover:shadow-[0_15px_25px_-5px_rgba(29,78,216,0.4)] hover:-translate-y-0.5 inline-block text-center"
                 >
                   Solicitar Cotización
-                </Link>
+                </a>
               </div>
 
               {/* Mobile Menu Button */}
@@ -146,13 +148,15 @@ export default function Header() {
                 </Link>
               ))}
               <div className="pt-4 mt-2">
-                <Link
-                  href="/contacto"
+                <a
+                  href="https://wa.me/573227790154?text=Hola,%20me%20gustaría%20solicitar%20una%20cotización."
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center justify-center w-full px-8 py-4 bg-blue-700 text-white font-bold rounded-2xl hover:bg-blue-800 shadow-lg transition-all"
                 >
                   Cotizar Ahora
-                </Link>
+                </a>
               </div>
             </nav>
           </div>
