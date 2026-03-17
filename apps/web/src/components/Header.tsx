@@ -77,7 +77,7 @@ export default function Header() {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-gray-900 tracking-tighter leading-none group-hover:text-blue-700 transition-colors">OSPINA</span>
-                <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mt-1.5 leading-tight">Comercializador y Suministros</span>
+                <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mt-1.5 leading-tight">Comercializadora & Suministros</span>
               </div>
             </Link>
 
