@@ -85,18 +85,25 @@ export default function ProductDetailPage() {
   if (!product) return <div className="p-8 text-white">Producto no encontrado.</div>;
 
   // Calculations
-  const purchasePrice = Number(product.purchasePrice || 0);
-  const purchaseIvaPercent = Number(product.purchaseIvaPercent || 0);
-  const purchaseIvaValue = purchasePrice * (purchaseIvaPercent / 100);
-  const purchasePriceWithIva = purchasePrice + purchaseIvaValue;
+  const pPriceFull = Number(product.purchasePrice || 0);
+  const pIvaP = Number(product.purchaseIvaPercent || 0);
+  const uP = Number(product.utilityPercent || 0);
+  const sIvaP = Number(product.salesIvaPercent || 0);
 
-  const utilityPercent = Number(product.utilityPercent || 0);
-  const utilityValue = purchasePrice * (utilityPercent / 100);
-  const sellingPrice = purchasePrice + utilityValue;
+  // 1. Quitar IVA del costo
+  const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+  const pIvaValue = pPriceFull - purchasePriceNet;
 
-  const salesIvaPercent = Number(product.salesIvaPercent || 0);
-  const salesIvaValue = sellingPrice * (salesIvaPercent / 100);
-  const sellingPriceWithIva = sellingPrice + salesIvaValue;
+  // 2. Venta (sin IVA) usando MARGEN
+  const divisor = (1 - (uP / 100));
+  const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
+
+  // 3. Utilidad
+  const utilityValue = sellingPriceNet - purchasePriceNet;
+
+  // 4. Venta Final con IVA
+  const salesIvaValue = sellingPriceNet * (sIvaP / 100);
+  const sellingPriceWithIva = sellingPriceNet + salesIvaValue;
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -272,25 +279,25 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase mb-1">Precio Compra</p>
+                  <p className="text-[10px] text-gray-500 uppercase mb-1">Costo Base (sin IVA)</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${purchasePrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${purchasePriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">% IVA</p>
-                  <p className="text-base text-gray-900 font-semibold">{purchaseIvaPercent}%</p>
+                  <p className="text-base text-gray-900 font-semibold">{pIvaP}%</p>
                 </div>
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Valor IVA</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${purchaseIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${pIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-blue-600 uppercase mb-1 font-bold">Compra + IVA</p>
+                  <p className="text-[10px] text-blue-600 uppercase mb-1 font-bold">Total con IVA</p>
                   <p className="text-base text-blue-600 font-bold">
-                    ${purchasePriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -303,21 +310,21 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase mb-1">% Utilidad</p>
-                  <p className="text-base text-gray-900 font-semibold">{utilityPercent}%</p>
+                  <p className="text-[10px] text-gray-500 uppercase mb-1">% Margen</p>
+                  <p className="text-base text-gray-900 font-semibold">{uP}%</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase mb-1">Valor Utilidad</p>
+                  <p className="text-[10px] text-gray-500 uppercase mb-1">Utilidad Neta</p>
                   <p className="text-base text-gray-900 font-semibold">
                     ${utilityValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-[10px] text-indigo-600 uppercase mb-1 font-bold">
-                    Precio de Venta (Neto)
+                    Venta Base (sin IVA)
                   </p>
                   <p className="text-base text-indigo-600 font-bold">
-                    ${sellingPrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${sellingPriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -331,7 +338,7 @@ export default function ProductDetailPage() {
                 </div>
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">% IVA Venta</p>
-                  <p className="text-base text-gray-900 font-semibold">{salesIvaPercent}%</p>
+                  <p className="text-base text-gray-900 font-semibold">{sIvaP}%</p>
                 </div>
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Valor IVA Venta</p>

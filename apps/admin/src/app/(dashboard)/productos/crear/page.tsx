@@ -108,17 +108,25 @@ function CreateProductForm() {
   };
 
   // Calculations
-  const pPrice = parseFloat(formData.purchasePrice || '0');
+  const pPriceFull = parseFloat(formData.purchasePrice || '0');
   const pIvaP = parseFloat(formData.purchaseIvaPercent || '0');
   const uP = parseFloat(formData.utilityPercent || '0');
   const sIvaP = parseFloat(formData.salesIvaPercent || '0');
 
-  const pIvaValue = pPrice * (pIvaP / 100);
-  const pPriceWithIva = pPrice + pIvaValue;
-  const utilityValue = pPrice * (uP / 100);
-  const sellingPrice = pPrice + utilityValue;
-  const sIvaValue = sellingPrice * (sIvaP / 100);
-  const sPriceWithIva = sellingPrice + sIvaValue;
+  // 1. Quitar IVA del costo: Costo sin IVA = Precio de compra / (1 + IVA)
+  const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+  const pIvaValue = pPriceFull - purchasePriceNet;
+
+  // 2. Definir precio de venta (sin IVA) usando MARGEN: Precio = Costo / (1 - margen)
+  const divisor = (1 - (uP / 100));
+  const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
+
+  // 3. Calcular la utilidad: Utilidad = Precio de venta (sin IVA) - Costo (sin IVA)
+  const utilityValue = sellingPriceNet - purchasePriceNet;
+
+  // 4. Calcular precio final con IVA de venta
+  const sIvaValue = sellingPriceNet * (sIvaP / 100);
+  const sPriceWithIva = sellingPriceNet + sIvaValue;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,7 +362,7 @@ function CreateProductForm() {
             <div className="space-y-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
               <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Compra</h3>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Precio de Compra (sin IVA)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Precio de Compra (con IVA)</label>
                 <input
                   type="number"
                   name="purchasePrice"
@@ -378,12 +386,12 @@ function CreateProductForm() {
               </div>
               <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex justify-between text-xs text-gray-500">
-                  <span>Valor IVA Compra:</span>
-                  <span>${pIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>Costo sin IVA:</span>
+                  <span>${purchasePriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-gray-900">
-                  <span>Subtotal + IVA:</span>
-                  <span className="text-blue-600">${pPriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>Total con IVA:</span>
+                  <span className="text-blue-600">${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>
@@ -406,14 +414,14 @@ function CreateProductForm() {
               </div>
               <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex justify-between text-xs text-gray-500">
-                  <span>Margen Utilidad:</span>
+                  <span>Ganancia Neta:</span>
                   <span>${utilityValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-gray-900">
-                  <span>Precio de Venta:</span>
-                  <span className="text-indigo-600">${sellingPrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>Precio Venta (Base):</span>
+                  <span className="text-indigo-600">${sellingPriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
-                <p className="text-[10px] text-gray-500 italic mt-1">(Precio sin IVA de venta)</p>
+                <p className="text-[10px] text-gray-500 italic mt-1">(Precio antes de IVA de venta)</p>
               </div>
             </div>
 
