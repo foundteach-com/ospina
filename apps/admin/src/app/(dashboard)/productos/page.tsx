@@ -96,13 +96,25 @@ export default function ProductsPage() {
         }
 
         if (sortConfig.key === 'finalPrice') {
-          const aPurchasePrice = Number(a.purchasePrice || 0);
-          const aSellingPrice = aPurchasePrice + (aPurchasePrice * (Number(a.utilityPercent || 0) / 100));
-          aValue = aSellingPrice + (aSellingPrice * (Number(a.salesIvaPercent || 0) / 100));
+          const pPriceFull = Number(a.purchasePrice || 0);
+          const pIvaP = Number(a.purchaseIvaPercent || 0);
+          const uP = Number(a.utilityPercent || 0);
+          const sIvaP = Number(a.salesIvaPercent || 0);
 
-          const bPurchasePrice = Number(b.purchasePrice || 0);
-          const bSellingPrice = bPurchasePrice + (bPurchasePrice * (Number(b.utilityPercent || 0) / 100));
-          bValue = bSellingPrice + (bSellingPrice * (Number(b.salesIvaPercent || 0) / 100));
+          const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+          const divisor = (1 - (uP / 100));
+          const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
+          aValue = sellingPriceNet * (1 + (sIvaP / 100));
+
+          const bpPriceFull = Number(b.purchasePrice || 0);
+          const bpIvaP = Number(b.purchaseIvaPercent || 0);
+          const buP = Number(b.utilityPercent || 0);
+          const bsIvaP = Number(b.salesIvaPercent || 0);
+
+          const bPurchasePriceNet = bpPriceFull / (1 + (bpIvaP / 100));
+          const bDivisor = (1 - (buP / 100));
+          const bSellingPriceNet = bDivisor > 0 ? (bPurchasePriceNet / bDivisor) : 0;
+          bValue = bSellingPriceNet * (1 + (bsIvaP / 100));
         }
 
         if (aValue < bValue) {
@@ -327,13 +339,15 @@ export default function ProductsPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredProducts.map((product) => {
-                const purchasePrice = Number(product.purchasePrice || 0);
-                const purchaseIva = purchasePrice * (Number(product.purchaseIvaPercent || 0) / 100);
-                const costWithIva = purchasePrice + purchaseIva;
-                const utilityValue = purchasePrice * (Number(product.utilityPercent || 0) / 100);
-                const sellingPrice = purchasePrice + utilityValue;
-                const salesIvaValue = sellingPrice * (Number(product.salesIvaPercent || 0) / 100);
-                const finalPrice = sellingPrice + salesIvaValue;
+                const pPriceFull = Number(product.purchasePrice || 0);
+                const pIvaP = Number(product.purchaseIvaPercent || 0);
+                const uP = Number(product.utilityPercent || 0);
+                const sIvaP = Number(product.salesIvaPercent || 0);
+
+                const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+                const divisor = (1 - (uP / 100));
+                const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
+                const finalPrice = sellingPriceNet * (1 + (sIvaP / 100));
 
                 return (
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
