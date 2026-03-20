@@ -238,16 +238,49 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Hero Image Placeholder */}
+            {/* Hero Image */}
             <div className="hidden lg:block">
-              <div className="relative">
-                <div className="w-full h-96 bg-white/10 backdrop-blur rounded-3xl border border-white/20 flex items-center justify-center animate-float">
-                  <div className="text-center text-white/80">
-                    <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <span className="text-5xl font-bold">O</span>
+              <div className="relative group">
+                {/* Decorative blobs behind the image matching brand colors */}
+                <div className="absolute -top-10 -right-10 w-64 h-64 bg-green-500/30 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-blue-700/30 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                
+                <div className="relative w-full h-[550px] bg-white/10 backdrop-blur rounded-[2rem] border border-white/20 overflow-hidden shadow-2xl animate-float group-hover:shadow-blue-500/20 transition-all duration-500">
+                  <img 
+                    src="/img/hero-supplies.png" 
+                    alt="Suministros y Soluciones Ospina" 
+                    className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110"
+                  />
+                  
+                  {/* Overlay Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#020b33] via-[#020b33]/40 to-transparent"></div>
+                  
+                  {/* Floating Content over Image */}
+                  <div className="absolute bottom-8 left-8 right-8 text-white p-6 backdrop-blur-md bg-[#020b33]/60 rounded-2xl border border-white/20 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500 shadow-[0_8px_32px_rgba(2,11,51,0.5)]">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="w-16 h-16 bg-white rounded-xl p-1.5 flex items-center justify-center shadow-lg">
+                        <img 
+                          src="/img/logo.jpg" 
+                          alt="Logo OSPINA" 
+                          className="w-full h-full object-contain rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-black leading-none tracking-wide" style={{ color: '#000033' }}>
+                          <span className="text-white">OSPINA</span>
+                        </p>
+                        <p className="text-gray-300 text-[10px] uppercase font-semibold tracking-wider mt-1 border-t border-white/20 pt-1">Comercializadora y Suministros</p>
+                      </div>
                     </div>
-                    <p className="text-lg font-medium">OSPINA</p>
-                    <p className="text-sm">Comercializadora & Suministros</p>
+                    <p className="text-sm text-blue-50 font-medium leading-relaxed mt-2 pl-1">
+                      Papelería · Repuestos · Aseo Institucional
+                    </p>
+                  </div>
+                  
+                  {/* Glass Tag */}
+                  <div className="absolute top-6 left-6 px-4 py-2 bg-white/20 backdrop-blur-lg border border-white/30 rounded-full text-xs font-bold text-white tracking-wider uppercase shadow-lg">
+                    Yopal · Casanare
                   </div>
                 </div>
               </div>
