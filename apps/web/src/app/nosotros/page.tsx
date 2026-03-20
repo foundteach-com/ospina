@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Nosotros | OSPINA Comercializadora y Suministros',
-  description: 'Conoce nuestra historia, misión, visión y valores. Más de 15 años siendo el proveedor de confianza en Yopal, Casanare.',
+  description: 'Conoce nuestra historia, misión, visión y valores. Más de 3 años siendo el proveedor de confianza en Yopal, Casanare.',
 };
 
 const values = [
@@ -74,7 +74,7 @@ export default function NosotrosPage() {
             Sobre Nosotros
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-            Más de 15 años siendo el aliado estratégico de empresas e instituciones en Casanare
+            Más de 3 años siendo el aliado estratégico de empresas e instituciones en Casanare
           </p>
         </div>
       </section>

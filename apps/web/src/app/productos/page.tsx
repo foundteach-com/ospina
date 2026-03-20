@@ -148,7 +148,7 @@ export default function ProductosPage() {
             Nuestros Productos
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-            Más de 500 productos en 8 líneas para satisfacer todas las necesidades de tu empresa
+            Más de 200 productos en 8 líneas para satisfacer todas las necesidades de tu empresa
           </p>
         </div>
       </section>

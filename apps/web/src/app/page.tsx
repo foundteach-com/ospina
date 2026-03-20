@@ -228,11 +228,11 @@ export default function HomePage() {
                   <div className="text-blue-200 text-sm">Líneas de Productos</div>
                 </div>
                 <div>
-                  <div className="text-3xl md:text-4xl font-bold">500+</div>
+                  <div className="text-3xl md:text-4xl font-bold">200+</div>
                   <div className="text-blue-200 text-sm">Productos</div>
                 </div>
                 <div>
-                  <div className="text-3xl md:text-4xl font-bold">15+</div>
+                  <div className="text-3xl md:text-4xl font-bold">3+</div>
                   <div className="text-blue-200 text-sm">Años de Experiencia</div>
                 </div>
               </div>
@@ -347,7 +347,7 @@ export default function HomePage() {
                 <span className="text-amber-400"> Abastecimiento</span>
               </h2>
               <p className="text-gray-400 text-lg mb-8 leading-relaxed">
-                Con más de 15 años de experiencia, nos hemos consolidado como el proveedor de confianza para empresas, instituciones y comercios en Yopal, Casanare y toda la región.
+                Con más de 3 años de experiencia, nos hemos consolidado como el proveedor de confianza para empresas, instituciones y comercios en Yopal, Casanare y toda la región.
               </p>
               
               <Link href="/nosotros" className="btn-primary inline-flex items-center gap-2">
