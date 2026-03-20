@@ -40,7 +40,7 @@ export default function BannerCarousel() {
               <img 
                 src={src} 
                 alt={`Banner principal ${index + 1}`} 
-                className="w-full h-full object-cover sm:object-contain bg-gray-50"
+                className="w-full h-full object-cover"
               />
             </div>
           ))}
