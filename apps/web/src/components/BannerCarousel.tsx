@@ -5,7 +5,8 @@ import { useState, useEffect, useCallback } from 'react';
 const BANNERS = [
   '/img/banners/banner-1.png',
   '/img/banners/banner-2.png',
-  '/img/banners/banner-3.jpg',
+  '/img/banners/banner-3.png',
+  '/img/banners/banner-4.png',
 ];
 
 export default function BannerCarousel() {
@@ -59,7 +60,7 @@ export default function BannerCarousel() {
           className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/70 backdrop-blur-sm hover:bg-white text-blue-900 shadow-[0_4px_12px_rgba(0,0,0,0.1)] flex items-center justify-center transition-all opacity-0 md:group-hover:opacity-100 hover:scale-110"
           aria-label="Siguiente"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6 6-6"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
 
         {/* Dots */}
