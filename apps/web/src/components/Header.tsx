@@ -9,7 +9,7 @@ export default function Header() {
   const navItems = [
     { name: 'Inicio', href: '/' },
     { name: 'Nosotros', href: '/nosotros' },
-    { name: 'Productos', href: '/productos' },
+    { name: 'Productos', href: '/docs/catalogo-ospina.pdf', isExternal: true },
     { name: 'Contacto', href: '/contacto' },
   ];
 
@@ -91,6 +91,8 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
+                  target={item.isExternal ? "_blank" : undefined}
+                  rel={item.isExternal ? "noopener noreferrer" : undefined}
                   className="text-gray-600 hover:text-blue-700 text-[15px] font-semibold tracking-tight transition-all duration-300 relative group py-2"
                 >
                   {item.name}
@@ -144,6 +146,8 @@ export default function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
+                  target={item.isExternal ? "_blank" : undefined}
+                  rel={item.isExternal ? "noopener noreferrer" : undefined}
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center justify-between px-4 py-3 text-gray-700 hover:text-blue-700 hover:bg-blue-50 rounded-xl font-semibold transition-all duration-300"
                 >
