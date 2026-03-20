@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BannerCarousel from '../components/BannerCarousel';
 
 const productLines = [
   {
@@ -288,6 +289,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Carousel Banners Section */}
+      <BannerCarousel />
 
       {/* Product Lines Section */}
       <section className="section-padding bg-gradient-section">
