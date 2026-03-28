@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDialog } from '@/context/DialogContext';
+import * as XLSX from 'xlsx';
 
 interface Product {
   id: string;
@@ -197,6 +198,40 @@ export default function ProductsPage() {
     }
   };
 
+  const exportToExcel = () => {
+    const dataToExport = filteredProducts.map(product => {
+      const pPriceFull = Number(product.purchasePrice || 0);
+      const pIvaP = Number(product.purchaseIvaPercent || 0);
+      const uP = Number(product.utilityPercent || 0);
+      const sIvaP = Number(product.salesIvaPercent || 0);
+
+      const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+      const divisor = (1 - (uP / 100));
+      const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
+      const finalPrice = sellingPriceNet * (1 + (sIvaP / 100));
+
+      return {
+        'Código': product.code,
+        'Nombre': product.name,
+        'Descripción': product.description || '-',
+        'Marca': product.brand || '-',
+        'Categoría': product.category?.name || 'S/C',
+        'Precio Compra (Bruto)': pPriceFull,
+        'IVA Compra (%)': pIvaP,
+        'Utilidad (%)': uP,
+        'IVA Venta (%)': sIvaP,
+        'Precio Venta (Neto)': sellingPriceNet,
+        'Precio Venta + IVA': finalPrice,
+        'Stock': product.currentStock || 0
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+    XLSX.writeFile(wb, `Listado_Productos_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const handleTogglePublished = async (id: string, currentState: boolean) => {
     try {
       const token = localStorage.getItem('access_token');
@@ -268,6 +303,13 @@ export default function ProductsPage() {
               className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
             />
           </div>
+          <button
+            onClick={exportToExcel}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all shadow-lg shadow-green-600/20 flex items-center gap-2 whitespace-nowrap"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
           {userRole !== 'VIEWER' && (
             <Link
               href="/productos/crear"
