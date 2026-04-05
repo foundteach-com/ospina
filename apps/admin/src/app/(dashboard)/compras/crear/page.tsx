@@ -123,12 +123,12 @@ export default function CreatePurchasePage() {
     if (product) {
       setItems(prevItems => {
         const newItems = [...prevItems];
-        // Use purchasePrice as the Base Cost (Net) directly
-        const basePrice = parseFloat(product.purchasePrice);
+        // purchasePrice in DB already include IVA
+        const purchasePriceFull = parseFloat(product.purchasePrice);
         const ivaPercent = product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
         
-        // Calculate Total (Gross) from Base + IVA
-        const totalWithIva = basePrice * (1 + (ivaPercent / 100));
+        // Derive Base from Full
+        const basePrice = purchasePriceFull / (1 + (ivaPercent / 100));
         
         newItems[index] = { 
           ...newItems[index], 
@@ -136,7 +136,7 @@ export default function CreatePurchasePage() {
           code: product.code, 
           basePrice: Math.round(basePrice),
           ivaPercent: ivaPercent,
-          purchasePrice: Math.round(totalWithIva), // This is the total with IVA
+          purchasePrice: Math.round(purchasePriceFull), // This is the total with IVA
           reteFuentePercent: 0, 
           reteIvaPercent: 0 
         };
@@ -156,10 +156,10 @@ export default function CreatePurchasePage() {
     setItems(prevItems => {
       const newItems = [...prevItems];
       
-      const basePrice = product ? parseFloat(product.purchasePrice) : 0; 
+      const purchasePriceFull = product ? parseFloat(product.purchasePrice) : 0; 
       const ivaPercent = product && product.purchaseIvaPercent ? parseFloat(product.purchaseIvaPercent) : 19;
       
-      const totalWithIva = basePrice * (1 + (ivaPercent / 100));
+      const basePrice = purchasePriceFull / (1 + (ivaPercent / 100));
       
       newItems[index] = { 
         ...newItems[index], 
@@ -167,7 +167,7 @@ export default function CreatePurchasePage() {
         code: product ? product.code : '',
         basePrice: Math.round(basePrice),
         ivaPercent: ivaPercent,
-        purchasePrice: Math.round(totalWithIva),
+        purchasePrice: Math.round(purchasePriceFull),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
