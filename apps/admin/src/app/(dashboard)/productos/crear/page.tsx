@@ -387,11 +387,11 @@ function CreateProductForm() {
               <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Costo sin IVA:</span>
-                  <span>${purchasePriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>${purchasePriceNet.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-gray-900">
                   <span>Total con IVA:</span>
-                  <span className="text-blue-600">${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-blue-600">${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
               </div>
             </div>
@@ -415,11 +415,11 @@ function CreateProductForm() {
               <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Ganancia Neta:</span>
-                  <span>${utilityValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>${utilityValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-gray-900">
                   <span>Precio Venta (Base):</span>
-                  <span className="text-indigo-600">${sellingPriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-indigo-600">${sellingPriceNet.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                 <p className="text-[10px] text-gray-500 italic mt-1">(Precio antes de IVA de venta)</p>
               </div>
@@ -444,11 +444,11 @@ function CreateProductForm() {
               <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Valor IVA Venta:</span>
-                  <span>${sIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>${sIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-gray-900">
                   <span>Venta + IVA:</span>
-                  <span className="text-green-600">${sPriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-green-600">${sPriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
               </div>
             </div>

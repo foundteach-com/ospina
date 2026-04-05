@@ -229,7 +229,7 @@ export default function CreateSalePage() {
       }
       acc.ivaBreakdown[ivaKey] += ivaLine;
       
-      acc.total += totalLine;
+      acc.total += Math.round(totalLine);
       return acc;
     }, { base: 0, ivaBreakdown: {} as Record<string, number>, total: 0 });
   };
@@ -297,7 +297,7 @@ export default function CreateSalePage() {
         return {
           productId: item.productId,
           quantity: item.quantity,
-          salePrice: Number(salePriceWithIva.toFixed(2)) // Sending Total Unit Price with IVA for backend consistency
+          salePrice: Math.round(salePriceWithIva) // Sending Total Unit Price rounded for backend consistency
         };
       });
 
@@ -609,7 +609,7 @@ export default function CreateSalePage() {
                       const net = item.quantity * discounted;
                       const iva = net * (item.ivaPercent / 100);
                       const t = net + iva;
-                      return `$${t.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                      return `$${t.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                     })()}
                   </div>
                 </div>
@@ -646,14 +646,14 @@ export default function CreateSalePage() {
               <div className="text-right space-y-2 w-full md:w-1/3 min-w-[300px]">
                 <div className="flex justify-between gap-8 text-sm text-gray-500 pb-1 border-b border-gray-100">
                   <span>Valor Neto (Sin IVA)</span>
-                  <span>${totals.base.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>${totals.base.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                 
                 {/* Desglose de IVA */}
                 {Object.entries(totals.ivaBreakdown).map(([percent, value]) => (
                   <div key={percent} className="flex justify-between gap-8 text-sm text-gray-500 pb-1 border-b border-gray-100">
                     <span>IVA ({percent}%)</span>
-                    <span>${value.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>${value.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                   </div>
                 ))}
 
@@ -661,7 +661,7 @@ export default function CreateSalePage() {
                   <div className="flex justify-between items-end gap-8">
                     <span className="text-base font-bold text-gray-800">Total a Pagar</span>
                     <span className="text-3xl font-bold text-green-600">
-                      ${totals.total.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ${totals.total.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </span>
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDialog } from '@/context/DialogContext';
 import * as XLSX from 'xlsx';
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 
 interface Product {
   id: string;
@@ -105,7 +106,7 @@ export default function ProductsPage() {
           const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
           const divisor = (1 - (uP / 100));
           const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-          aValue = sellingPriceNet * (1 + (sIvaP / 100));
+          aValue = Math.round(sellingPriceNet * (1 + (sIvaP / 100)));
 
           const bpPriceFull = Number(b.purchasePrice || 0);
           const bpIvaP = Number(b.purchaseIvaPercent || 0);
@@ -115,7 +116,7 @@ export default function ProductsPage() {
           const bPurchasePriceNet = bpPriceFull / (1 + (bpIvaP / 100));
           const bDivisor = (1 - (buP / 100));
           const bSellingPriceNet = bDivisor > 0 ? (bPurchasePriceNet / bDivisor) : 0;
-          bValue = bSellingPriceNet * (1 + (bsIvaP / 100));
+          bValue = Math.round(bSellingPriceNet * (1 + (bsIvaP / 100)));
         }
 
         if (aValue < bValue) {
@@ -208,7 +209,7 @@ export default function ProductsPage() {
       const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
       const divisor = (1 - (uP / 100));
       const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-      const finalPrice = sellingPriceNet * (1 + (sIvaP / 100));
+      const finalPrice = Math.round(sellingPriceNet * (1 + (sIvaP / 100)));
 
       return {
         'Código': product.code,
@@ -389,7 +390,7 @@ export default function ProductsPage() {
                 const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
                 const divisor = (1 - (uP / 100));
                 const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-                const finalPrice = sellingPriceNet * (1 + (sIvaP / 100));
+                const finalPrice = Math.round(sellingPriceNet * (1 + (sIvaP / 100)));
 
                 return (
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
@@ -409,7 +410,7 @@ export default function ProductsPage() {
                       {product.brand || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-bold">
-                      ${finalPrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatCurrency(finalPrice)}
                     </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                     <span className={`font-bold ${
@@ -417,7 +418,7 @@ export default function ProductsPage() {
                       (product.currentStock || 0) < 10 ? 'text-yellow-600' : 
                       'text-gray-900'
                     }`}>
-                      {(product.currentStock || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatNumber(product.currentStock || 0)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">

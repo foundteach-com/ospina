@@ -130,10 +130,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
              id: item.id,
              productId: item.productId,
              code: code,
-             quantity: parseFloat(item.quantity),
-             purchasePrice: Number(purchasePrice.toFixed(2)), // Total + IVA unit price
+             quantity: Math.round(parseFloat(item.quantity)),
+             purchasePrice: Math.round(purchasePrice), // Total + IVA unit price
              ivaPercent: productIva, 
-             basePrice: Number(basePrice.toFixed(2)),
+             basePrice: Math.round(basePrice),
              reteFuentePercent: item.reteFuentePercent ? parseFloat(item.reteFuentePercent) : 0,
              reteIvaPercent: item.reteIvaPercent ? parseFloat(item.reteIvaPercent) : 0,
            };
@@ -165,13 +165,13 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
         
         const calculatedTotal = base * (1 + (iva / 100));
-        currentItem.purchasePrice = Number(calculatedTotal.toFixed(2));
+        currentItem.purchasePrice = Math.round(calculatedTotal);
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
          
          const calculatedBase = total / (1 + (iva / 100));
-         currentItem.basePrice = Number(calculatedBase.toFixed(2));
+         currentItem.basePrice = Math.round(calculatedBase);
       }
 
       newItems[index] = currentItem;
@@ -196,9 +196,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           ...newItems[index], 
           productId: product.id,
           code: product.code,
-          basePrice: Number(basePrice.toFixed(2)),
+          basePrice: Math.round(basePrice),
           ivaPercent: ivaPercent,
-          purchasePrice: Number(totalWithIva.toFixed(2)),
+          purchasePrice: Math.round(totalWithIva),
           reteFuentePercent: 0, // Reset default
           reteIvaPercent: 0 // Reset default
         };
@@ -227,9 +227,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: Number(basePrice.toFixed(2)),
+        basePrice: Math.round(basePrice),
         ivaPercent: ivaPercent,
-        purchasePrice: Number(totalWithIva.toFixed(2)),
+        purchasePrice: Math.round(totalWithIva),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -246,10 +246,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.subtotal += totalLine; // This is actually Total + IVA
-      acc.reteFuente += reteFuenteValue;
-      acc.reteIva += reteIvaValue;
-      acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
+      acc.subtotal += Math.round(totalLine); // This is actually Total + IVA
+      acc.reteFuente += Math.round(reteFuenteValue);
+      acc.reteIva += Math.round(reteIvaValue);
+      acc.totalPayable += Math.round(totalLine - reteFuenteValue - reteIvaValue);
       
       return acc;
     }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
@@ -318,8 +318,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           invoiceUrl: finalInvoiceUrl,
           items: items.filter(item => item.productId).map(item => ({
             productId: item.productId,
-            quantity: item.quantity,
-            purchasePrice: Number(item.purchasePrice.toFixed(2)),
+            quantity: Math.round(item.quantity),
+            purchasePrice: Math.round(item.purchasePrice),
             reteFuentePercent: item.reteFuentePercent,
             reteIvaPercent: item.reteIvaPercent,
           })),
@@ -454,10 +454,11 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   <input
                     type="number"
                     value={item.quantity}
-                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
+                    onChange={(e) => updateItem(index, 'quantity', Math.round(parseFloat(e.target.value)))}
                     className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
                     required
-                    step="0.01"
+                    step="1"
+                    min="1"
                   />
                 </div>
                 <div className="col-span-2">
@@ -544,20 +545,20 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
               <div className="text-right space-y-2">
                  <div className="flex justify-between gap-8 text-sm text-gray-600">
                   <span>Subtotal (Base + IVA)</span>
-                  <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteFuente</span>
-                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteIVA</span>
-                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="pt-2 border-t border-gray-200">
                     <div className="text-sm text-gray-500 mb-1">Total a Pagar</div>
                     <div className="text-2xl font-bold text-green-600">
-                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </div>
                 </div>
               </div>
