@@ -552,7 +552,7 @@ export default function CreateSalePage() {
                     value={item.ivaPercent}
                     onChange={(e) => updateItem(index, 'ivaPercent', parseFloat(e.target.value))}
                     min="0"
-                    step="0.1"
+                    step="any"
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   />
                 </div>
@@ -577,7 +577,7 @@ export default function CreateSalePage() {
                     value={item.quantity}
                     onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
                     min="0.01"
-                    step="0.01"
+                    step="any"
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   />
                   {/* Pequeño aviso de stock en desktop */}
@@ -592,7 +592,7 @@ export default function CreateSalePage() {
                     value={item.unitPriceNet}
                     onChange={(e) => updateItem(index, 'unitPriceNet', parseFloat(e.target.value))}
                     min="0"
-                    step="0.01"
+                    step="any"
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   />
                 </div>
@@ -606,7 +606,7 @@ export default function CreateSalePage() {
                     onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value))}
                     min="0"
                     max="100"
-                    step="0.1"
+                    step="any"
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   />
                 </div>
