@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { calculateSellingPrice } from '@/lib/formatters';
 
 interface Client {
   id: string;
@@ -16,6 +17,7 @@ interface Product {
   code: string;
   basePrice: string | number;
   purchasePrice?: string | number;
+  purchaseIvaPercent?: string | number;
   utilityPercent?: string | number;
   salesIvaPercent: string | number;
   measurementUnit?: string;
@@ -143,12 +145,21 @@ export default function CreateSalePage() {
   };
 
   const calculateNetSalePrice = (product: Product) => {
-    const purchase = parseFloat(product.purchasePrice?.toString() || '0');
-    const utility = parseFloat(product.utilityPercent?.toString() || '0');
-    if (purchase > 0 && utility > 0) {
-      return purchase * (1 + (utility / 100));
+    const sellingPriceNet = calculateSellingPrice(
+      product.purchasePrice,
+      product.purchaseIvaPercent,
+      product.utilityPercent
+    );
+    
+    if (sellingPriceNet > 0) {
+      return sellingPriceNet;
     }
-    return parseFloat(product.basePrice?.toString() || '0');
+    
+    // Fallback: Si no hay precio de compra configurado correctamente, usamos el basePrice
+    // pero asumiendo que basePrice ya incluye el IVA de venta (según lógica de productos)
+    const sIvaP = parseFloat(product.salesIvaPercent?.toString() || '19');
+    const bPrice = parseFloat(product.basePrice?.toString() || '0');
+    return bPrice / (1 + (sIvaP / 100));
   };
 
   const addItem = () => {
