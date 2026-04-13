@@ -26,6 +26,7 @@ export class SalesController {
       date: string;
       notes?: string;
       documentUrl?: string;
+      status?: string;
       paymentStatus?: string;
       paymentType?: string;
       paymentMethod?: string;

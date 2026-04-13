@@ -320,6 +320,7 @@ export default function CreateSalePage() {
         },
         body: JSON.stringify({
           ...formData,
+          status: formData.paymentStatus === 'PAID' ? 'COMPLETED' : 'PENDING',
           documentUrl,
           items: validItems,
         }),

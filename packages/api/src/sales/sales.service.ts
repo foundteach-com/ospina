@@ -12,6 +12,7 @@ export class SalesService {
     date: Date;
     notes?: string;
     documentUrl?: string;
+    status?: string;
     paymentStatus?: string;
     paymentType?: string;
     paymentMethod?: string;
@@ -48,6 +49,7 @@ export class SalesService {
         date: data.date,
         notes: data.notes,
         documentUrl: data.documentUrl,
+        status: data.status as any,
         paymentStatus: data.paymentStatus as any,
         paymentType: data.paymentType as any,
         paymentMethod: data.paymentMethod as any,
