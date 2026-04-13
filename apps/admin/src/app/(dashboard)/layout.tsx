@@ -238,13 +238,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       item.children?.some((child) => child.href === pathname)
     );
     if (activeGroup && !openGroups.includes(activeGroup.name)) {
-      setOpenGroups((prev) => [...prev, activeGroup.name]);
+      setOpenGroups([activeGroup.name]);
     }
   }, [pathname]);
 
   const toggleGroup = (name: string) => {
     setOpenGroups((prev) =>
-      prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
+      prev.includes(name) ? [] : [name]
     );
   };
 
