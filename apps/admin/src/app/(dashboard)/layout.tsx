@@ -231,43 +231,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/login');
   }, [router]);
 
-  // Autocierre de sesión a las 23:59:59 hora Colombia (America/Bogota).
+  // Autocierre de sesión: programa el logout para cuando expire el JWT (10 h desde el login).
   // Se re-ejecuta en cada cambio de ruta (pathname) para detectar tokens expirados
   // incluso si el navegador suspendió la pestaña y el setTimeout no disparó.
   useEffect(() => {
-    // Verificar si el token JWT ya expiró (p.ej. el usuario dejó la pestaña abierta de un día para otro)
     const token = localStorage.getItem('access_token');
     if (!token) {
       handleLogout();
       return;
     }
 
+    let expMs: number;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.exp && Date.now() / 1000 >= payload.exp) {
+      if (!payload.exp) {
         handleLogout();
         return;
       }
+      expMs = payload.exp * 1000; // convertir de segundos a milisegundos
     } catch {
       // Token malformado — cerrar sesión por precaución
       handleLogout();
       return;
     }
 
-    // Calcular tiempo hasta las 23:59:59 en hora Bogotá (igual que el backend)
-    const now = new Date();
-    const bogotaFormatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Bogota',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    const bogotaDateStr = bogotaFormatter.format(now); // "YYYY-MM-DD" en hora Bogotá
-    const endOfDayBogota = new Date(`${bogotaDateStr}T23:59:59-05:00`);
-    const timeUntilExpiration = endOfDayBogota.getTime() - now.getTime();
+    const timeUntilExpiration = expMs - Date.now();
 
     if (timeUntilExpiration <= 0) {
-      // Ya pasó la medianoche en Bogotá
+      // El token ya expiró
       handleLogout();
       return;
     }

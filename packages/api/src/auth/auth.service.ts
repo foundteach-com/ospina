@@ -36,24 +36,8 @@ export class AuthService {
   async login(user: any) {
     const payload = { username: user.email, sub: user.id, role: user.role };
 
-    // Calcular segundos hasta las 23:59:59 hora Colombia (America/Bogota, UTC-5)
-    // El servidor puede correr en UTC, por eso usamos Intl para obtener la fecha local en Bogotá
-    const now = new Date();
-    const bogotaFormatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Bogota',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    // Obtiene la fecha en formato "YYYY-MM-DD" en hora Bogotá
-    const bogotaDateStr = bogotaFormatter.format(now); // ej: "2026-04-15"
-    // Construimos las 23:59:59 de ese día en Bogotá expresadas en UTC
-    // "YYYY-MM-DDT23:59:59-05:00" (Bogotá = UTC-5)
-    const endOfDayBogota = new Date(`${bogotaDateStr}T23:59:59-05:00`);
-
-    const secondsUntilEndOfDay = Math.floor((endOfDayBogota.getTime() - now.getTime()) / 1000);
-    // Mínimo 60 segundos para no bloquear un login justo antes de medianoche
-    const expiresIn = Math.max(secondsUntilEndOfDay, 60);
+    // La sesión expira 10 horas después del login
+    const expiresIn = 10 * 60 * 60; // 36 000 segundos
 
     return {
       access_token: this.jwtService.sign(payload, { expiresIn }),
