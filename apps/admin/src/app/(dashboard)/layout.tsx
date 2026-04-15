@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -225,43 +225,54 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     router.push('/login');
-  };
+  }, [router]);
 
-  // Autocierre de sesión a las 11:59 p.m.
+  // Autocierre de sesión a las 23:59:59 hora Colombia (America/Bogota)
   useEffect(() => {
-    const setupAutoLogout = () => {
-      const now = new Date();
-      const endOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        23,
-        59,
-        59,
-        0
-      );
-
-      const timeUntilExpiration = endOfDay.getTime() - now.getTime();
-
-      if (timeUntilExpiration <= 0) {
-        // Si por alguna razón ya es después de las 11:59 p.m.
-        handleLogout();
-      } else {
-        const timer = setTimeout(() => {
+    // Verificar si el token JWT ya expiró (p.ej. el usuario dejó la pestaña abierta de un día para otro)
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp && Date.now() / 1000 >= payload.exp) {
           handleLogout();
-        }, timeUntilExpiration);
-
-        return () => clearTimeout(timer);
+          return;
+        }
+      } catch {
+        // Token malformado — cerrar sesión por precaución
+        handleLogout();
+        return;
       }
-    };
+    }
 
-    const cleanup = setupAutoLogout();
-    return cleanup;
-  }, []);
+    // Calcular tiempo hasta las 23:59:59 en hora Bogotá (igual que el backend)
+    const now = new Date();
+    const bogotaFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const bogotaDateStr = bogotaFormatter.format(now); // "YYYY-MM-DD" en hora Bogotá
+    const endOfDayBogota = new Date(`${bogotaDateStr}T23:59:59-05:00`);
+    const timeUntilExpiration = endOfDayBogota.getTime() - now.getTime();
+
+    if (timeUntilExpiration <= 0) {
+      // Ya pasó la medianoche en Bogotá
+      handleLogout();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      handleLogout();
+    }, timeUntilExpiration);
+
+    return () => clearTimeout(timer);
+  }, [handleLogout]);
 
   const [openGroups, setOpenGroups] = useState<string[]>([]);
 
