@@ -35,8 +35,21 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { username: user.email, sub: user.id, role: user.role };
+
+    // Calcular segundos hasta las 23:59:59 del día actual (hora del servidor)
+    const now = new Date();
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23, 59, 59, 0
+    );
+    const secondsUntilEndOfDay = Math.floor((endOfDay.getTime() - now.getTime()) / 1000);
+    // Mínimo 60 segundos para no bloquear un login justo antes de medianoche
+    const expiresIn = Math.max(secondsUntilEndOfDay, 60);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn }),
       user: {
         id: user.id,
         email: user.email,

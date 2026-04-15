@@ -231,6 +231,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/login');
   };
 
+  // Autocierre de sesión a las 11:59 p.m.
+  useEffect(() => {
+    const setupAutoLogout = () => {
+      const now = new Date();
+      const endOfDay = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        0
+      );
+
+      const timeUntilExpiration = endOfDay.getTime() - now.getTime();
+
+      if (timeUntilExpiration <= 0) {
+        // Si por alguna razón ya es después de las 11:59 p.m.
+        handleLogout();
+      } else {
+        const timer = setTimeout(() => {
+          handleLogout();
+        }, timeUntilExpiration);
+
+        return () => clearTimeout(timer);
+      }
+    };
+
+    const cleanup = setupAutoLogout();
+    return cleanup;
+  }, []);
+
   const [openGroups, setOpenGroups] = useState<string[]>([]);
 
   useEffect(() => {
