@@ -231,22 +231,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/login');
   }, [router]);
 
-  // Autocierre de sesión a las 23:59:59 hora Colombia (America/Bogota)
+  // Autocierre de sesión a las 23:59:59 hora Colombia (America/Bogota).
+  // Se re-ejecuta en cada cambio de ruta (pathname) para detectar tokens expirados
+  // incluso si el navegador suspendió la pestaña y el setTimeout no disparó.
   useEffect(() => {
     // Verificar si el token JWT ya expiró (p.ej. el usuario dejó la pestaña abierta de un día para otro)
     const token = localStorage.getItem('access_token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.exp && Date.now() / 1000 >= payload.exp) {
-          handleLogout();
-          return;
-        }
-      } catch {
-        // Token malformado — cerrar sesión por precaución
+    if (!token) {
+      handleLogout();
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.exp && Date.now() / 1000 >= payload.exp) {
         handleLogout();
         return;
       }
+    } catch {
+      // Token malformado — cerrar sesión por precaución
+      handleLogout();
+      return;
     }
 
     // Calcular tiempo hasta las 23:59:59 en hora Bogotá (igual que el backend)
@@ -272,7 +277,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }, timeUntilExpiration);
 
     return () => clearTimeout(timer);
-  }, [handleLogout]);
+  }, [handleLogout, pathname]);
 
   const [openGroups, setOpenGroups] = useState<string[]>([]);
 
