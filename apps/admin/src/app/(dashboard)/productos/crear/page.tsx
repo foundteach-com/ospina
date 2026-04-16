@@ -368,7 +368,26 @@ function CreateProductForm() {
                   name="purchasePrice"
                   value={formData.purchasePrice}
                   onChange={handleChange}
+                  step="any"
                   className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Precio de Compra (sin IVA)</label>
+                <input
+                  type="number"
+                  value={purchasePriceNet || ''}
+                  onChange={(e) => {
+                    const netValue = parseFloat(e.target.value || '0');
+                    const iva = parseFloat(formData.purchaseIvaPercent || '0');
+                    const fullValue = netValue * (1 + (iva / 100));
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      purchasePrice: (Math.round(fullValue * 100) / 100).toString() 
+                    }));
+                  }}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-500/50"
+                  step="any"
                 />
               </div>
               <div>
@@ -384,11 +403,6 @@ function CreateProductForm() {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
                 </div>
               </div>
-              <div className="pt-2 border-t border-gray-200 space-y-2">
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Costo sin IVA:</span>
-                  <span>${purchasePriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
                 <div className="flex justify-between text-sm font-bold text-gray-900">
                   <span>Total con IVA:</span>
                   <span className="text-blue-600">${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
