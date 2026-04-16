@@ -88,9 +88,9 @@ export default function CreateCotizacionPage() {
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
-      const totalLine = Math.round(item.quantity * item.unitPrice);
-      const baseLine = Math.round(totalLine / (1 + (item.ivaPercent / 100)));
-      const ivaLine = totalLine - baseLine;
+      const totalLine = parseFloat((item.quantity * item.unitPrice).toFixed(2));
+      const baseLine = parseFloat((totalLine / (1 + (item.ivaPercent / 100))).toFixed(2));
+      const ivaLine = parseFloat((totalLine - baseLine).toFixed(2));
       
       acc.base += baseLine;
       acc.iva += ivaLine;
@@ -288,9 +288,9 @@ export default function CreateCotizacionPage() {
                   <input
                     type="number"
                     value={item.unitPrice}
-                    onChange={(e) => updateItem(index, 'unitPrice', Math.round(parseFloat(e.target.value)))}
+                    onChange={(e) => updateItem(index, 'unitPrice', parseFloat(parseFloat(e.target.value).toFixed(2)))}
                     min="0"
-                    step="1"
+                    step="0.01"
                     className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />
@@ -301,7 +301,7 @@ export default function CreateCotizacionPage() {
                     Subtotal
                   </label>
                   <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-green-600 font-bold">
-                    ${(item.quantity * item.unitPrice).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${(item.quantity * item.unitPrice).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
 
@@ -325,16 +325,16 @@ export default function CreateCotizacionPage() {
               <div className="text-right space-y-2">
                 <div className="flex justify-between gap-8 text-sm text-gray-500">
                   <span>Subtotal (Base)</span>
-                  <span>${calculateTotals().base.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>${calculateTotals().base.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between gap-8 text-sm text-gray-500">
                   <span>IVA</span>
-                  <span>${calculateTotals().iva.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>${calculateTotals().iva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="pt-2 border-t border-gray-100">
                   <div className="text-sm text-gray-500 mb-1 font-bold">Total Cotización</div>
                   <div className="text-2xl font-bold text-green-600">
-                    ${calculateTotals().total.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${calculateTotals().total.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>

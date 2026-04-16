@@ -103,13 +103,13 @@ export default function CreatePurchasePage() {
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
         
         const calculatedTotal = base * (1 + (iva / 100));
-        currentItem.purchasePrice = Math.round(calculatedTotal);
+        currentItem.purchasePrice = parseFloat(calculatedTotal.toFixed(2));
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
          
          const calculatedBase = total / (1 + (iva / 100));
-         currentItem.basePrice = Math.round(calculatedBase);
+         currentItem.basePrice = parseFloat(calculatedBase.toFixed(2));
       }
 
       newItems[index] = currentItem;
@@ -134,9 +134,9 @@ export default function CreatePurchasePage() {
           ...newItems[index], 
           productId: product.id,
           code: product.code, 
-          basePrice: Math.round(basePrice),
+          basePrice: parseFloat(basePrice.toFixed(2)),
           ivaPercent: ivaPercent,
-          purchasePrice: Math.round(purchasePriceFull), // This is the total with IVA
+          purchasePrice: parseFloat(purchasePriceFull.toFixed(2)), // This is the total with IVA
           reteFuentePercent: 0, 
           reteIvaPercent: 0 
         };
@@ -165,9 +165,9 @@ export default function CreatePurchasePage() {
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: Math.round(basePrice),
+        basePrice: parseFloat(basePrice.toFixed(2)),
         ivaPercent: ivaPercent,
-        purchasePrice: Math.round(purchasePriceFull),
+        purchasePrice: parseFloat(purchasePriceFull.toFixed(2)),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -185,12 +185,12 @@ export default function CreatePurchasePage() {
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.base += Math.round(baseTotalLine);
-      acc.iva += Math.round(ivaTotalLine);
-      acc.subtotal += Math.round(totalLine); 
-      acc.reteFuente += Math.round(reteFuenteValue);
-      acc.reteIva += Math.round(reteIvaValue);
-      acc.totalPayable += Math.round(totalLine - reteFuenteValue - reteIvaValue);
+      acc.base += parseFloat(baseTotalLine.toFixed(2));
+      acc.iva += parseFloat(ivaTotalLine.toFixed(2));
+      acc.subtotal += parseFloat(totalLine.toFixed(2));
+      acc.reteFuente += parseFloat(reteFuenteValue.toFixed(2));
+      acc.reteIva += parseFloat(reteIvaValue.toFixed(2));
+      acc.totalPayable += parseFloat((totalLine - reteFuenteValue - reteIvaValue).toFixed(2));
       
       return acc;
     }, { base: 0, iva: 0, subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
@@ -259,9 +259,9 @@ export default function CreatePurchasePage() {
           invoiceUrl: finalInvoiceUrl,
           items: items.filter(item => item.productId).map(item => ({
             ...item,
-            quantity: Math.round(item.quantity),
-            basePrice: Math.round(item.basePrice),
-            purchasePrice: Math.round(item.purchasePrice)
+            quantity: item.quantity,
+            basePrice: parseFloat(item.basePrice.toFixed(2)),
+            purchasePrice: parseFloat(item.purchasePrice.toFixed(2))
           })),
         }),
       });
@@ -535,24 +535,24 @@ export default function CreatePurchasePage() {
               <div className="text-right space-y-2">
                  <div className="flex justify-between gap-8 text-sm text-gray-600">
                   <span>Subtotal (Base)</span>
-                  <span>${totals.base.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>${totals.base.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-gray-600">
                   <span>IVA</span>
-                  <span>${totals.iva.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>${totals.iva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteFuente</span>
-                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteIVA</span>
-                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="pt-2 border-t border-gray-200">
                     <div className="text-sm text-gray-500 mb-1">Total a Pagar</div>
                     <div className="text-2xl font-bold text-green-600">
-                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                 </div>
               </div>

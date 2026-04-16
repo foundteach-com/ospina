@@ -130,10 +130,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
              id: item.id,
              productId: item.productId,
              code: code,
-             quantity: Math.round(parseFloat(item.quantity)),
-             purchasePrice: Math.round(purchasePrice), // Total + IVA unit price
+             quantity: parseFloat(parseFloat(item.quantity).toFixed(2)),
+             purchasePrice: parseFloat(purchasePrice.toFixed(2)), // Total + IVA unit price
              ivaPercent: productIva, 
-             basePrice: Math.round(basePrice),
+             basePrice: parseFloat(basePrice.toFixed(2)),
              reteFuentePercent: item.reteFuentePercent ? parseFloat(item.reteFuentePercent) : 0,
              reteIvaPercent: item.reteIvaPercent ? parseFloat(item.reteIvaPercent) : 0,
            };
@@ -165,13 +165,13 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
         
         const calculatedTotal = base * (1 + (iva / 100));
-        currentItem.purchasePrice = Math.round(calculatedTotal);
+        currentItem.purchasePrice = parseFloat(calculatedTotal.toFixed(2));
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
          
          const calculatedBase = total / (1 + (iva / 100));
-         currentItem.basePrice = Math.round(calculatedBase);
+         currentItem.basePrice = parseFloat(calculatedBase.toFixed(2));
       }
 
       newItems[index] = currentItem;
@@ -196,9 +196,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           ...newItems[index], 
           productId: product.id,
           code: product.code,
-          basePrice: Math.round(basePrice),
+          basePrice: parseFloat(basePrice.toFixed(2)),
           ivaPercent: ivaPercent,
-          purchasePrice: Math.round(purchasePriceFull),
+          purchasePrice: parseFloat(purchasePriceFull.toFixed(2)),
           reteFuentePercent: 0, // Reset default
           reteIvaPercent: 0 // Reset default
         };
@@ -227,9 +227,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: Math.round(basePrice),
+        basePrice: parseFloat(basePrice.toFixed(2)),
         ivaPercent: ivaPercent,
-        purchasePrice: Math.round(purchasePriceFull),
+        purchasePrice: parseFloat(purchasePriceFull.toFixed(2)),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -246,10 +246,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.subtotal += Math.round(totalLine); // This is actually Total + IVA
-      acc.reteFuente += Math.round(reteFuenteValue);
-      acc.reteIva += Math.round(reteIvaValue);
-      acc.totalPayable += Math.round(totalLine - reteFuenteValue - reteIvaValue);
+      acc.subtotal += parseFloat(totalLine.toFixed(2));
+      acc.reteFuente += parseFloat(reteFuenteValue.toFixed(2));
+      acc.reteIva += parseFloat(reteIvaValue.toFixed(2));
+      acc.totalPayable += parseFloat((totalLine - reteFuenteValue - reteIvaValue).toFixed(2));
       
       return acc;
     }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
@@ -318,8 +318,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           invoiceUrl: finalInvoiceUrl,
           items: items.filter(item => item.productId).map(item => ({
             productId: item.productId,
-            quantity: Math.round(item.quantity),
-            purchasePrice: Math.round(item.purchasePrice),
+            quantity: item.quantity,
+            purchasePrice: parseFloat(item.purchasePrice.toFixed(2)),
             reteFuentePercent: item.reteFuentePercent,
             reteIvaPercent: item.reteIvaPercent,
           })),
@@ -545,20 +545,20 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
               <div className="text-right space-y-2">
                  <div className="flex justify-between gap-8 text-sm text-gray-600">
                   <span>Subtotal (Base + IVA)</span>
-                  <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteFuente</span>
-                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteIVA</span>
-                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span>- ${totals.reteIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="pt-2 border-t border-gray-200">
                     <div className="text-sm text-gray-500 mb-1">Total a Pagar</div>
                     <div className="text-2xl font-bold text-green-600">
-                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${totals.totalPayable.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                 </div>
               </div>

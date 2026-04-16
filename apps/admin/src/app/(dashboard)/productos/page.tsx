@@ -106,7 +106,7 @@ export default function ProductsPage() {
           const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
           const divisor = (1 - (uP / 100));
           const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-          aValue = Math.round(sellingPriceNet * (1 + (sIvaP / 100)));
+          aValue = parseFloat((sellingPriceNet * (1 + (sIvaP / 100))).toFixed(2));
 
           const bpPriceFull = Number(b.purchasePrice || 0);
           const bpIvaP = Number(b.purchaseIvaPercent || 0);
@@ -116,7 +116,7 @@ export default function ProductsPage() {
           const bPurchasePriceNet = bpPriceFull / (1 + (bpIvaP / 100));
           const bDivisor = (1 - (buP / 100));
           const bSellingPriceNet = bDivisor > 0 ? (bPurchasePriceNet / bDivisor) : 0;
-          bValue = Math.round(bSellingPriceNet * (1 + (bsIvaP / 100)));
+          bValue = parseFloat((bSellingPriceNet * (1 + (bsIvaP / 100))).toFixed(2));
         }
 
         if (aValue < bValue) {
@@ -209,7 +209,7 @@ export default function ProductsPage() {
       const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
       const divisor = (1 - (uP / 100));
       const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-      const finalPrice = Math.round(sellingPriceNet * (1 + (sIvaP / 100)));
+      const finalPrice = parseFloat((sellingPriceNet * (1 + (sIvaP / 100))).toFixed(2));
 
       return {
         'Código': product.code,
@@ -390,7 +390,7 @@ export default function ProductsPage() {
                 const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
                 const divisor = (1 - (uP / 100));
                 const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-                const finalPrice = Math.round(sellingPriceNet * (1 + (sIvaP / 100)));
+                const finalPrice = parseFloat((sellingPriceNet * (1 + (sIvaP / 100))).toFixed(2));
 
                 return (
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors group">

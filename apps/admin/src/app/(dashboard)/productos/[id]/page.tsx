@@ -281,7 +281,7 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Costo Base (sin IVA)</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${purchasePriceNet.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${purchasePriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
@@ -291,13 +291,13 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Valor IVA</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${pIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${pIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-blue-600 uppercase mb-1 font-bold">Total con IVA</p>
                   <p className="text-base text-blue-600 font-bold">
-                    ${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -316,7 +316,7 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Utilidad Neta</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${utilityValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${utilityValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="col-span-2">
@@ -324,7 +324,7 @@ export default function ProductDetailPage() {
                     Venta Base (sin IVA)
                   </p>
                   <p className="text-base text-indigo-600 font-bold">
-                    ${sellingPriceNet.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${sellingPriceNet.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default function ProductDetailPage() {
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase mb-1">Valor IVA Venta</p>
                   <p className="text-base text-gray-900 font-semibold">
-                    ${salesIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${salesIvaValue.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="col-span-2">
@@ -351,7 +351,7 @@ export default function ProductDetailPage() {
                     Precio de Venta Final (+IVA)
                   </p>
                   <p className="text-2xl text-green-600 font-bold">
-                    ${sellingPriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    ${sellingPriceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -375,7 +375,7 @@ export default function ProductDetailPage() {
                     : 'text-blue-600'
               }`}
             >
-              {(product.currentStock || 0).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              {(product.currentStock || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <p className="text-gray-500 text-sm">unidades en inventario</p>
             <div className="mt-6 pt-6 border-t border-gray-100">
