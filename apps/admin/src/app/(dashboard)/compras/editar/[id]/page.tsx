@@ -240,12 +240,12 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
-      const totalLine = item.quantity * item.purchasePrice;
-      const baseTotalLine = item.quantity * item.basePrice;
-      const ivaTotalLine = totalLine - baseTotalLine;
+      const totalLine = roundToTwo(item.quantity * item.purchasePrice);
+      const baseTotalLine = roundToTwo(item.quantity * item.basePrice);
+      const ivaTotalLine = roundToTwo(totalLine - baseTotalLine);
 
-      const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
-      const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
+      const reteFuenteValue = roundToTwo(baseTotalLine * (item.reteFuentePercent / 100));
+      const reteIvaValue = roundToTwo(ivaTotalLine * (item.reteIvaPercent / 100));
 
       acc.subtotal = roundToTwo(acc.subtotal + totalLine); // This is actually Total + IVA
       acc.reteFuente = roundToTwo(acc.reteFuente + reteFuenteValue);

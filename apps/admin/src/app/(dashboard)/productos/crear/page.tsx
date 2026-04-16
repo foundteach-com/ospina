@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ImageUpload from '@/components/common/ImageUpload';
+import { roundToTwo } from '@/lib/formatters';
 
 function CreateProductForm() {
   const router = useRouter();
@@ -114,19 +115,19 @@ function CreateProductForm() {
   const sIvaP = parseFloat(formData.salesIvaPercent || '0');
 
   // 1. Quitar IVA del costo: Costo sin IVA = Precio de compra / (1 + IVA)
-  const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
-  const pIvaValue = pPriceFull - purchasePriceNet;
+  const purchasePriceNet = roundToTwo(pPriceFull / (1 + (pIvaP / 100)));
+  const pIvaValue = roundToTwo(pPriceFull - purchasePriceNet);
 
   // 2. Definir precio de venta (sin IVA) usando MARGEN: Precio = Costo / (1 - margen)
   const divisor = (1 - (uP / 100));
-  const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
+  const sellingPriceNet = roundToTwo(divisor > 0 ? (purchasePriceNet / divisor) : 0);
 
   // 3. Calcular la utilidad: Utilidad = Precio de venta (sin IVA) - Costo (sin IVA)
-  const utilityValue = sellingPriceNet - purchasePriceNet;
+  const utilityValue = roundToTwo(sellingPriceNet - purchasePriceNet);
 
   // 4. Calcular precio final con IVA de venta
-  const sIvaValue = sellingPriceNet * (sIvaP / 100);
-  const sPriceWithIva = sellingPriceNet + sIvaValue;
+  const sIvaValue = roundToTwo(sellingPriceNet * (sIvaP / 100));
+  const sPriceWithIva = roundToTwo(sellingPriceNet + sIvaValue);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -376,7 +377,7 @@ function CreateProductForm() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">Precio de Compra (sin IVA)</label>
                 <input
                   type="number"
-                  value={purchasePriceNet || ''}
+                  value={purchasePriceNet || 0}
                   onChange={(e) => {
                     const netValue = parseFloat(e.target.value || '0');
                     const iva = parseFloat(formData.purchaseIvaPercent || '0');

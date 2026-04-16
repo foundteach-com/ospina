@@ -178,13 +178,13 @@ export default function CreatePurchasePage() {
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
-      const totalLine = item.quantity * item.purchasePrice;
-      const baseTotalLine = item.quantity * item.basePrice;
+      const totalLine = roundToTwo(item.quantity * item.purchasePrice);
+      const baseTotalLine = roundToTwo(item.quantity * item.basePrice);
       
-      const ivaTotalLine = totalLine - baseTotalLine;
+      const ivaTotalLine = roundToTwo(totalLine - baseTotalLine);
 
-      const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
-      const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
+      const reteFuenteValue = roundToTwo(baseTotalLine * (item.reteFuentePercent / 100));
+      const reteIvaValue = roundToTwo(ivaTotalLine * (item.reteIvaPercent / 100));
 
       acc.base = roundToTwo(acc.base + baseTotalLine);
       acc.iva = roundToTwo(acc.iva + ivaTotalLine);

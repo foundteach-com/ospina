@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { calculateSellingPrice } from '@/lib/formatters';
+import { calculateSellingPrice, roundToTwo } from '@/lib/formatters';
 
 interface Client {
   id: string;
@@ -159,7 +159,7 @@ export default function CreateSalePage() {
     // pero asumiendo que basePrice ya incluye el IVA de venta (según lógica de productos)
     const sIvaP = parseFloat(product.salesIvaPercent?.toString() || '19');
     const bPrice = parseFloat(product.basePrice?.toString() || '0');
-    return bPrice / (1 + (sIvaP / 100));
+    return roundToTwo(bPrice / (1 + (sIvaP / 100)));
   };
 
   const addItem = () => {
@@ -227,20 +227,20 @@ export default function CreateSalePage() {
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
-      const unitDiscounted = item.unitPriceNet * (1 - (item.discountPercent / 100));
-      const netLine = item.quantity * unitDiscounted;
-      const ivaLine = netLine * (item.ivaPercent / 100);
-      const totalLine = netLine + ivaLine;
+      const unitDiscounted = roundToTwo(item.unitPriceNet * (1 - (item.discountPercent / 100)));
+      const netLine = roundToTwo(item.quantity * unitDiscounted);
+      const ivaLine = roundToTwo(netLine * (item.ivaPercent / 100));
+      const totalLine = roundToTwo(netLine + ivaLine);
       
-      acc.base += netLine;
+      acc.base = roundToTwo(acc.base + netLine);
       
       const ivaKey = item.ivaPercent.toString();
       if (!acc.ivaBreakdown[ivaKey]) {
         acc.ivaBreakdown[ivaKey] = 0;
       }
-      acc.ivaBreakdown[ivaKey] += ivaLine;
+      acc.ivaBreakdown[ivaKey] = roundToTwo(acc.ivaBreakdown[ivaKey] + ivaLine);
       
-      acc.total += totalLine;
+      acc.total = roundToTwo(acc.total + totalLine);
       return acc;
     }, { base: 0, ivaBreakdown: {} as Record<string, number>, total: 0 });
   };

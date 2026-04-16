@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { roundToTwo } from '@/lib/formatters';
 
 interface Client {
   id: string;
@@ -137,14 +138,14 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
         ...newItems[index], 
         productId,
         availableStock: stock, // Reset to real current stock if changing product
-        salePrice: product ? parseFloat(product.basePrice) : 0
+        salePrice: product ? roundToTwo(parseFloat(product.basePrice)) : 0
       };
       return newItems;
     });
   };
 
   const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+    return roundToTwo(items.reduce((sum, item) => sum + roundToTwo(item.quantity * item.salePrice), 0));
   };
 
   const validateStock = () => {
