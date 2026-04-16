@@ -130,10 +130,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
              id: item.id,
              productId: item.productId,
              code: code,
-             quantity: parseFloat(parseFloat(item.quantity).toFixed(2)),
-             purchasePrice: parseFloat(purchasePrice.toFixed(2)), // Total + IVA unit price
+             quantity: parseFloat(item.quantity),
+             purchasePrice: purchasePrice, // Total + IVA unit price
              ivaPercent: productIva, 
-             basePrice: parseFloat(basePrice.toFixed(2)),
+             basePrice: basePrice,
              reteFuentePercent: item.reteFuentePercent ? parseFloat(item.reteFuentePercent) : 0,
              reteIvaPercent: item.reteIvaPercent ? parseFloat(item.reteIvaPercent) : 0,
            };
@@ -165,13 +165,13 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
         
         const calculatedTotal = base * (1 + (iva / 100));
-        currentItem.purchasePrice = parseFloat(calculatedTotal.toFixed(2));
+        currentItem.purchasePrice = calculatedTotal;
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
          
          const calculatedBase = total / (1 + (iva / 100));
-         currentItem.basePrice = parseFloat(calculatedBase.toFixed(2));
+         currentItem.basePrice = calculatedBase;
       }
 
       newItems[index] = currentItem;
@@ -196,9 +196,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           ...newItems[index], 
           productId: product.id,
           code: product.code,
-          basePrice: parseFloat(basePrice.toFixed(2)),
+          basePrice: basePrice,
           ivaPercent: ivaPercent,
-          purchasePrice: parseFloat(purchasePriceFull.toFixed(2)),
+          purchasePrice: purchasePriceFull,
           reteFuentePercent: 0, // Reset default
           reteIvaPercent: 0 // Reset default
         };
@@ -227,9 +227,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: parseFloat(basePrice.toFixed(2)),
+        basePrice: basePrice,
         ivaPercent: ivaPercent,
-        purchasePrice: parseFloat(purchasePriceFull.toFixed(2)),
+        purchasePrice: purchasePriceFull,
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -246,10 +246,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.subtotal += parseFloat(totalLine.toFixed(2));
-      acc.reteFuente += parseFloat(reteFuenteValue.toFixed(2));
-      acc.reteIva += parseFloat(reteIvaValue.toFixed(2));
-      acc.totalPayable += parseFloat((totalLine - reteFuenteValue - reteIvaValue).toFixed(2));
+      acc.subtotal += totalLine; // This is actually Total + IVA
+      acc.reteFuente += reteFuenteValue;
+      acc.reteIva += reteIvaValue;
+      acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
       
       return acc;
     }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
@@ -319,7 +319,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           items: items.filter(item => item.productId).map(item => ({
             productId: item.productId,
             quantity: item.quantity,
-            purchasePrice: parseFloat(item.purchasePrice.toFixed(2)),
+            purchasePrice: item.purchasePrice,
             reteFuentePercent: item.reteFuentePercent,
             reteIvaPercent: item.reteIvaPercent,
           })),
@@ -454,7 +454,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   <input
                     type="number"
                     value={item.quantity}
-                    onChange={(e) => updateItem(index, 'quantity', Math.round(parseFloat(e.target.value)))}
+                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
                     className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
                     required
                     step="1"

@@ -34,7 +34,6 @@ export const calculateSellingPrice = (
   const divisor = (1 - (uP / 100));
   const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
 
-  // Retornar con 2 decimales de precisión
-  return parseFloat(sellingPriceNet.toFixed(2));
+  return sellingPriceNet;
 };
 

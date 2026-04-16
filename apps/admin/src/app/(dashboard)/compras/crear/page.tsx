@@ -103,13 +103,13 @@ export default function CreatePurchasePage() {
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
         
         const calculatedTotal = base * (1 + (iva / 100));
-        currentItem.purchasePrice = parseFloat(calculatedTotal.toFixed(2));
+        currentItem.purchasePrice = calculatedTotal;
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
          
          const calculatedBase = total / (1 + (iva / 100));
-         currentItem.basePrice = parseFloat(calculatedBase.toFixed(2));
+         currentItem.basePrice = calculatedBase;
       }
 
       newItems[index] = currentItem;
@@ -134,9 +134,9 @@ export default function CreatePurchasePage() {
           ...newItems[index], 
           productId: product.id,
           code: product.code, 
-          basePrice: parseFloat(basePrice.toFixed(2)),
+          basePrice: basePrice,
           ivaPercent: ivaPercent,
-          purchasePrice: parseFloat(purchasePriceFull.toFixed(2)), // This is the total with IVA
+          purchasePrice: purchasePriceFull, // This is the total with IVA
           reteFuentePercent: 0, 
           reteIvaPercent: 0 
         };
@@ -165,9 +165,9 @@ export default function CreatePurchasePage() {
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: parseFloat(basePrice.toFixed(2)),
+        basePrice: basePrice,
         ivaPercent: ivaPercent,
-        purchasePrice: parseFloat(purchasePriceFull.toFixed(2)),
+        purchasePrice: purchasePriceFull,
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -185,12 +185,12 @@ export default function CreatePurchasePage() {
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.base += parseFloat(baseTotalLine.toFixed(2));
-      acc.iva += parseFloat(ivaTotalLine.toFixed(2));
-      acc.subtotal += parseFloat(totalLine.toFixed(2));
-      acc.reteFuente += parseFloat(reteFuenteValue.toFixed(2));
-      acc.reteIva += parseFloat(reteIvaValue.toFixed(2));
-      acc.totalPayable += parseFloat((totalLine - reteFuenteValue - reteIvaValue).toFixed(2));
+      acc.base += baseTotalLine;
+      acc.iva += ivaTotalLine;
+      acc.subtotal += totalLine; 
+      acc.reteFuente += reteFuenteValue;
+      acc.reteIva += reteIvaValue;
+      acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
       
       return acc;
     }, { base: 0, iva: 0, subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
@@ -260,8 +260,8 @@ export default function CreatePurchasePage() {
           items: items.filter(item => item.productId).map(item => ({
             ...item,
             quantity: item.quantity,
-            basePrice: parseFloat(item.basePrice.toFixed(2)),
-            purchasePrice: parseFloat(item.purchasePrice.toFixed(2))
+            basePrice: item.basePrice,
+            purchasePrice: item.purchasePrice
           })),
         }),
       });
@@ -424,7 +424,7 @@ export default function CreatePurchasePage() {
                   <input
                     type="number"
                     value={item.quantity}
-                    onChange={(e) => updateItem(index, 'quantity', Math.round(parseFloat(e.target.value)))}
+                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
                     min="1"
                     step="1"
                     className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"

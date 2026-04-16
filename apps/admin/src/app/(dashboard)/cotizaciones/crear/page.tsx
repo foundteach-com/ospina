@@ -88,9 +88,9 @@ export default function CreateCotizacionPage() {
 
   const calculateTotals = () => {
     return items.reduce((acc, item) => {
-      const totalLine = parseFloat((item.quantity * item.unitPrice).toFixed(2));
-      const baseLine = parseFloat((totalLine / (1 + (item.ivaPercent / 100))).toFixed(2));
-      const ivaLine = parseFloat((totalLine - baseLine).toFixed(2));
+      const totalLine = item.quantity * item.unitPrice;
+      const baseLine = totalLine / (1 + (item.ivaPercent / 100));
+      const ivaLine = totalLine - baseLine;
       
       acc.base += baseLine;
       acc.iva += ivaLine;
@@ -288,9 +288,9 @@ export default function CreateCotizacionPage() {
                   <input
                     type="number"
                     value={item.unitPrice}
-                    onChange={(e) => updateItem(index, 'unitPrice', parseFloat(parseFloat(e.target.value).toFixed(2)))}
+                    onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value))}
                     min="0"
-                    step="0.01"
+                    step="any"
                     className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
                     required
                   />

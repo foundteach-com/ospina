@@ -240,7 +240,7 @@ export default function CreateSalePage() {
       }
       acc.ivaBreakdown[ivaKey] += ivaLine;
       
-      acc.total += parseFloat(totalLine.toFixed(2));
+      acc.total += totalLine;
       return acc;
     }, { base: 0, ivaBreakdown: {} as Record<string, number>, total: 0 });
   };
@@ -308,7 +308,7 @@ export default function CreateSalePage() {
         return {
           productId: item.productId,
           quantity: item.quantity,
-          salePrice: parseFloat(salePriceWithIva.toFixed(2)) // Precio unitario total con 2 decimales
+          salePrice: salePriceWithIva
         };
       });
 
