@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { roundToTwo } from '@/lib/formatters';
 
 interface CashFlowRecord {
   id: string;
@@ -148,7 +149,7 @@ export default function CashFlowPage() {
         },
         body: JSON.stringify({
           ...formData,
-          amount: parseFloat(formData.amount),
+          amount: roundToTwo(parseFloat(formData.amount)),
         }),
       });
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use, ChangeEvent } from 'react';
 import Link from 'next/link';
+import { roundToTwo } from '@/lib/formatters';
 
 interface SaleItem {
   id: string;
@@ -122,9 +123,9 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
       const baseLine = totalLine / (1 + (ivaPerc / 100));
       const ivaLine = totalLine - baseLine;
       
-      acc.subtotalBase += baseLine;
-      acc.ivaTotal += ivaLine;
-      acc.totalGross += totalLine;
+      acc.subtotalBase = roundToTwo(acc.subtotalBase + baseLine);
+      acc.ivaTotal = roundToTwo(acc.ivaTotal + ivaLine);
+      acc.totalGross = roundToTwo(acc.totalGross + totalLine);
       
       return acc;
     }, { subtotalBase: 0, ivaTotal: 0, totalGross: 0 });

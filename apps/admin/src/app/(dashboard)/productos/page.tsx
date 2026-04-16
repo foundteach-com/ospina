@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDialog } from '@/context/DialogContext';
 import * as XLSX from 'xlsx';
-import { formatCurrency, formatNumber } from '@/lib/formatters';
+import { formatCurrency, formatNumber, roundToTwo } from '@/lib/formatters';
 
 interface Product {
   id: string;
@@ -103,20 +103,20 @@ export default function ProductsPage() {
           const uP = Number(a.utilityPercent || 0);
           const sIvaP = Number(a.salesIvaPercent || 0);
 
-          const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+          const purchasePriceNet = roundToTwo(pPriceFull / (1 + (pIvaP / 100)));
           const divisor = (1 - (uP / 100));
-          const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-          aValue = parseFloat((sellingPriceNet * (1 + (sIvaP / 100))).toFixed(2));
+          const sellingPriceNet = roundToTwo(divisor > 0 ? (purchasePriceNet / divisor) : 0);
+          aValue = roundToTwo(sellingPriceNet * (1 + (sIvaP / 100)));
 
           const bpPriceFull = Number(b.purchasePrice || 0);
           const bpIvaP = Number(b.purchaseIvaPercent || 0);
           const buP = Number(b.utilityPercent || 0);
           const bsIvaP = Number(b.salesIvaPercent || 0);
 
-          const bPurchasePriceNet = bpPriceFull / (1 + (bpIvaP / 100));
+          const bPurchasePriceNet = roundToTwo(bpPriceFull / (1 + (bpIvaP / 100)));
           const bDivisor = (1 - (buP / 100));
-          const bSellingPriceNet = bDivisor > 0 ? (bPurchasePriceNet / bDivisor) : 0;
-          bValue = parseFloat((bSellingPriceNet * (1 + (bsIvaP / 100))).toFixed(2));
+          const bSellingPriceNet = roundToTwo(bDivisor > 0 ? (bPurchasePriceNet / bDivisor) : 0);
+          bValue = roundToTwo(bSellingPriceNet * (1 + (bsIvaP / 100)));
         }
 
         if (aValue < bValue) {
@@ -206,10 +206,10 @@ export default function ProductsPage() {
       const uP = Number(product.utilityPercent || 0);
       const sIvaP = Number(product.salesIvaPercent || 0);
 
-      const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+      const purchasePriceNet = roundToTwo(pPriceFull / (1 + (pIvaP / 100)));
       const divisor = (1 - (uP / 100));
-      const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-      const finalPrice = parseFloat((sellingPriceNet * (1 + (sIvaP / 100))).toFixed(2));
+      const sellingPriceNet = roundToTwo(divisor > 0 ? (purchasePriceNet / divisor) : 0);
+      const finalPrice = roundToTwo(sellingPriceNet * (1 + (sIvaP / 100)));
 
       return {
         'Código': product.code,
@@ -387,10 +387,10 @@ export default function ProductsPage() {
                 const uP = Number(product.utilityPercent || 0);
                 const sIvaP = Number(product.salesIvaPercent || 0);
 
-                const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
+                const purchasePriceNet = roundToTwo(pPriceFull / (1 + (pIvaP / 100)));
                 const divisor = (1 - (uP / 100));
-                const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
-                const finalPrice = parseFloat((sellingPriceNet * (1 + (sIvaP / 100))).toFixed(2));
+                const sellingPriceNet = roundToTwo(divisor > 0 ? (purchasePriceNet / divisor) : 0);
+                const finalPrice = roundToTwo(sellingPriceNet * (1 + (sIvaP / 100)));
 
                 return (
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors group">

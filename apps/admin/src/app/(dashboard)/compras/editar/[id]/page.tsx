@@ -3,6 +3,7 @@
 import { useState, useEffect, use, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { roundToTwo } from '@/lib/formatters';
 
 interface Provider {
   id: string;
@@ -133,7 +134,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
              quantity: parseFloat(item.quantity),
              purchasePrice: purchasePrice, // Total + IVA unit price
              ivaPercent: productIva, 
-             basePrice: basePrice,
+             basePrice: roundToTwo(basePrice),
              reteFuentePercent: item.reteFuentePercent ? parseFloat(item.reteFuentePercent) : 0,
              reteIvaPercent: item.reteIvaPercent ? parseFloat(item.reteIvaPercent) : 0,
            };
@@ -165,13 +166,13 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
         
         const calculatedTotal = base * (1 + (iva / 100));
-        currentItem.purchasePrice = calculatedTotal;
+        currentItem.purchasePrice = roundToTwo(calculatedTotal);
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
          
          const calculatedBase = total / (1 + (iva / 100));
-         currentItem.basePrice = calculatedBase;
+         currentItem.basePrice = roundToTwo(calculatedBase);
       }
 
       newItems[index] = currentItem;
@@ -196,9 +197,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           ...newItems[index], 
           productId: product.id,
           code: product.code,
-          basePrice: basePrice,
+          basePrice: roundToTwo(basePrice),
           ivaPercent: ivaPercent,
-          purchasePrice: purchasePriceFull,
+          purchasePrice: roundToTwo(purchasePriceFull),
           reteFuentePercent: 0, // Reset default
           reteIvaPercent: 0 // Reset default
         };
@@ -227,9 +228,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: basePrice,
+        basePrice: roundToTwo(basePrice),
         ivaPercent: ivaPercent,
-        purchasePrice: purchasePriceFull,
+        purchasePrice: roundToTwo(purchasePriceFull),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -246,10 +247,10 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.subtotal += totalLine; // This is actually Total + IVA
-      acc.reteFuente += reteFuenteValue;
-      acc.reteIva += reteIvaValue;
-      acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
+      acc.subtotal = roundToTwo(acc.subtotal + totalLine); // This is actually Total + IVA
+      acc.reteFuente = roundToTwo(acc.reteFuente + reteFuenteValue);
+      acc.reteIva = roundToTwo(acc.reteIva + reteIvaValue);
+      acc.totalPayable = roundToTwo(acc.totalPayable + (totalLine - reteFuenteValue - reteIvaValue));
       
       return acc;
     }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });

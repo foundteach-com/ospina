@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { roundToTwo } from '@/lib/formatters';
 
 interface Product {
   id: string;
@@ -91,19 +92,19 @@ export default function ProductDetailPage() {
   const sIvaP = Number(product.salesIvaPercent || 0);
 
   // 1. Quitar IVA del costo
-  const purchasePriceNet = pPriceFull / (1 + (pIvaP / 100));
-  const pIvaValue = pPriceFull - purchasePriceNet;
+  const purchasePriceNet = roundToTwo(pPriceFull / (1 + (pIvaP / 100)));
+  const pIvaValue = roundToTwo(pPriceFull - purchasePriceNet);
 
   // 2. Venta (sin IVA) usando MARGEN
   const divisor = (1 - (uP / 100));
-  const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
+  const sellingPriceNet = roundToTwo(divisor > 0 ? (purchasePriceNet / divisor) : 0);
 
   // 3. Utilidad
-  const utilityValue = sellingPriceNet - purchasePriceNet;
+  const utilityValue = roundToTwo(sellingPriceNet - purchasePriceNet);
 
   // 4. Venta Final con IVA
-  const salesIvaValue = sellingPriceNet * (sIvaP / 100);
-  const sellingPriceWithIva = sellingPriceNet + salesIvaValue;
+  const salesIvaValue = roundToTwo(sellingPriceNet * (sIvaP / 100));
+  const sellingPriceWithIva = roundToTwo(sellingPriceNet + salesIvaValue);
 
   return (
     <div className="p-8 max-w-5xl mx-auto">

@@ -34,6 +34,9 @@ export const calculateSellingPrice = (
   const divisor = (1 - (uP / 100));
   const sellingPriceNet = divisor > 0 ? (purchasePriceNet / divisor) : 0;
 
-  return sellingPriceNet;
+  return roundToTwo(sellingPriceNet);
 };
 
+export const roundToTwo = (num: number): number => {
+  return Math.round((num + Number.EPSILON) * 100) / 100;
+};

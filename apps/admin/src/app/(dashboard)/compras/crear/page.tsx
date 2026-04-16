@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { roundToTwo } from '@/lib/formatters';
 
 interface Provider {
   id: string;
@@ -103,13 +104,13 @@ export default function CreatePurchasePage() {
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
         
         const calculatedTotal = base * (1 + (iva / 100));
-        currentItem.purchasePrice = calculatedTotal;
+        currentItem.purchasePrice = roundToTwo(calculatedTotal);
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
          
          const calculatedBase = total / (1 + (iva / 100));
-         currentItem.basePrice = calculatedBase;
+         currentItem.basePrice = roundToTwo(calculatedBase);
       }
 
       newItems[index] = currentItem;
@@ -134,9 +135,9 @@ export default function CreatePurchasePage() {
           ...newItems[index], 
           productId: product.id,
           code: product.code, 
-          basePrice: basePrice,
+          basePrice: roundToTwo(basePrice),
           ivaPercent: ivaPercent,
-          purchasePrice: purchasePriceFull, // This is the total with IVA
+          purchasePrice: roundToTwo(purchasePriceFull), // This is the total with IVA
           reteFuentePercent: 0, 
           reteIvaPercent: 0 
         };
@@ -165,9 +166,9 @@ export default function CreatePurchasePage() {
         ...newItems[index], 
         productId,
         code: product ? product.code : '',
-        basePrice: basePrice,
+        basePrice: roundToTwo(basePrice),
         ivaPercent: ivaPercent,
-        purchasePrice: purchasePriceFull,
+        purchasePrice: roundToTwo(purchasePriceFull),
         reteFuentePercent: 0,
         reteIvaPercent: 0
       };
@@ -185,12 +186,12 @@ export default function CreatePurchasePage() {
       const reteFuenteValue = baseTotalLine * (item.reteFuentePercent / 100);
       const reteIvaValue = ivaTotalLine * (item.reteIvaPercent / 100);
 
-      acc.base += baseTotalLine;
-      acc.iva += ivaTotalLine;
-      acc.subtotal += totalLine; 
-      acc.reteFuente += reteFuenteValue;
-      acc.reteIva += reteIvaValue;
-      acc.totalPayable += (totalLine - reteFuenteValue - reteIvaValue);
+      acc.base = roundToTwo(acc.base + baseTotalLine);
+      acc.iva = roundToTwo(acc.iva + ivaTotalLine);
+      acc.subtotal = roundToTwo(acc.subtotal + totalLine); 
+      acc.reteFuente = roundToTwo(acc.reteFuente + reteFuenteValue);
+      acc.reteIva = roundToTwo(acc.reteIva + reteIvaValue);
+      acc.totalPayable = roundToTwo(acc.totalPayable + (totalLine - reteFuenteValue - reteIvaValue));
       
       return acc;
     }, { base: 0, iva: 0, subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
