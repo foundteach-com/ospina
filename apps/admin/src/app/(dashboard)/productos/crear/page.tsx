@@ -403,6 +403,7 @@ function CreateProductForm() {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
                 </div>
               </div>
+              <div className="pt-2 border-t border-gray-200 space-y-2">
                 <div className="flex justify-between text-sm font-bold text-gray-900">
                   <span>Total con IVA:</span>
                   <span className="text-blue-600">${pPriceFull.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
