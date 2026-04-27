@@ -10,6 +10,9 @@ interface Purchase {
   total: string;
   invoiceUrl?: string;
   status: 'PENDING' | 'PAID';
+  paymentType: 'CONTADO' | 'CREDITO';
+  paymentDays?: number;
+  paymentDate?: string;
   provider: {
     id: string;
     name: string;
@@ -120,6 +123,42 @@ export default function PurchasesPage() {
     );
   };
 
+  const getExpirationStatus = (purchase: Purchase) => {
+    if (purchase.paymentType !== 'CREDITO' || !purchase.paymentDate || !purchase.paymentDays) {
+      return null;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [year, month, day] = purchase.paymentDate.split('T')[0].split('-');
+    const pDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    const diffTime = pDate.getTime() - today.getTime();
+    const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (remainingDays < 0) {
+      return { status: 'red', text: 'Vencido' };
+    }
+
+    const yellowThreshold = purchase.paymentDays * 0.25; // 25% of the total term
+
+    if (remainingDays <= yellowThreshold) {
+      return { status: 'yellow', text: 'Próximo' };
+    }
+
+    return { status: 'green', text: 'Al día' };
+  };
+
+  const getExpirationStyle = (status: string) => {
+    switch (status) {
+      case 'red': return 'bg-red-100 text-red-700 border border-red-200';
+      case 'yellow': return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+      case 'green': return 'bg-green-100 text-green-700 border border-green-200';
+      default: return 'bg-gray-100 text-gray-700 border border-gray-200';
+    }
+  };
+
   const fetchPurchases = async () => {
     try {
       const token = localStorage.getItem('access_token');
@@ -151,6 +190,7 @@ export default function PurchasesPage() {
         p.provider.name,
         p.provider.email || 'N/A',
         p.provider.phone || 'N/A',
+        p.paymentType === 'CREDITO' && p.paymentDate ? new Date(p.paymentDate).toISOString().split('T')[0] : 'Contado',
         p.items.length,
         parseFloat(p.total)
       ].join(','))
@@ -281,7 +321,7 @@ export default function PurchasesPage() {
                     Referencia {getSortIcon('referenceNumber')}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Celular</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vencimiento</th>
                 <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Doc.</th>
                 <th 
@@ -308,8 +348,25 @@ export default function PurchasesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {purchase.referenceNumber}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {purchase.provider.phone || 'N/A'}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {purchase.paymentType === 'CREDITO' && purchase.paymentDate ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-gray-900 font-medium">
+                          {new Date(purchase.paymentDate).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
+                        </span>
+                        {(() => {
+                          const expStatus = getExpirationStatus(purchase);
+                          if (!expStatus) return null;
+                          return (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold inline-block w-fit ${getExpirationStyle(expStatus.status)}`}>
+                              {expStatus.text}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">Contado</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button
