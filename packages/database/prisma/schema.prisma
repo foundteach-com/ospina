@@ -72,6 +72,9 @@ model Purchase {
   date            DateTime
   total           Decimal
   status          PurchaseStatus @default(PENDING)
+  paymentType     PaymentType    @default(CONTADO)
+  paymentDays     Int?
+  paymentDate     DateTime?
   notes           String?
   invoiceUrl      String?
   createdAt       DateTime       @default(now())

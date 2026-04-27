@@ -13,6 +13,9 @@ export class PurchasesService {
     notes?: string;
     invoiceUrl?: string;
     status?: any;
+    paymentType?: any;
+    paymentDays?: number;
+    paymentDate?: Date;
     items: {
       productId: string;
       quantity: number;
@@ -53,6 +56,9 @@ export class PurchasesService {
         notes: data.notes,
         invoiceUrl: data.invoiceUrl,
         status: data.status || 'PENDING',
+        paymentType: data.paymentType || 'CONTADO',
+        paymentDays: data.paymentDays,
+        paymentDate: data.paymentDate,
         total,
         items: {
           create: data.items.map((item) => ({
@@ -121,6 +127,9 @@ export class PurchasesService {
       notes?: string;
       invoiceUrl?: string;
       status?: any;
+      paymentType?: any;
+      paymentDays?: number;
+      paymentDate?: Date;
       items?: {
         productId: string;
         quantity: number;
@@ -166,6 +175,9 @@ export class PurchasesService {
         notes: data.notes,
         invoiceUrl: data.invoiceUrl,
         status: data.status,
+        paymentType: data.paymentType,
+        paymentDays: data.paymentDays,
+        paymentDate: data.paymentDate,
         ...(total !== undefined && { total }),
         ...(data.items && {
           items: {

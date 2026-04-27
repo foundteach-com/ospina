@@ -47,6 +47,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     notes: '',
     invoiceUrl: '', 
     status: 'PENDING',
+    paymentType: 'CONTADO',
+    paymentDays: '',
+    paymentDate: '',
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([]);
@@ -60,6 +63,36 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     };
     loadData();
   }, [id]);
+
+  useEffect(() => {
+    if (formData.paymentType === 'CREDITO' && formData.paymentDays && formData.date) {
+      const days = parseInt(formData.paymentDays.toString(), 10);
+      if (!isNaN(days)) {
+        // We use UTC so we don't get shifted by timezone offsets if we parse 'YYYY-MM-DD'
+        const baseDate = new Date(formData.date + 'T12:00:00Z');
+        baseDate.setDate(baseDate.getDate() + days);
+        setFormData(prev => ({ ...prev, paymentDate: baseDate.toISOString().split('T')[0] }));
+      }
+    } else if (formData.paymentType === 'CONTADO') {
+       setFormData(prev => ({ ...prev, paymentDays: '', paymentDate: '' }));
+    }
+  }, [formData.paymentDays, formData.date, formData.paymentType]);
+
+  const getPaymentDateColor = () => {
+    if (!formData.paymentDate) return '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [year, month, day] = formData.paymentDate.split('-');
+    if (!year || !month || !day) return '';
+    const pDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    
+    const diffTime = pDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'border-red-500 bg-red-50 text-red-900 focus:border-red-600';
+    if (diffDays <= 3) return 'border-yellow-500 bg-yellow-50 text-yellow-900 focus:border-yellow-600';
+    return 'border-green-500 bg-green-50 text-green-900 focus:border-green-600';
+  };
 
   const fetchProviders = async () => {
     try {
@@ -109,6 +142,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           notes: data.notes || '',
           invoiceUrl: data.invoiceUrl || '',
           status: data.status || 'PENDING',
+          paymentType: data.paymentType || 'CONTADO',
+          paymentDays: data.paymentDays ? data.paymentDays.toString() : '',
+          paymentDate: data.paymentDate ? new Date(data.paymentDate).toISOString().split('T')[0] : '',
         });
         
         // Use provided products or state
@@ -317,6 +353,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         body: JSON.stringify({
           ...formData,
           invoiceUrl: finalInvoiceUrl,
+          paymentDays: formData.paymentDays ? parseInt(formData.paymentDays.toString(), 10) : undefined,
           items: items.filter(item => item.productId).map(item => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -407,7 +444,42 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                 <option value="PAID">Pagada</option>
               </select>
             </div>
-
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Forma de Pago</label>
+              <select
+                value={formData.paymentType}
+                onChange={(e) => setFormData({ ...formData, paymentType: e.target.value })}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+              >
+                <option value="CONTADO">Contado</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
+            </div>
+            {formData.paymentType === 'CREDITO' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Días de Pago</label>
+                  <input
+                    type="number"
+                    value={formData.paymentDays}
+                    onChange={(e) => setFormData({ ...formData, paymentDays: e.target.value })}
+                    min="1"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+                    required={formData.paymentType === 'CREDITO'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Pago</label>
+                  <input
+                    type="date"
+                    value={formData.paymentDate}
+                    onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                    className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none ${getPaymentDateColor() || 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'}`}
+                    required={formData.paymentType === 'CREDITO'}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
 

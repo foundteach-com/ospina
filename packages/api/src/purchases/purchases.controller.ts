@@ -27,6 +27,9 @@ export class PurchasesController {
       notes?: string;
       invoiceUrl?: string;
       status?: string;
+      paymentType?: string;
+      paymentDays?: number;
+      paymentDate?: string;
       items: {
         productId: string;
         quantity: number;
@@ -39,6 +42,8 @@ export class PurchasesController {
     return this.purchasesService.create({
       ...data,
       date: new Date(data.date),
+      paymentType: data.paymentType as any,
+      paymentDate: data.paymentDate ? new Date(data.paymentDate) : undefined,
     });
   }
 
@@ -68,6 +73,9 @@ export class PurchasesController {
       notes?: string;
       invoiceUrl?: string;
       status?: string;
+      paymentType?: string;
+      paymentDays?: number;
+      paymentDate?: string;
       items?: {
         productId: string;
         quantity: number;
@@ -80,6 +88,8 @@ export class PurchasesController {
     return this.purchasesService.update(id, {
       ...data,
       date: data.date ? new Date(data.date) : undefined,
+      paymentType: data.paymentType as any,
+      paymentDate: data.paymentDate ? new Date(data.paymentDate) : undefined,
     });
   }
 
