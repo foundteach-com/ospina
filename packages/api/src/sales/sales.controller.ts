@@ -29,6 +29,8 @@ export class SalesController {
       status?: string;
       paymentStatus?: string;
       paymentType?: string;
+      paymentDays?: number;
+      paymentDate?: string;
       paymentMethod?: string;
       items: {
         productId: string;
@@ -40,6 +42,7 @@ export class SalesController {
     return this.salesService.create({
       ...data,
       date: new Date(data.date),
+      paymentDate: data.paymentDate ? new Date(data.paymentDate) : undefined,
     });
   }
 
@@ -71,6 +74,8 @@ export class SalesController {
       status?: string;
       paymentStatus?: string;
       paymentType?: string;
+      paymentDays?: number;
+      paymentDate?: string;
       paymentMethod?: string;
       items?: {
         productId: string;
@@ -82,6 +87,7 @@ export class SalesController {
     return this.salesService.update(id, {
       ...data,
       date: data.date ? new Date(data.date) : undefined,
+      paymentDate: data.paymentDate ? new Date(data.paymentDate) : undefined,
     });
   }
 

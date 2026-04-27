@@ -10,6 +10,9 @@ interface Sale {
   referenceNumber?: string;
   total: string;
   status: string;
+  paymentType: 'CONTADO' | 'CREDITO';
+  paymentDays?: number;
+  paymentDate?: string;
   client: {
     id: string;
     name: string;
@@ -148,6 +151,42 @@ export default function SalesPage() {
     );
   };
 
+  const getExpirationStatus = (sale: Sale) => {
+    if (sale.paymentType !== 'CREDITO' || !sale.paymentDate || !sale.paymentDays) {
+      return null;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [year, month, day] = sale.paymentDate.split('T')[0].split('-');
+    const pDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    const diffTime = pDate.getTime() - today.getTime();
+    const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (remainingDays < 0) {
+      return { status: 'red', text: 'Vencido' };
+    }
+
+    const yellowThreshold = sale.paymentDays * 0.25; // 25% of the total term
+
+    if (remainingDays <= yellowThreshold) {
+      return { status: 'yellow', text: 'Próximo' };
+    }
+
+    return { status: 'green', text: 'Al día' };
+  };
+
+  const getExpirationStyle = (status: string) => {
+    switch (status) {
+      case 'red': return 'bg-red-100 text-red-700 border border-red-200';
+      case 'yellow': return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+      case 'green': return 'bg-green-100 text-green-700 border border-green-200';
+      default: return 'bg-gray-100 text-gray-700 border border-gray-200';
+    }
+  };
+
   const handleDelete = async (id: string) => {
     const isConfirmed = await confirm({
       title: '¿Eliminar Venta?',
@@ -262,7 +301,7 @@ export default function SalesPage() {
                     Cliente {getSortIcon('client')}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Productos</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vencimiento</th>
                 <th 
                   className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
                   onClick={() => requestSort('status')}
@@ -294,8 +333,25 @@ export default function SalesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {sale.client?.name || 'Cliente desconocido'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {sale.items.length} producto(s)
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {sale.paymentType === 'CREDITO' && sale.paymentDate ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-gray-900 font-medium">
+                          {new Date(sale.paymentDate).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
+                        </span>
+                        {(() => {
+                          const expStatus = getExpirationStatus(sale);
+                          if (!expStatus) return null;
+                          return (
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold inline-block w-fit ${getExpirationStyle(expStatus.status)}`}>
+                              {expStatus.text}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">Contado</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full border ${statusColors[sale.status]}`}>

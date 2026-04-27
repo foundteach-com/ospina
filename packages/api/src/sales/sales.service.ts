@@ -15,6 +15,8 @@ export class SalesService {
     status?: string;
     paymentStatus?: string;
     paymentType?: string;
+    paymentDays?: number;
+    paymentDate?: Date;
     paymentMethod?: string;
     items: {
       productId: string;
@@ -52,6 +54,8 @@ export class SalesService {
         status: data.status as any,
         paymentStatus: data.paymentStatus as any,
         paymentType: data.paymentType as any,
+        paymentDays: data.paymentDays,
+        paymentDate: data.paymentDate,
         paymentMethod: data.paymentMethod as any,
         total,
         items: {
@@ -121,6 +125,8 @@ export class SalesService {
       status?: string;
       paymentStatus?: string;
       paymentType?: string;
+      paymentDays?: number;
+      paymentDate?: Date;
       paymentMethod?: string;
       items?: {
         productId: string;
@@ -142,6 +148,8 @@ export class SalesService {
         status: data.status as any,
         paymentStatus: data.paymentStatus as any,
         paymentType: data.paymentType as any,
+        paymentDays: data.paymentDays,
+        paymentDate: data.paymentDate,
         paymentMethod: data.paymentMethod as any,
         notes: data.notes,
         documentUrl: data.documentUrl,

@@ -142,6 +142,8 @@ model Sale {
   status          SaleStatus @default(PENDING)
   paymentStatus   PaymentStatus @default(PENDING)
   paymentType     PaymentType @default(CONTADO)
+  paymentDays     Int?
+  paymentDate     DateTime?
   paymentMethod   PaymentMethod @default(EFECTIVO)
   notes           String?
   documentUrl     String?
