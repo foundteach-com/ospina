@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+interface User {
+  id: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+}
+
 interface ChecklistItem {
   id: string;
   title: string;
@@ -50,6 +57,9 @@ export default function ProjectDetailPage() {
   const [saving, setSaving] = useState(false);
   const [checklistInput, setChecklistInput] = useState('');
   const [activeChecklistTaskId, setActiveChecklistTaskId] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -71,6 +81,52 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     fetchProject();
   }, [fetchProject]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    setDraggedTaskId(taskId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, colKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverCol !== colKey) setDragOverCol(colKey);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverCol(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, colKey: string) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    if (!draggedTaskId) return;
+    const task = project?.tasks.find(t => t.id === draggedTaskId);
+    if (task && task.status !== colKey) {
+      await handleMoveTask(draggedTaskId, colKey);
+    }
+    setDraggedTaskId(null);
+  };
 
   const handleSaveTask = async () => {
     if (!taskForm.title.trim()) return;
@@ -273,9 +329,15 @@ export default function ProjectDetailPage() {
         {columns.map(col => {
           const colTasks = project.tasks.filter(t => t.status === col.key);
           return (
-            <div key={col.key} style={{
-              background: col.bg, borderRadius: '16px', padding: '16px',
-              border: `1px solid ${col.accent}`, minHeight: '300px',
+            <div key={col.key} 
+              onDragOver={(e) => handleDragOver(e, col.key)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, col.key)}
+              style={{
+              background: dragOverCol === col.key ? col.accent : col.bg, 
+              borderRadius: '16px', padding: '16px',
+              border: `2px ${dragOverCol === col.key ? 'dashed' : 'solid'} ${col.accent}`, minHeight: '300px',
+              transition: 'all 0.2s ease',
             }}>
               {/* Column Header */}
               <div style={{
@@ -304,9 +366,21 @@ export default function ProjectDetailPage() {
                 {colTasks.map(task => {
                   const checklistTotal = task.checklists.length;
                   const checklistDone = task.checklists.filter(c => c.isCompleted).length;
+                  
+                  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && task.status !== 'DONE';
+                  const isToday = task.dueDate && new Date(task.dueDate).toDateString() === new Date().toDateString() && task.status !== 'DONE';
+                  const dateColor = isOverdue ? '#ef4444' : isToday ? '#f59e0b' : '#94a3b8';
+                  
+                  const assignedUser = users.find(u => u.id === task.assignedTo);
+                  const isDragging = draggedTaskId === task.id;
 
                   return (
-                    <div key={task.id} style={{
+                    <div key={task.id} 
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, task.id)}
+                      onDragEnd={() => setDraggedTaskId(null)}
+                      style={{
+                      opacity: isDragging ? 0.5 : 1,
                       background: 'white', borderRadius: '12px', padding: '14px 16px',
                       boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                       border: '1px solid #f1f5f9', transition: 'all 0.2s ease',
@@ -412,7 +486,7 @@ export default function ProjectDetailPage() {
                       }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                           {task.dueDate && (
-                            <span style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            <span style={{ fontSize: '11px', color: dateColor, fontWeight: isOverdue || isToday ? '600' : 'normal', display: 'flex', alignItems: 'center', gap: '3px' }}>
                               📅 {new Date(task.dueDate).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
                             </span>
                           )}
@@ -423,8 +497,23 @@ export default function ProjectDetailPage() {
                           )}
                         </div>
 
-                        {/* Move buttons */}
-                        <div style={{ display: 'flex', gap: '2px' }}>
+                        {/* Right side: User Avatar and Move Buttons */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {assignedUser && (
+                            <div title={assignedUser.name || assignedUser.email} style={{
+                              width: '24px', height: '24px', borderRadius: '50%', background: '#e2e8f0',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+                              fontSize: '10px', fontWeight: 'bold', color: '#475569', border: '1px solid white',
+                              boxShadow: '0 0 0 1px #e2e8f0'
+                            }}>
+                              {assignedUser.avatarUrl ? (
+                                <img src={assignedUser.avatarUrl} alt={assignedUser.name || 'User'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                (assignedUser.name || assignedUser.email).substring(0, 2).toUpperCase()
+                              )}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: '2px' }}>
                           {col.key !== 'TODO' && (
                             <button
                               onClick={() => handleMoveTask(task.id, columns[columns.findIndex(c => c.key === col.key) - 1].key)}
@@ -522,6 +611,18 @@ export default function ProjectDetailPage() {
                     <option value="DONE">Completado</option>
                   </select>
                 </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px', marginTop: '12px' }}>Responsable</label>
+                <select value={taskForm.assignedTo} onChange={e => setTaskForm({ ...taskForm, assignedTo: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white' }}>
+                  <option value="">Sin asignar</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name || user.email}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
