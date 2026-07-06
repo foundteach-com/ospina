@@ -4,7 +4,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
-const menuItems = [
+import { ReactNode } from 'react';
+
+interface MenuItem {
+  name: string;
+  href: string;
+  icon: ReactNode;
+  children?: { name: string; href: string }[];
+}
+
+const menuItems: MenuItem[] = [
   {
     name: 'Inicio',
     href: '/',
