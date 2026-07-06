@@ -539,7 +539,8 @@ export default function ProjectDetailPage() {
                         </div>
                       </div>
                     </div>
-                  );
+                  </div>
+                );
                 })}
 
                 {/* Empty state per column */}
