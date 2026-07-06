@@ -2,6 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { 
+  Search, 
+  FileSpreadsheet, 
+  TrendingUp, 
+  Activity, 
+  AlertTriangle, 
+  XOctagon, 
+  Eye, 
+  ChevronLeft, 
+  ChevronRight,
+  PackagePlus,
+  Box,
+  Filter
+} from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface InventoryItem {
@@ -11,6 +25,7 @@ interface InventoryItem {
   unit: string;
   basePrice: number;
   currentStock: number;
+  imageUrl?: string;
   category?: {
     id: string;
     name: string;
@@ -139,25 +154,25 @@ export default function InventoryPage() {
   };
 
   const getStockStatus = (stock: number) => {
-    if (stock === 0) {
+    if (stock <= 0) {
       return {
         label: 'Agotado',
-        class: 'bg-red-500/10 text-red-500 border-red-500/20',
+        class: 'bg-rose-50 text-rose-700 border-rose-200',
       };
-    } else if (stock < 10) {
+    } else if (stock <= 10) {
       return {
         label: 'Stock Bajo',
-        class: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+        class: 'bg-amber-50 text-amber-700 border-amber-200',
       };
     } else if (stock < 50) {
       return {
         label: 'Stock Medio',
-        class: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+        class: 'bg-blue-50 text-blue-700 border-blue-200',
       };
     } else {
       return {
         label: 'Stock Alto',
-        class: 'bg-green-500/10 text-green-500 border-green-500/20',
+        class: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       };
     }
   };
@@ -215,53 +230,114 @@ export default function InventoryPage() {
   if (loading) return <div className="p-8 text-white">Cargando...</div>;
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Inventario
-        </h1>
+    <div className="p-8 max-w-7xl mx-auto">
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Inventario
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Gestiona tus productos, categorías y controla el stock
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={exportToExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm font-medium"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-green-600" />
+            <span>Exportar</span>
+          </button>
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:-translate-y-0.5 transition-all font-medium"
+          >
+            <PackagePlus className="w-4 h-4" />
+            <span>Nuevo Producto</span>
+          </button>
+        </div>
       </div>
 
+      {/* KPIs Premium */}
       <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-green-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-green-600 text-sm font-medium mb-2">Stock Alto</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {stats.high}
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-teal-100/50 border border-emerald-100 rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
+          <div className="absolute -right-4 -bottom-4 text-emerald-500/10 group-hover:scale-110 transition-transform duration-500">
+            <TrendingUp className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <div className="text-emerald-700 text-sm font-semibold mb-1 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+              Stock Alto
+            </div>
+            <div className="text-4xl font-bold text-gray-900 tracking-tight">
+              {stats.high}
+            </div>
           </div>
         </div>
-        <div className="bg-white border border-blue-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-blue-600 text-sm font-medium mb-2">Stock Medio</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {stats.medium}
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100/50 border border-blue-100 rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
+          <div className="absolute -right-4 -bottom-4 text-blue-500/10 group-hover:scale-110 transition-transform duration-500">
+            <Activity className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <div className="text-blue-700 text-sm font-semibold mb-1 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              Stock Medio
+            </div>
+            <div className="text-4xl font-bold text-gray-900 tracking-tight">
+              {stats.medium}
+            </div>
           </div>
         </div>
-        <div className="bg-white border border-yellow-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-yellow-600 text-sm font-medium mb-2">Stock Bajo</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {stats.low}
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100/50 border border-amber-100 rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
+          <div className="absolute -right-4 -bottom-4 text-amber-500/10 group-hover:scale-110 transition-transform duration-500">
+            <AlertTriangle className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <div className="text-amber-700 text-sm font-semibold mb-1 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+              Stock Bajo
+            </div>
+            <div className="text-4xl font-bold text-gray-900 tracking-tight">
+              {stats.low}
+            </div>
           </div>
         </div>
-        <div className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-red-600 text-sm font-medium mb-2">Agotado</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {stats.outOfStock}
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-rose-50 to-red-100/50 border border-rose-100 rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
+          <div className="absolute -right-4 -bottom-4 text-rose-500/10 group-hover:scale-110 transition-transform duration-500">
+            <XOctagon className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <div className="text-rose-700 text-sm font-semibold mb-1 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+              Agotado
+            </div>
+            <div className="text-4xl font-bold text-gray-900 tracking-tight">
+              {stats.outOfStock}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mb-6 flex gap-4">
-        <div className="flex-1 flex gap-4">
+      <div className="mb-6 flex flex-col md:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Buscar por nombre o código..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 shadow-sm"
+            className="w-full pl-11 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
+        </div>
+        <div className="w-full md:w-1/3 relative">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-1/3 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
           >
             <option value="">Todas las Categorías</option>
             {categories.map((cat) => (
@@ -271,20 +347,14 @@ export default function InventoryPage() {
         </div>
         <button
           onClick={() => setLowStockOnly(!lowStockOnly)}
-          className={`px-4 py-2 rounded-lg transition-colors shadow-sm ${
+          className={`px-6 py-2.5 rounded-xl transition-all font-medium flex items-center justify-center gap-2 ${
             lowStockOnly
-              ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+              ? 'bg-amber-100 text-amber-700 border border-amber-200 shadow-inner'
+              : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 hover:text-gray-900'
           }`}
         >
-          {lowStockOnly ? 'Mostrar Todos' : 'Solo Stock Bajo'}
-        </button>
-        <button
-          onClick={exportToExcel}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Exportar a Excel
+          <AlertTriangle className={`w-4 h-4 ${lowStockOnly ? 'text-amber-600' : 'text-gray-400'}`} />
+          <span>{lowStockOnly ? 'Mostrando Stock Bajo' : 'Filtrar Stock Bajo'}</span>
         </button>
       </div>
 
@@ -352,47 +422,49 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-gray-200">
               {sortedInventory.map((item) => {
                 const status = getStockStatus(item.currentStock);
-                // Dynamically mapping status classes for light theme
-                let lightStatusClass = '';
-                if (item.currentStock === 0) lightStatusClass = 'bg-red-50 text-red-700 border-red-200';
-                else if (item.currentStock < 10) lightStatusClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                else if (item.currentStock < 50) lightStatusClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                else lightStatusClass = 'bg-green-50 text-green-700 border-green-200';
-
                 return (
-                  <tr key={item.productId} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                  <tr key={item.productId} className="group border-b border-gray-50 hover:bg-gray-50/80 transition-all duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
                       {item.productCode}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {item.productName}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-gray-100 shadow-sm" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 shadow-sm">
+                            <Box className="w-5 h-5 text-gray-400" />
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-900 font-medium">{item.productName}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.category?.name || '-'}
+                      <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
+                        {item.category?.name || 'Sin Categoría'}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
                       {item.unit}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-medium">
-                      ${item.basePrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
+                      ${item.basePrice.toLocaleString('es-CO')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-semibold">
                       {item.currentStock.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full border ${lightStatusClass}`}
-                      >
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${status.class} shadow-sm`}>
                         {status.label}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <Link
+                      <Link 
                         href={`/inventario/${item.productId}/movimientos`}
-                        title="Ver Detalles"
-                        className="p-2 inline-block text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                        className="inline-flex items-center justify-center p-2 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                        title="Ver Movimientos"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <Eye className="w-5 h-5" />
                       </Link>
                     </td>
                   </tr>
