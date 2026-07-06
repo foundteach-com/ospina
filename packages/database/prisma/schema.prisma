@@ -8,37 +8,38 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  email     String    @unique
   password  String
   name      String?
   avatarUrl String?
-  role      UserRole @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      UserRole  @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  employee  Employee?
 }
 
 model Product {
-  id                  String          @id @default(cuid())
+  id                  String                 @id @default(cuid())
   name                String
   description         String?
-  sku                 String?         @unique
+  sku                 String?                @unique
   categoryId          String?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  basePrice           Decimal         @default(0)
-  code                String          @unique
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  basePrice           Decimal                @default(0)
+  code                String                 @unique
   brand               String?
   measurementQuantity Decimal?
   measurementUnit     String?
-  purchaseIvaPercent  Decimal         @default(19)
-  purchasePrice       Decimal         @default(0)
-  salesIvaPercent     Decimal         @default(19)
-  utilityPercent      Decimal         @default(0)
+  purchaseIvaPercent  Decimal                @default(19)
+  purchasePrice       Decimal                @default(0)
+  salesIvaPercent     Decimal                @default(19)
+  utilityPercent      Decimal                @default(0)
   imageUrl            String?
-  isPublished         Boolean         @default(true)
+  isPublished         Boolean                @default(true)
   clientPricing       ClientPricing[]
-  category            Category?       @relation(fields: [categoryId], references: [id])
+  category            Category?              @relation(fields: [categoryId], references: [id])
   purchaseItems       PurchaseItem[]
   saleItems           SaleItem[]
   cotizacionItems     CotizacionItem[]
@@ -89,17 +90,17 @@ enum PurchaseStatus {
 }
 
 model PurchaseItem {
-  id            String   @id @default(cuid())
-  purchaseId    String
-  productId     String
-  quantity      Decimal
-  purchasePrice Decimal
-  reteFuentePercent Decimal @default(0)
-  reteIvaPercent    Decimal @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  product       Product  @relation(fields: [productId], references: [id])
-  purchase      Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  purchaseId        String
+  productId         String
+  quantity          Decimal
+  purchasePrice     Decimal
+  reteFuentePercent Decimal  @default(0)
+  reteIvaPercent    Decimal  @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  product           Product  @relation(fields: [productId], references: [id])
+  purchase          Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 }
 
 model Client {
@@ -135,22 +136,22 @@ enum PaymentMethod {
 }
 
 model Sale {
-  id              String     @id @default(cuid())
+  id              String        @id @default(cuid())
   referenceNumber String?
   date            DateTime
   total           Decimal
-  status          SaleStatus @default(PENDING)
+  status          SaleStatus    @default(PENDING)
   paymentStatus   PaymentStatus @default(PENDING)
-  paymentType     PaymentType @default(CONTADO)
+  paymentType     PaymentType   @default(CONTADO)
   paymentDays     Int?
   paymentDate     DateTime?
   paymentMethod   PaymentMethod @default(EFECTIVO)
   notes           String?
   documentUrl     String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   clientId        String
-  client          Client     @relation(fields: [clientId], references: [id])
+  client          Client        @relation(fields: [clientId], references: [id])
   items           SaleItem[]
 }
 
@@ -192,15 +193,15 @@ model CashFlow {
 }
 
 model CompanySettings {
-  id              String   @id @default("singleton")
-  companyName    String   @default("Ospina Admin")
-  logoUrl        String?
-  taxId          String?
-  address        String?
-  phone          String?
-  email          String?
-  primaryColor   String   @default("#2563eb")
-  updatedAt      DateTime @updatedAt
+  id           String   @id @default("singleton")
+  companyName  String   @default("Ospina Admin")
+  logoUrl      String?
+  taxId        String?
+  address      String?
+  phone        String?
+  email        String?
+  primaryColor String   @default("#2563eb")
+  updatedAt    DateTime @updatedAt
 }
 
 enum UserRole {
@@ -230,18 +231,18 @@ enum CotizacionStatus {
 }
 
 model Cotizacion {
-  id              String            @id @default(cuid())
-  numero          String            @unique
+  id              String           @id @default(cuid())
+  numero          String           @unique
   clienteNombre   String
   clienteEmail    String?
   clienteTelefono String?
   fecha           DateTime
-  validezDias     Int               @default(30)
-  estado          CotizacionStatus  @default(PENDIENTE)
+  validezDias     Int              @default(30)
+  estado          CotizacionStatus @default(PENDIENTE)
   notas           String?
-  total           Decimal           @default(0)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  total           Decimal          @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   items           CotizacionItem[]
 }
 
@@ -256,13 +257,13 @@ model CotizacionItem {
 }
 
 model InternalMovement {
-  id          String               @id @default(cuid())
+  id          String                 @id @default(cuid())
   date        DateTime
   type        InternalMovementType
   description String?
-  total       Decimal              @default(0)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  total       Decimal                @default(0)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
   items       InternalMovementItem[]
 }
 
@@ -290,4 +291,202 @@ model ContactNotification {
   mensaje   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// ==========================================
+// MÓDULO TALENTO HUMANO
+// ==========================================
+
+model Employee {
+  id         String    @id @default(cuid())
+  userId     String?   @unique
+  user       User?     @relation(fields: [userId], references: [id])
+  firstName  String
+  lastName   String
+  documentId String    @unique
+  phone      String?
+  address    String?
+  birthDate  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  contracts EmploymentContract[]
+  payrolls  Payroll[]
+}
+
+model EmploymentContract {
+  id          String    @id @default(cuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  position    String
+  salary      Decimal
+  startDate   DateTime
+  endDate     DateTime?
+  status      String    @default("ACTIVE") // ACTIVE, TERMINATED
+  documentUrl String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Payroll {
+  id          String    @id @default(cuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  periodStart DateTime
+  periodEnd   DateTime
+  baseSalary  Decimal
+  deductions  Decimal   @default(0)
+  bonuses     Decimal   @default(0)
+  netPay      Decimal
+  paymentDate DateTime?
+  status      String    @default("PENDING") // PENDING, PAID
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ==========================================
+// MÓDULO OPERACIONES
+// ==========================================
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String    @default("PLANNED") // PLANNED, ACTIVE, COMPLETED, ON_HOLD
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tasks       Task[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      String    @default("TODO") // TODO, IN_PROGRESS, DONE
+  assignedTo  String? // userId or employeeId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Checklist {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==========================================
+// MÓDULO SST
+// ==========================================
+
+model RiskMatrix {
+  id          String   @id @default(cuid())
+  area        String
+  riskType    String
+  description String
+  severity    String // LOW, MEDIUM, HIGH, CRITICAL
+  mitigation  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WorkplaceIncident {
+  id          String   @id @default(cuid())
+  date        DateTime
+  description String
+  employeeId  String?
+  severity    String // MINOR, MAJOR, CRITICAL
+  status      String   @default("REPORTED") // REPORTED, INVESTIGATING, RESOLVED
+  actionTaken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==========================================
+// MÓDULO JURÍDICO
+// ==========================================
+
+model LegalDocument {
+  id          String    @id @default(cuid())
+  title       String
+  type        String // CONTRACT, ACT, POLICY, OTHER
+  description String?
+  documentUrl String
+  validUntil  DateTime?
+  entityId    String? // Relacionado a un cliente, proveedor o empleado
+  entityType  String? // CLIENT, PROVIDER, EMPLOYEE
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ==========================================
+// MÓDULO TECNOLOGÍA
+// ==========================================
+
+model ITAsset {
+  id           String    @id @default(cuid())
+  name         String
+  type         String // LAPTOP, DESKTOP, PRINTER, NETWORK
+  serialNumber String?
+  status       String    @default("ACTIVE") // ACTIVE, MAINTENANCE, RETIRED
+  assignedTo   String?
+  purchaseDate DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model SoftwareLicense {
+  id         String    @id @default(cuid())
+  name       String
+  provider   String
+  licenseKey String?
+  seats      Int       @default(1)
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+// ==========================================
+// MÓDULO CONFIGURACIÓN (Y BODEGAS)
+// ==========================================
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  city      String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Warehouse {
+  id        String   @id @default(cuid())
+  name      String
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// MÓDULO COMPRAS (NUEVO ORDEN)
+// ==========================================
+
+model PurchaseOrder {
+  id              String   @id @default(cuid())
+  referenceNumber String   @unique
+  providerId      String
+  date            DateTime @default(now())
+  total           Decimal
+  status          String   @default("DRAFT") // DRAFT, APPROVED, SENT, FULFILLED
+  documentUrl     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

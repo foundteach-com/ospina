@@ -19,6 +19,11 @@ import { SettingsModule } from './settings/settings.module';
 import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
 import { InternalMovementsModule } from './internal-movements/internal-movements.module';
 import { ContactModule } from './contact/contact.module';
+import { HrModule } from './hr/hr.module';
+import { OperationsModule } from './operations/operations.module';
+import { SstModule } from './sst/sst.module';
+import { LegalModule } from './legal/legal.module';
+import { ItModule } from './it/it.module';
 
 @Module({
   imports: [
@@ -41,6 +46,11 @@ import { ContactModule } from './contact/contact.module';
     CotizacionesModule,
     InternalMovementsModule,
     ContactModule,
+    HrModule,
+    OperationsModule,
+    SstModule,
+    LegalModule,
+    ItModule,
   ],
   controllers: [AppController],
   providers: [AppService],

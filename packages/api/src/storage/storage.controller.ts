@@ -37,21 +37,4 @@ export class StorageController {
     return { url };
   }
 
-  // Endpoint de respaldo para servir archivos si useStaticAssets no funciona
-  @Get('file/:folder/:filename')
-  serveFile(
-    @Param('folder') folder: string,
-    @Param('filename') filename: string,
-    @Res() res: Response,
-  ) {
-    const uploadDir =
-      process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
-    const filePath = path.join(uploadDir, folder, filename);
-
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('Archivo no encontrado');
-    }
-
-    return res.sendFile(filePath);
-  }
 }

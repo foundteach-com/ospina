@@ -1,28 +1,28 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as fs from 'fs';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import * as path from 'path';
 
 @Injectable()
 export class StorageService {
-  private uploadDir: string;
-  private publicBaseUrl: string;
+  private s3Client: S3Client;
+  private bucketName: string;
+  private endpoint: string;
 
   constructor(private configService: ConfigService) {
-    // En Railway se monta el volumen en /app/uploads
-    // En local usamos ./uploads relativo al proceso
-    this.uploadDir =
-      this.configService.get<string>('UPLOAD_DIR') ||
-      path.join(process.cwd(), 'uploads');
+    this.endpoint = this.configService.get<string>('DO_SPACES_ENDPOINT') || 'https://ospina-assets.sfo3.digitaloceanspaces.com';
+    this.bucketName = this.configService.get<string>('DO_SPACES_BUCKET') || 'ospina-assets';
+    const region = 'sfo3';
 
-    this.publicBaseUrl =
-      this.configService.get<string>('PUBLIC_API_URL') ||
-      `http://localhost:${this.configService.get<string>('PORT') || 4000}`;
-
-    // Asegurarse de que el directorio base exista
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
-    }
+    this.s3Client = new S3Client({
+      endpoint: 'https://sfo3.digitaloceanspaces.com', // Base DO API endpoint
+      forcePathStyle: false, 
+      region: region,
+      credentials: {
+        accessKeyId: this.configService.get<string>('DO_SPACES_KEY') || '',
+        secretAccessKey: this.configService.get<string>('DO_SPACES_SECRET') || '',
+      },
+    });
   }
 
   async uploadFile(
@@ -30,40 +30,55 @@ export class StorageService {
     folder: string = 'uploads',
   ): Promise<string> {
     try {
-      const folderPath = path.join(this.uploadDir, folder);
-
-      // Crear subcarpeta si no existe
-      if (!fs.existsSync(folderPath)) {
-        fs.mkdirSync(folderPath, { recursive: true });
-      }
-
       const fileExt = path.extname(file.originalname);
       const fileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}${fileExt}`;
-      const filePath = path.join(folderPath, fileName);
+      const objectKey = `${folder}/${fileName}`;
 
-      // Escribir el buffer al disco
-      fs.writeFileSync(filePath, file.buffer);
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: objectKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        ACL: 'public-read',
+      });
 
-      // Retornar la URL pública
-      const publicUrl = `${this.publicBaseUrl}/uploads/${folder}/${fileName}`;
-      return publicUrl;
+      await this.s3Client.send(command);
+
+      // Retornar la URL pública (usando el endpoint origin que nos dio el usuario)
+      return `${this.endpoint}/${objectKey}`;
     } catch (error) {
-      console.error('Error saving file to disk:', error);
-      throw new InternalServerErrorException('No se pudo guardar el archivo');
+      console.error('Error uploading file to Digital Ocean Spaces:', error);
+      throw new InternalServerErrorException('No se pudo subir el archivo a la nube');
     }
   }
 
   async deleteFile(fileUrl: string): Promise<void> {
     try {
-      // Extraer la ruta relativa de la URL
-      const urlPath = fileUrl.replace(/^https?:\/\/[^/]+\/uploads\//, '');
-      const filePath = path.join(this.uploadDir, urlPath);
+      if (!fileUrl) return;
 
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      const urlPrefix = `${this.endpoint}/`;
+      let objectKey = fileUrl;
+
+      if (fileUrl.startsWith(urlPrefix)) {
+        objectKey = fileUrl.substring(urlPrefix.length);
+      } else {
+        try {
+          const urlObj = new URL(fileUrl);
+          objectKey = urlObj.pathname.substring(1);
+        } catch {
+           // Fallback en caso de URL malformada
+           objectKey = fileUrl;
+        }
       }
+
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: objectKey,
+      });
+
+      await this.s3Client.send(command);
     } catch (error) {
-      console.error('Error deleting file:', error);
+      console.error('Error deleting file from Digital Ocean Spaces:', error);
     }
   }
 }
