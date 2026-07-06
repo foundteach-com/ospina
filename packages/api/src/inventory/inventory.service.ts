@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 export interface InventoryItem {
   productId: string;
@@ -33,50 +34,119 @@ export class InventoryService {
     categoryId?: string;
     lowStock?: boolean;
     search?: string;
-  }): Promise<InventoryItem[]> {
-    // Get all products with filters
-    const products = await this.prisma.product.findMany({
-      where: {
-        ...(params?.categoryId && { categoryId: params.categoryId }),
-        ...(params?.search && {
-          OR: [
-            { name: { contains: params.search, mode: 'insensitive' } },
-            { code: { contains: params.search, mode: 'insensitive' } },
-          ],
-        }),
-      },
-      include: {
-        category: true,
-      },
-    });
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: InventoryItem[]; total: number; page: number; totalPages: number }> {
+    const page = params?.page || 1;
+    const limit = params?.limit || 10;
+    const offset = (page - 1) * limit;
 
-    // Calculate stock for each product
-    const inventory: InventoryItem[] = [];
-
-    for (const product of products) {
-      const stock = await this.getProductStock(product.id);
-
-      // Apply low stock filter if requested
-      if (params?.lowStock && stock > 10) continue;
-
-      inventory.push({
-        productId: product.id,
-        productCode: product.code,
-        productName: product.name,
-        unit: product.measurementUnit,
-        basePrice: Number(product.basePrice),
-        currentStock: stock,
-        category: product.category
-          ? {
-              id: product.category.id,
-              name: product.category.name,
-            }
-          : undefined,
-        imageUrl: product.imageUrl,
-      });
+    const filters: Prisma.Sql[] = [];
+    if (params?.categoryId) {
+      filters.push(Prisma.sql`p."categoryId" = ${params.categoryId}`);
+    }
+    if (params?.search) {
+      filters.push(Prisma.sql`(p.name ILIKE ${'%' + params.search + '%'} OR p.code ILIKE ${'%' + params.search + '%'})`);
     }
 
-    return inventory;
+    const whereClause = filters.length > 0 ? Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}` : Prisma.empty;
+    const havingClause = params?.lowStock ? Prisma.sql`WHERE "currentStock" <= 10` : Prisma.empty;
+
+    const countQuery = Prisma.sql`
+      WITH StockCalculated AS (
+        SELECT 
+          p.id,
+          COALESCE((SELECT SUM(quantity) FROM "PurchaseItem" WHERE "productId" = p.id), 0) -
+          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) -
+          COALESCE((SELECT SUM(quantity) FROM "InternalMovementItem" WHERE "productId" = p.id), 0) as "currentStock"
+        FROM "Product" p
+        ${whereClause}
+      )
+      SELECT COUNT(*) as total FROM StockCalculated
+      ${havingClause}
+    `;
+
+    const dataQuery = Prisma.sql`
+      WITH StockCalculated AS (
+        SELECT 
+          p.id as "productId",
+          p.code as "productCode",
+          p.name as "productName",
+          p."measurementUnit" as unit,
+          p."basePrice",
+          p."imageUrl",
+          c.id as "categoryId",
+          c.name as "categoryName",
+          COALESCE((SELECT SUM(quantity) FROM "PurchaseItem" WHERE "productId" = p.id), 0) -
+          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) -
+          COALESCE((SELECT SUM(quantity) FROM "InternalMovementItem" WHERE "productId" = p.id), 0) as "currentStock"
+        FROM "Product" p
+        LEFT JOIN "Category" c ON p."categoryId" = c.id
+        ${whereClause}
+      )
+      SELECT * FROM StockCalculated
+      ${havingClause}
+      ORDER BY "productName" ASC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const [countResult, dataResult] = await Promise.all([
+      this.prisma.$queryRaw<any[]>(countQuery),
+      this.prisma.$queryRaw<any[]>(dataQuery),
+    ]);
+
+    const total = Number(countResult[0]?.total || 0);
+
+    const data: InventoryItem[] = dataResult.map(row => ({
+      productId: row.productId,
+      productCode: row.productCode,
+      productName: row.productName,
+      unit: row.unit,
+      basePrice: Number(row.basePrice),
+      currentStock: Number(row.currentStock),
+      imageUrl: row.imageUrl,
+      category: row.categoryId ? {
+        id: row.categoryId,
+        name: row.categoryName,
+      } : undefined,
+    }));
+
+    return {
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getInventoryStats(): Promise<{ high: number; medium: number; low: number; outOfStock: number }> {
+    const query = Prisma.sql`
+      WITH StockCalculated AS (
+        SELECT 
+          COALESCE((SELECT SUM(quantity) FROM "PurchaseItem" WHERE "productId" = p.id), 0) -
+          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) -
+          COALESCE((SELECT SUM(quantity) FROM "InternalMovementItem" WHERE "productId" = p.id), 0) as "currentStock"
+        FROM "Product" p
+      )
+      SELECT 
+        CAST(SUM(CASE WHEN "currentStock" >= 50 THEN 1 ELSE 0 END) AS INTEGER) as high,
+        CAST(SUM(CASE WHEN "currentStock" >= 10 AND "currentStock" < 50 THEN 1 ELSE 0 END) AS INTEGER) as medium,
+        CAST(SUM(CASE WHEN "currentStock" > 0 AND "currentStock" < 10 THEN 1 ELSE 0 END) AS INTEGER) as low,
+        CAST(SUM(CASE WHEN "currentStock" <= 0 THEN 1 ELSE 0 END) AS INTEGER) as "outOfStock"
+      FROM StockCalculated
+    `;
+    const result = await this.prisma.$queryRaw<any[]>(query);
+    
+    if (!result || result.length === 0) {
+      return { high: 0, medium: 0, low: 0, outOfStock: 0 };
+    }
+    
+    return {
+      high: Number(result[0].high || 0),
+      medium: Number(result[0].medium || 0),
+      low: Number(result[0].low || 0),
+      outOfStock: Number(result[0].outofstock || result[0].outOfStock || 0),
+    };
   }
 
   async getProductMovements(productId: string): Promise<StockMovement[]> {
@@ -198,7 +268,8 @@ export class InventoryService {
     return Number(totalPurchased) - Number(totalSold) - Number(totalInternal);
   }
 
-  async getLowStockProducts(threshold = 10): Promise<InventoryItem[]> {
-    return this.getInventory({ lowStock: true });
+  async getLowStockProducts(threshold = 10) {
+    // We ignore the threshold param dynamically here because getInventory hardcodes <= 10 for lowStock param
+    return this.getInventory({ lowStock: true, limit: 100 });
   }
 }

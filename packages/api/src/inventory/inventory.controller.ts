@@ -11,13 +11,23 @@ export class InventoryController {
   getInventory(
     @Query('categoryId') categoryId?: string,
     @Query('lowStock') lowStock?: string,
-    @Query('search') search?: string
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     return this.inventoryService.getInventory({
       categoryId,
       lowStock: lowStock === 'true',
       search,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
     });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('stats')
+  getInventoryStats() {
+    return this.inventoryService.getInventoryStats();
   }
 
   @UseGuards(JwtAuthGuard)

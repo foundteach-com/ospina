@@ -27,6 +27,17 @@ export default function InventoryPage() {
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'productName', direction: 'asc' });
 
+  // Pagination and Stats
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [stats, setStats] = useState({ high: 0, medium: 0, low: 0, outOfStock: 0 });
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, lowStockOnly, selectedCategory]);
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
@@ -36,12 +47,28 @@ export default function InventoryPage() {
 
   useEffect(() => {
     fetchCategories();
+    fetchStats();
   }, []);
 
   useEffect(() => {
     fetchInventory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, lowStockOnly, selectedCategory]);
+  }, [debouncedSearch, lowStockOnly, selectedCategory, currentPage]);
+
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching inventory stats:', error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -60,11 +87,14 @@ export default function InventoryPage() {
 
   const fetchInventory = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('access_token');
       const params = new URLSearchParams();
       if (debouncedSearch) params.append('search', debouncedSearch);
       if (lowStockOnly) params.append('lowStock', 'true');
       if (selectedCategory) params.append('categoryId', selectedCategory);
+      params.append('page', currentPage.toString());
+      params.append('limit', '10');
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/inventory?${params.toString()}`,
@@ -76,7 +106,13 @@ export default function InventoryPage() {
       );
       if (response.ok) {
         const data = await response.json();
-        setInventory(data);
+        if (data.data) {
+          setInventory(data.data);
+          setTotalPages(data.totalPages || 1);
+          setTotalItems(data.total || 0);
+        } else {
+          setInventory(data);
+        }
       }
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -190,25 +226,25 @@ export default function InventoryPage() {
         <div className="bg-white border border-green-200 rounded-2xl p-6 shadow-sm">
           <div className="text-green-600 text-sm font-medium mb-2">Stock Alto</div>
           <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock >= 50).length}
+            {stats.high}
           </div>
         </div>
         <div className="bg-white border border-blue-200 rounded-2xl p-6 shadow-sm">
           <div className="text-blue-600 text-sm font-medium mb-2">Stock Medio</div>
           <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock >= 10 && i.currentStock < 50).length}
+            {stats.medium}
           </div>
         </div>
         <div className="bg-white border border-yellow-200 rounded-2xl p-6 shadow-sm">
           <div className="text-yellow-600 text-sm font-medium mb-2">Stock Bajo</div>
           <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock > 0 && i.currentStock < 10).length}
+            {stats.low}
           </div>
         </div>
         <div className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm">
           <div className="text-red-600 text-sm font-medium mb-2">Agotado</div>
           <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock === 0).length}
+            {stats.outOfStock}
           </div>
         </div>
       </div>
@@ -375,6 +411,30 @@ export default function InventoryPage() {
           </table>
         </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Mostrando página <span className="font-medium text-gray-900">{currentPage}</span> de <span className="font-medium text-gray-900">{totalPages}</span> ({totalItems} productos en total)
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
