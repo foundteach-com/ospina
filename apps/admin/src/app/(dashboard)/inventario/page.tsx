@@ -25,6 +25,7 @@ interface InventoryItem {
   productCode: string;
   productName: string;
   unit: string;
+  measurementQuantity: number | null;
   basePrice: number;
   salesIvaPercent: number;
   purchasePrice: number;
@@ -174,6 +175,7 @@ export default function InventoryPage() {
       'Marca': item.brand || '-',
       'Categoría': item.category?.name || '-',
       'Proveedor': item.providerName || '-',
+      'Cantidad Medida': item.measurementQuantity || '-',
       'Unidad': item.unit,
       'P. Compra (Sin IVA)': item.purchasePrice,
       'P. Compra (+ IVA)': item.purchasePrice * (1 + (item.purchaseIvaPercent / 100)),
@@ -443,6 +445,14 @@ export default function InventoryPage() {
                 </th>
                 <th 
                   className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('measurementQuantity')}
+                >
+                  <div className="flex items-center">
+                    C. Medida {getSortIcon('measurementQuantity')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
                   onClick={() => requestSort('unit')}
                 >
                   <div className="flex items-center">
@@ -490,7 +500,7 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={13} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={14} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex items-center justify-center gap-3">
                       <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                       Cargando inventario...
@@ -499,7 +509,7 @@ export default function InventoryPage() {
                 </tr>
               ) : sortedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={14} className="px-6 py-12 text-center text-gray-500">
                     {search || statusFilter || selectedCategory 
                       ? 'No se encontraron productos con los filtros aplicados'
                       : 'No hay productos en el inventario'}
@@ -535,6 +545,9 @@ export default function InventoryPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {item.providerName || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                        {item.measurementQuantity || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
                         {item.unit}

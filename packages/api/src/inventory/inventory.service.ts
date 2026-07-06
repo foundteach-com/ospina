@@ -7,6 +7,7 @@ export interface InventoryItem {
   productCode: string;
   productName: string;
   unit: string | null;
+  measurementQuantity: number | null;
   basePrice: number;
   salesIvaPercent: number;
   purchasePrice: number;
@@ -90,6 +91,7 @@ export class InventoryService {
           p.code as "productCode",
           p.name as "productName",
           p."measurementUnit" as unit,
+          p."measurementQuantity",
           p."basePrice",
           p."salesIvaPercent",
           p."purchasePrice",
@@ -125,6 +127,7 @@ export class InventoryService {
       productCode: row.productCode,
       productName: row.productName,
       unit: row.unit,
+      measurementQuantity: row.measurementQuantity ? Number(row.measurementQuantity) : null,
       basePrice: Number(row.basePrice),
       salesIvaPercent: Number(row.salesIvaPercent),
       purchasePrice: Number(row.purchasePrice),
