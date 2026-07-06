@@ -18,7 +18,7 @@ import {
 interface StockMovement {
   id: string;
   date: string;
-  type: 'PURCHASE' | 'SALE' | 'INTERNAL_USE' | 'OWNER_WITHDRAWAL';
+  type: 'PURCHASE' | 'SALE' | 'INTERNAL_USE' | 'OWNER_WITHDRAWAL' | 'INITIAL_BALANCE';
   quantity: number;
   price: number;
   referenceNumber?: string;
@@ -36,6 +36,9 @@ interface Product {
   category?: {
     name: string;
   };
+  brand?: string;
+  description?: string;
+  measurementUnit?: string;
 }
 
 export default function ProductMovementsPage() {
@@ -123,7 +126,7 @@ export default function ProductMovementsPage() {
     const reversedMovements = [...movements].reverse();
     let balance = 0;
     const reversedBalances = reversedMovements.map((movement) => {
-      if (movement.type === 'PURCHASE') {
+      if (movement.type === 'PURCHASE' || movement.type === 'INITIAL_BALANCE') {
         balance += movement.quantity;
       } else {
         balance -= movement.quantity;
@@ -189,12 +192,23 @@ export default function ProductMovementsPage() {
                     {product.category?.name || 'Sin Categoría'}
                   </span>
                 </div>
-                <p className="text-gray-500 flex items-center gap-2">
+                <p className="text-gray-500 flex items-center gap-2 mb-3">
                   <Box className="w-4 h-4" />
                   Código: <span className="font-mono font-medium text-gray-700">{product.code}</span>
                   <span className="text-gray-300">|</span>
-                  Unidad: <span className="font-medium text-gray-700">{product.unit}</span>
+                  Unidad: <span className="font-medium text-gray-700">{product.unit || product.measurementUnit}</span>
+                  {product.brand && (
+                    <>
+                      <span className="text-gray-300">|</span>
+                      Marca: <span className="font-medium text-gray-700">{product.brand}</span>
+                    </>
+                  )}
                 </p>
+                {product.description && (
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    {product.description}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -286,6 +300,10 @@ export default function ProductMovementsPage() {
                         <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                           Uso Interno
                         </span>
+                      ) : movement.type === 'INITIAL_BALANCE' ? (
+                        <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                          Saldo Inicial
+                        </span>
                       ) : (
                         <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-50 text-gray-700 border border-gray-200">
                           Retiro Socio
@@ -299,7 +317,7 @@ export default function ProductMovementsPage() {
                       {movement.partner || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold font-mono">
-                      {movement.type === 'PURCHASE' ? (
+                      {(movement.type === 'PURCHASE' || movement.type === 'INITIAL_BALANCE') ? (
                         <span className="text-emerald-600 flex items-center justify-end gap-1">
                           <TrendingUp className="w-3 h-3" />
                           +{movement.quantity}

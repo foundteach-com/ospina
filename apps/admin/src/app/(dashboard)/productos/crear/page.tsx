@@ -179,7 +179,7 @@ function CreateProductForm() {
       });
 
       if (response.ok) {
-        router.push('/productos');
+        router.push('/inventario');
         router.refresh();
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -205,7 +205,7 @@ function CreateProductForm() {
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/productos" className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900">
+        <Link href="/inventario" className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </Link>
         <h1 className="text-3xl font-bold text-gray-900">Nuevo Producto</h1>
@@ -474,7 +474,7 @@ function CreateProductForm() {
 
         <div className="pt-4 flex justify-end gap-4">
           <Link
-            href="/productos"
+            href="/inventario"
             className="px-6 py-3 rounded-xl font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all"
           >
             Cancelar

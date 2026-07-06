@@ -255,8 +255,6 @@ export default function InventoryPage() {
     return 0;
   });
 
-  if (loading) return <div className="p-8 text-white">Cargando...</div>;
-
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header Premium */}
@@ -455,83 +453,93 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sortedInventory.map((item) => {
-                const status = getStockStatus(item.currentStock);
-                return (
-                  <tr key={item.productId} className="group border-b border-gray-50 hover:bg-gray-50/80 transition-all duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
-                      {item.productCode}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        {item.imageUrl ? (
-                          <img src={item.imageUrl} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-gray-100 shadow-sm" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 shadow-sm">
-                            <Box className="w-5 h-5 text-gray-400" />
-                          </div>
-                        )}
-                        <span className="text-sm text-gray-900 font-medium">{item.productName}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
-                        {item.category?.name || 'Sin Categoría'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
-                      {item.unit}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
-                      ${item.basePrice.toLocaleString('es-CO')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-medium">
-                      ${(item.basePrice * (1 + (item.salesIvaPercent / 100))).toLocaleString('es-CO')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-bold">
-                      {item.currentStock.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${status.class} shadow-sm`}>
-                        {status.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                        <Link 
-                          href={`/inventario/${item.productId}/movimientos`}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
-                          title="Ver Movimientos"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </Link>
-                        <Link 
-                          href={`/productos/editar/${item.productId}`}
-                          className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all duration-200"
-                          title="Editar Producto"
-                        >
-                          <Pencil className="w-5 h-5" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteProduct(item.productId)}
-                          className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
-                          title="Eliminar Producto"
-                        >
-                          <Trash className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {sortedInventory.length === 0 && (
+              {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      Cargando inventario...
+                    </div>
+                  </td>
+                </tr>
+              ) : sortedInventory.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
                     {search || statusFilter || selectedCategory 
                       ? 'No se encontraron productos con los filtros aplicados'
                       : 'No hay productos en el inventario'}
                   </td>
                 </tr>
+              ) : (
+                sortedInventory.map((item) => {
+                  const status = getStockStatus(item.currentStock);
+                  return (
+                    <tr key={item.productId} className="group border-b border-gray-50 hover:bg-gray-50/80 transition-all duration-200">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">
+                        {item.productCode}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.productName} className="w-10 h-10 rounded-xl object-cover border border-gray-100 shadow-sm" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 shadow-sm">
+                              <Box className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="text-sm text-gray-900 font-medium">{item.productName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
+                          {item.category?.name || 'Sin Categoría'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                        {item.unit}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
+                        ${item.basePrice.toLocaleString('es-CO')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-medium">
+                        ${(item.basePrice * (1 + (item.salesIvaPercent / 100))).toLocaleString('es-CO')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-bold">
+                        {item.currentStock.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${status.class} shadow-sm`}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <Link 
+                            href={`/inventario/${item.productId}/movimientos`}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                            title="Ver Movimientos"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </Link>
+                          <Link 
+                            href={`/productos/editar/${item.productId}`}
+                            className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all duration-200"
+                            title="Editar Producto"
+                          >
+                            <Pencil className="w-5 h-5" />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteProduct(item.productId)}
+                            className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
+                            title="Eliminar Producto"
+                          >
+                            <Trash className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
