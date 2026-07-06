@@ -151,7 +151,7 @@ export default function EditProductPage() {
         categoryId: formData.categoryId || null,
         imageUrl: formData.imageUrl || null,
         isPublished: formData.isPublished,
-        basePrice: sPriceWithIva, // For compatibility
+        basePrice: sellingPriceNet, // Guardamos el precio neto sin IVA
       };
 
       const response = await fetch(`${apiUrl}/products/${params.id}`, {

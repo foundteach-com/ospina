@@ -19,9 +19,10 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() data: Prisma.ProductCreateInput) {
-    console.log('[ProductsController] Creating product:', { name: data.name, code: data.code });
-    return this.productsService.create(data);
+  create(@Body() body: any) {
+    const { initialStock, ...data } = body;
+    console.log('[ProductsController] Creating product:', { name: data.name, code: data.code, initialStock });
+    return this.productsService.create(data, initialStock);
   }
 
   @Get()

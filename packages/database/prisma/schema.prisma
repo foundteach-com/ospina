@@ -280,6 +280,7 @@ model InternalMovementItem {
 enum InternalMovementType {
   OWNER_WITHDRAWAL
   INTERNAL_USE
+  INITIAL_BALANCE
 }
 
 model ContactNotification {

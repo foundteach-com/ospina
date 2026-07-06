@@ -6,8 +6,28 @@ import { Prisma, Product } from '@prisma/client';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: Prisma.ProductCreateInput): Promise<Product> {
-    return this.prisma.product.create({ data });
+  async create(data: Prisma.ProductCreateInput, initialStock?: number): Promise<Product> {
+    const product = await this.prisma.product.create({ data });
+
+    if (initialStock && initialStock > 0) {
+      await this.prisma.internalMovement.create({
+        data: {
+          date: new Date(),
+          type: 'INITIAL_BALANCE',
+          description: 'Saldo inicial del producto',
+          total: Number(product.basePrice || 0) * initialStock,
+          items: {
+            create: {
+              productId: product.id,
+              quantity: initialStock,
+              unitPrice: product.basePrice,
+            }
+          }
+        }
+      });
+    }
+
+    return product;
   }
 
   async findAll(params?: {

@@ -69,8 +69,8 @@ export class InventoryService {
         SELECT 
           p.id,
           COALESCE((SELECT SUM(quantity) FROM "PurchaseItem" WHERE "productId" = p.id), 0) -
-          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) -
-          COALESCE((SELECT SUM(quantity) FROM "InternalMovementItem" WHERE "productId" = p.id), 0) as "currentStock"
+          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) +
+          COALESCE((SELECT SUM(CASE WHEN m.type = 'INITIAL_BALANCE' THEN i.quantity ELSE -i.quantity END) FROM "InternalMovementItem" i JOIN "InternalMovement" m ON i."internalMovementId" = m.id WHERE i."productId" = p.id), 0) as "currentStock"
         FROM "Product" p
         ${whereClause}
       )
@@ -91,8 +91,8 @@ export class InventoryService {
           c.id as "categoryId",
           c.name as "categoryName",
           COALESCE((SELECT SUM(quantity) FROM "PurchaseItem" WHERE "productId" = p.id), 0) -
-          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) -
-          COALESCE((SELECT SUM(quantity) FROM "InternalMovementItem" WHERE "productId" = p.id), 0) as "currentStock"
+          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) +
+          COALESCE((SELECT SUM(CASE WHEN m.type = 'INITIAL_BALANCE' THEN i.quantity ELSE -i.quantity END) FROM "InternalMovementItem" i JOIN "InternalMovement" m ON i."internalMovementId" = m.id WHERE i."productId" = p.id), 0) as "currentStock"
         FROM "Product" p
         LEFT JOIN "Category" c ON p."categoryId" = c.id
         ${whereClause}
@@ -138,8 +138,8 @@ export class InventoryService {
       WITH StockCalculated AS (
         SELECT 
           COALESCE((SELECT SUM(quantity) FROM "PurchaseItem" WHERE "productId" = p.id), 0) -
-          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) -
-          COALESCE((SELECT SUM(quantity) FROM "InternalMovementItem" WHERE "productId" = p.id), 0) as "currentStock"
+          COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) +
+          COALESCE((SELECT SUM(CASE WHEN m.type = 'INITIAL_BALANCE' THEN i.quantity ELSE -i.quantity END) FROM "InternalMovementItem" i JOIN "InternalMovement" m ON i."internalMovementId" = m.id WHERE i."productId" = p.id), 0) as "currentStock"
         FROM "Product" p
       )
       SELECT 

@@ -156,7 +156,8 @@ function CreateProductForm() {
         categoryId: formData.categoryId || null,
         imageUrl: formData.imageUrl || null,
         isPublished: formData.isPublished,
-        basePrice: sPriceWithIva, // For compatibility
+        basePrice: sellingPriceNet, // Guardamos SIEMPRE el precio neto sin IVA
+        initialStock: formData.stock ? parseFloat(formData.stock) : 0, // Mandamos el stock inicial
       };
 
       // Robust API URL detection for production
