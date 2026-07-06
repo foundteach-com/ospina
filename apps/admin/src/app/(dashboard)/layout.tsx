@@ -26,11 +26,16 @@ const menuCategories: MenuCategory[] = [
         name: 'Inicio',
         href: '/',
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+      },
+      {
+        name: 'Configuración',
+        href: '/configuracion',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
       }
     ]
   },
   {
-    title: 'Gestión Estratégica',
+    title: 'Área Administrativa',
     items: [
       {
         name: 'Dirección',
@@ -46,11 +51,21 @@ const menuCategories: MenuCategory[] = [
         name: 'Jurídico',
         href: '/juridico',
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M4 10.5 12 3l8 7.5"/><path d="M4 14.5v-4"/><path d="M20 14.5v-4"/><path d="M2 14h20"/><path d="M7 14v4"/><path d="M17 14v4"/><path d="M3 18h18"/></svg>,
+      },
+      {
+        name: 'Talento Humano',
+        href: '/talento-humano',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+      },
+      {
+        name: 'SST',
+        href: '/sst',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
       }
     ]
   },
   {
-    title: 'Core Operativo',
+    title: 'Área Operativa',
     items: [
       {
         name: 'Comercial',
@@ -71,36 +86,11 @@ const menuCategories: MenuCategory[] = [
         name: 'Inventario',
         href: '/inventario',
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
-      }
-    ]
-  },
-  {
-    title: 'Recursos Internos',
-    items: [
-      {
-        name: 'Talento Humano',
-        href: '/talento-humano',
-        icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-      },
-      {
-        name: 'SST',
-        href: '/sst',
-        icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
       },
       {
         name: 'Tecnología',
         href: '/tecnologia',
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>,
-      }
-    ]
-  },
-  {
-    title: 'Sistema',
-    items: [
-      {
-        name: 'Configuración',
-        href: '/configuracion',
-        icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
       }
     ]
   }
@@ -204,20 +194,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [handleLogout, pathname]);
 
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   useEffect(() => {
     let activeGroup: MenuItem | undefined;
+    let activeCatTitle: string | null = null;
+
     for (const category of menuCategories) {
-      const found = category.items.find((item) =>
-        item.children?.some((child) => child.href === pathname)
-      );
-      if (found) {
-        activeGroup = found;
-        break;
+      for (const item of category.items) {
+        // Chequea si el ítem actual o alguno de sus sub-ítems está activo
+        const isItemActive = item.href === pathname;
+        const isAnyChildActive = item.children?.some((child) => child.href === pathname);
+
+        if (isItemActive || isAnyChildActive) {
+          if (category.title !== 'Principal') {
+            activeCatTitle = category.title;
+          }
+          if (isAnyChildActive) {
+            activeGroup = item;
+          }
+        }
       }
     }
+
     if (activeGroup && !openGroups.includes(activeGroup.name)) {
       setOpenGroups([activeGroup.name]);
+    }
+    
+    if (activeCatTitle && openCategory !== activeCatTitle) {
+      setOpenCategory(activeCatTitle);
     }
   }, [pathname]);
 
@@ -269,14 +274,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 if (visibleItems.length === 0) return null;
 
+                const isPrincipal = category.title === 'Principal';
+                const isCatOpen = openCategory === category.title;
+
                 return (
                   <div key={category.title}>
-                    {category.title !== 'Principal' && (
-                      <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                        {category.title}
-                      </h3>
+                    {!isPrincipal && (
+                      <button
+                        onClick={() => setOpenCategory(isCatOpen ? null : category.title)}
+                        className="w-full flex items-center justify-between px-4 py-2 mb-1 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer group"
+                      >
+                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider group-hover:text-gray-900 transition-colors">
+                          {category.title}
+                        </h3>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={`text-gray-400 group-hover:text-gray-900 transition-transform duration-200 ${isCatOpen ? 'rotate-180' : ''}`}
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
                     )}
-                    <ul className="space-y-1">
+                    
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPrincipal || isCatOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <ul className="space-y-1">
                       {visibleItems.map((item) => {
                         if (item.children) {
                           const isExpanded = openGroups.includes(item.name);
@@ -356,6 +385,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       })}
                     </ul>
                   </div>
+                </div>
                 );
               })}
             </div>
