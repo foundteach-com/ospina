@@ -177,8 +177,8 @@ export default function InventoryPage() {
       'Proveedor': item.providerName || '-',
       'Cantidad Medida': item.measurementQuantity || '-',
       'Unidad': item.unit,
-      'P. Compra (Sin IVA)': item.purchasePrice,
-      'P. Compra (+ IVA)': item.purchasePrice * (1 + (item.purchaseIvaPercent / 100)),
+      'P. Compra (Sin IVA)': item.purchasePrice / (1 + (item.purchaseIvaPercent / 100)),
+      'P. Compra (+ IVA)': item.purchasePrice,
       'P. Venta (Sin IVA)': item.basePrice,
       'P. Venta (+ IVA)': item.basePrice * (1 + (item.salesIvaPercent / 100)),
       'Stock Actual': item.currentStock,
@@ -553,10 +553,10 @@ export default function InventoryPage() {
                         {item.unit}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
-                        ${item.purchasePrice.toLocaleString('es-CO')}
+                        ${(item.purchasePrice / (1 + (item.purchaseIvaPercent / 100))).toLocaleString('es-CO')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-medium">
-                        ${(item.purchasePrice * (1 + (item.purchaseIvaPercent / 100))).toLocaleString('es-CO')}
+                        ${item.purchasePrice.toLocaleString('es-CO')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
                         ${item.basePrice.toLocaleString('es-CO')}
