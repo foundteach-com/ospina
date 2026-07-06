@@ -14,7 +14,9 @@ import {
   ChevronRight,
   PackagePlus,
   Box,
-  Filter
+  Filter,
+  Pencil,
+  Trash
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -24,6 +26,7 @@ interface InventoryItem {
   productName: string;
   unit: string;
   basePrice: number;
+  salesIvaPercent: number;
   currentStock: number;
   imageUrl?: string;
   category?: {
@@ -39,7 +42,7 @@ export default function InventoryPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'productName', direction: 'asc' });
 
   // Pagination and Stats
@@ -51,7 +54,7 @@ export default function InventoryPage() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, lowStockOnly, selectedCategory]);
+  }, [debouncedSearch, statusFilter, selectedCategory]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -68,7 +71,7 @@ export default function InventoryPage() {
   useEffect(() => {
     fetchInventory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, lowStockOnly, selectedCategory, currentPage]);
+  }, [debouncedSearch, statusFilter, selectedCategory, currentPage, sortConfig]);
 
   const fetchStats = async () => {
     try {
@@ -106,7 +109,7 @@ export default function InventoryPage() {
       const token = localStorage.getItem('access_token');
       const params = new URLSearchParams();
       if (debouncedSearch) params.append('search', debouncedSearch);
-      if (lowStockOnly) params.append('lowStock', 'true');
+      if (statusFilter) params.append('status', statusFilter);
       if (selectedCategory) params.append('categoryId', selectedCategory);
       params.append('page', currentPage.toString());
       params.append('limit', '10');
@@ -136,13 +139,38 @@ export default function InventoryPage() {
     }
   };
 
+  const handleDeleteProduct = async (id: string) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) return;
+    
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        // Actualizar estadísticas y tabla
+        fetchStats();
+        fetchInventory();
+      } else {
+        alert('No se pudo eliminar el producto.');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Ocurrió un error al eliminar el producto.');
+    }
+  };
+
   const exportToExcel = () => {
     const dataToExport = sortedInventory.map(item => ({
       'Código': item.productCode,
       'Producto': item.productName,
       'Categoría': item.category?.name || '-',
       'Unidad': item.unit,
-      'Precio Base': item.basePrice,
+      'Precio (Sin IVA)': item.basePrice,
+      'Precio (+ IVA)': item.basePrice * (1 + (item.salesIvaPercent / 100)),
       'Stock Actual': item.currentStock,
       'Estado': getStockStatus(item.currentStock).label
     }));
@@ -249,12 +277,13 @@ export default function InventoryPage() {
             <FileSpreadsheet className="w-4 h-4 text-green-600" />
             <span>Exportar</span>
           </button>
-          <button
+          <Link
+            href="/productos/crear"
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:-translate-y-0.5 transition-all font-medium"
           >
             <PackagePlus className="w-4 h-4" />
             <span>Nuevo Producto</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -345,17 +374,20 @@ export default function InventoryPage() {
             ))}
           </select>
         </div>
-        <button
-          onClick={() => setLowStockOnly(!lowStockOnly)}
-          className={`px-6 py-2.5 rounded-xl transition-all font-medium flex items-center justify-center gap-2 ${
-            lowStockOnly
-              ? 'bg-amber-100 text-amber-700 border border-amber-200 shadow-inner'
-              : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 hover:text-gray-900'
-          }`}
-        >
-          <AlertTriangle className={`w-4 h-4 ${lowStockOnly ? 'text-amber-600' : 'text-gray-400'}`} />
-          <span>{lowStockOnly ? 'Mostrando Stock Bajo' : 'Filtrar Stock Bajo'}</span>
-        </button>
+        <div className="w-full md:w-1/3 relative">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
+          >
+            <option value="">Todos los Estados</option>
+            <option value="ALTO">Stock Alto</option>
+            <option value="MEDIO">Stock Medio</option>
+            <option value="BAJO">Stock Bajo</option>
+            <option value="AGOTADO">Agotado</option>
+          </select>
+        </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -400,8 +432,11 @@ export default function InventoryPage() {
                   onClick={() => requestSort('basePrice')}
                 >
                   <div className="flex items-center justify-end">
-                    Precio Base {getSortIcon('basePrice')}
+                    Precio (Sin IVA) {getSortIcon('basePrice')}
                   </div>
+                </th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Precio (+ IVA)
                 </th>
                 <th 
                   className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
@@ -450,7 +485,10 @@ export default function InventoryPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
                       ${item.basePrice.toLocaleString('es-CO')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-semibold">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-medium">
+                      ${(item.basePrice * (1 + (item.salesIvaPercent / 100))).toLocaleString('es-CO')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-bold">
                       {item.currentStock.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -459,21 +497,37 @@ export default function InventoryPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <Link 
-                        href={`/inventario/${item.productId}/movimientos`}
-                        className="inline-flex items-center justify-center p-2 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
-                        title="Ver Movimientos"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </Link>
+                      <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <Link 
+                          href={`/inventario/${item.productId}/movimientos`}
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                          title="Ver Movimientos"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </Link>
+                        <Link 
+                          href={`/productos/editar/${item.productId}`}
+                          className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all duration-200"
+                          title="Editar Producto"
+                        >
+                          <Pencil className="w-5 h-5" />
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteProduct(item.productId)}
+                          className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
+                          title="Eliminar Producto"
+                        >
+                          <Trash className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
               })}
-              {inventory.length === 0 && (
+              {sortedInventory.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                    {search || lowStockOnly 
+                    {search || statusFilter || selectedCategory 
                       ? 'No se encontraron productos con los filtros aplicados'
                       : 'No hay productos en el inventario'}
                   </td>

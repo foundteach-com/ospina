@@ -32,7 +32,7 @@ export class InventoryService {
 
   async getInventory(params?: {
     categoryId?: string;
-    lowStock?: boolean;
+    status?: string;
     search?: string;
     page?: number;
     limit?: number;
@@ -50,7 +50,19 @@ export class InventoryService {
     }
 
     const whereClause = filters.length > 0 ? Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}` : Prisma.empty;
-    const havingClause = params?.lowStock ? Prisma.sql`WHERE "currentStock" <= 10` : Prisma.empty;
+    
+    let havingClause = Prisma.empty;
+    if (params?.status) {
+      if (params.status === 'AGOTADO') {
+        havingClause = Prisma.sql`WHERE "currentStock" <= 0`;
+      } else if (params.status === 'BAJO') {
+        havingClause = Prisma.sql`WHERE "currentStock" > 0 AND "currentStock" <= 10`;
+      } else if (params.status === 'MEDIO') {
+        havingClause = Prisma.sql`WHERE "currentStock" > 10 AND "currentStock" < 50`;
+      } else if (params.status === 'ALTO') {
+        havingClause = Prisma.sql`WHERE "currentStock" >= 50`;
+      }
+    }
 
     const countQuery = Prisma.sql`
       WITH StockCalculated AS (
@@ -74,6 +86,7 @@ export class InventoryService {
           p.name as "productName",
           p."measurementUnit" as unit,
           p."basePrice",
+          p."salesIvaPercent",
           p."imageUrl",
           c.id as "categoryId",
           c.name as "categoryName",
@@ -103,6 +116,7 @@ export class InventoryService {
       productName: row.productName,
       unit: row.unit,
       basePrice: Number(row.basePrice),
+      salesIvaPercent: Number(row.salesIvaPercent),
       currentStock: Number(row.currentStock),
       imageUrl: row.imageUrl,
       category: row.categoryId ? {
@@ -268,8 +282,7 @@ export class InventoryService {
     return Number(totalPurchased) - Number(totalSold) - Number(totalInternal);
   }
 
-  async getLowStockProducts(threshold = 10) {
-    // We ignore the threshold param dynamically here because getInventory hardcodes <= 10 for lowStock param
-    return this.getInventory({ lowStock: true, limit: 100 });
+  async getLowStockProducts(limit: number = 10) {
+    return this.getInventory({ status: 'BAJO', limit });
   }
 }

@@ -10,14 +10,14 @@ export class InventoryController {
   @Get()
   getInventory(
     @Query('categoryId') categoryId?: string,
-    @Query('lowStock') lowStock?: string,
+    @Query('status') status?: string,
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.inventoryService.getInventory({
       categoryId,
-      lowStock: lowStock === 'true',
+      status,
       search,
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
