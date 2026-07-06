@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 interface StockMovement {
   id: string;
   date: string;
-  type: 'PURCHASE' | 'SALE';
+  type: 'PURCHASE' | 'SALE' | 'INTERNAL_USE' | 'OWNER_WITHDRAWAL';
   quantity: number;
   price: number;
   referenceNumber?: string;
@@ -80,8 +80,9 @@ export default function ProductMovementsPage() {
   };
 
   const calculateRunningBalance = () => {
+    const reversedMovements = [...movements].reverse();
     let balance = 0;
-    return movements.map((movement) => {
+    const reversedBalances = reversedMovements.map((movement) => {
       if (movement.type === 'PURCHASE') {
         balance += movement.quantity;
       } else {
@@ -89,6 +90,7 @@ export default function ProductMovementsPage() {
       }
       return balance;
     });
+    return reversedBalances.reverse();
   };
 
   if (loading) return <div className="p-8 text-white">Cargando...</div>;
@@ -157,9 +159,17 @@ export default function ProductMovementsPage() {
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200">
                         Compra
                       </span>
-                    ) : (
+                    ) : movement.type === 'SALE' ? (
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         Venta
+                      </span>
+                    ) : movement.type === 'INTERNAL_USE' ? (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+                        Uso Interno
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-50 text-gray-700 border border-gray-200">
+                        Retiro Socio
                       </span>
                     )}
                   </td>

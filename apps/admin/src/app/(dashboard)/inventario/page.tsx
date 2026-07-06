@@ -20,21 +20,51 @@ interface InventoryItem {
 export default function InventoryPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'productName', direction: 'asc' });
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     fetchInventory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, lowStockOnly]);
+  }, [debouncedSearch, lowStockOnly, selectedCategory]);
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/categories`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchInventory = async () => {
     try {
       const token = localStorage.getItem('access_token');
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
       if (lowStockOnly) params.append('lowStock', 'true');
+      if (selectedCategory) params.append('categoryId', selectedCategory);
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/inventory?${params.toString()}`,
@@ -156,15 +186,52 @@ export default function InventoryPage() {
         </h1>
       </div>
 
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white border border-green-200 rounded-2xl p-6 shadow-sm">
+          <div className="text-green-600 text-sm font-medium mb-2">Stock Alto</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {inventory.filter(i => i.currentStock >= 50).length}
+          </div>
+        </div>
+        <div className="bg-white border border-blue-200 rounded-2xl p-6 shadow-sm">
+          <div className="text-blue-600 text-sm font-medium mb-2">Stock Medio</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {inventory.filter(i => i.currentStock >= 10 && i.currentStock < 50).length}
+          </div>
+        </div>
+        <div className="bg-white border border-yellow-200 rounded-2xl p-6 shadow-sm">
+          <div className="text-yellow-600 text-sm font-medium mb-2">Stock Bajo</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {inventory.filter(i => i.currentStock > 0 && i.currentStock < 10).length}
+          </div>
+        </div>
+        <div className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm">
+          <div className="text-red-600 text-sm font-medium mb-2">Agotado</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {inventory.filter(i => i.currentStock === 0).length}
+          </div>
+        </div>
+      </div>
+
       <div className="mb-6 flex gap-4">
-        <div className="flex-1">
+        <div className="flex-1 flex gap-4">
           <input
             type="text"
             placeholder="Buscar por nombre o código..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 shadow-sm"
+            className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 shadow-sm"
           />
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-1/3 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 shadow-sm"
+          >
+            <option value="">Todas las Categorías</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
         </div>
         <button
           onClick={() => setLowStockOnly(!lowStockOnly)}
@@ -306,33 +373,6 @@ export default function InventoryPage() {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-green-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-green-600 text-sm font-medium mb-2">Stock Alto</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock >= 50).length}
-          </div>
-        </div>
-        <div className="bg-white border border-blue-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-blue-600 text-sm font-medium mb-2">Stock Medio</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock >= 10 && i.currentStock < 50).length}
-          </div>
-        </div>
-        <div className="bg-white border border-yellow-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-yellow-600 text-sm font-medium mb-2">Stock Bajo</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock > 0 && i.currentStock < 10).length}
-          </div>
-        </div>
-        <div className="bg-white border border-red-200 rounded-2xl p-6 shadow-sm">
-          <div className="text-red-600 text-sm font-medium mb-2">Agotado</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {inventory.filter(i => i.currentStock === 0).length}
-          </div>
         </div>
       </div>
     </div>

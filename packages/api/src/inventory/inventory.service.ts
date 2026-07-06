@@ -18,11 +18,11 @@ export interface InventoryItem {
 export interface StockMovement {
   id: string;
   date: Date;
-  type: 'PURCHASE' | 'SALE';
+  type: 'PURCHASE' | 'SALE' | 'INTERNAL_USE' | 'OWNER_WITHDRAWAL';
   quantity: number;
   price: number;
   referenceNumber?: string;
-  partner?: string; // Provider or Client name
+  partner?: string; // Provider, Client name, or Internal description
 }
 
 @Injectable()
@@ -114,6 +114,19 @@ export class InventoryService {
       },
     });
 
+    // Get internal movements for this product
+    const internalMovementItems = await this.prisma.internalMovementItem.findMany({
+      where: { productId },
+      include: {
+        internalMovement: true,
+      },
+      orderBy: {
+        internalMovement: {
+          date: 'desc',
+        },
+      },
+    });
+
     // Combine and sort movements
     const movements: StockMovement[] = [];
 
@@ -138,6 +151,18 @@ export class InventoryService {
         price: Number(item.salePrice),
         referenceNumber: item.sale.referenceNumber || undefined,
         partner: item.sale.client.name,
+      });
+    });
+
+    internalMovementItems.forEach((item) => {
+      movements.push({
+        id: item.id,
+        date: item.internalMovement.date,
+        type: item.internalMovement.type as 'INTERNAL_USE' | 'OWNER_WITHDRAWAL',
+        quantity: Number(item.quantity),
+        price: Number(item.unitPrice) || 0,
+        referenceNumber: undefined,
+        partner: item.internalMovement.description || undefined,
       });
     });
 
