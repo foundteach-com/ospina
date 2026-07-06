@@ -12,6 +12,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+  const [providers, setProviders] = useState<{id: string, name: string}[]>([]);
   
   const [formData, setFormData] = useState({
     code: '',
@@ -25,6 +26,7 @@ export default function EditProductPage() {
     utilityPercent: '0',
     salesIvaPercent: '19',
     categoryId: '',
+    providerId: '',
     stock: '0',
     imageUrl: '',
     isPublished: true
@@ -53,11 +55,14 @@ export default function EditProductPage() {
         const apiUrl = getApiUrl();
 
         // Fetch product and categories
-        const [prodRes, catRes] = await Promise.all([
+        const [prodRes, catRes, provRes] = await Promise.all([
           fetch(`${apiUrl}/products/${params.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`${apiUrl}/products/categories`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${apiUrl}/providers`, {
             headers: { Authorization: `Bearer ${token}` },
           })
         ]);
@@ -75,6 +80,16 @@ export default function EditProductPage() {
           }
           
           setCategories(cats);
+
+          let provs: any[] = [];
+          if (provRes.ok) {
+            try {
+              provs = await provRes.json();
+            } catch (e) {
+              console.error('Error parsing providers:', e);
+            }
+          }
+          setProviders(provs);
           
           setFormData({
             code: data.code || '',
@@ -88,6 +103,7 @@ export default function EditProductPage() {
             utilityPercent: data.utilityPercent?.toString() || '0',
             salesIvaPercent: data.salesIvaPercent?.toString() || '19',
             categoryId: data.categoryId || '',
+            providerId: data.providerId || '',
             stock: data.stock?.toString() || '0',
             imageUrl: data.imageUrl || '',
             isPublished: data.isPublished ?? true
@@ -149,6 +165,7 @@ export default function EditProductPage() {
         utilityPercent: parseFloat(formData.utilityPercent),
         salesIvaPercent: parseFloat(formData.salesIvaPercent),
         categoryId: formData.categoryId || null,
+        providerId: formData.providerId || null,
         imageUrl: formData.imageUrl || null,
         isPublished: formData.isPublished,
         basePrice: sellingPriceNet, // Guardamos el precio neto sin IVA
@@ -237,6 +254,20 @@ export default function EditProductPage() {
                 <option value="">Seleccionar Categoría</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor Principal</label>
+              <select
+                name="providerId"
+                value={formData.providerId}
+                onChange={handleChange}
+                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+              >
+                <option value="">Seleccionar Proveedor</option>
+                {providers.map(prov => (
+                  <option key={prov.id} value={prov.id}>{prov.name}</option>
                 ))}
               </select>
             </div>

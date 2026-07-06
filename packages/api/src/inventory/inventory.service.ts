@@ -8,6 +8,11 @@ export interface InventoryItem {
   productName: string;
   unit: string | null;
   basePrice: number;
+  salesIvaPercent: number;
+  purchasePrice: number;
+  purchaseIvaPercent: number;
+  brand: string | null;
+  providerName: string | null;
   currentStock: number;
   category?: {
     id: string;
@@ -19,7 +24,7 @@ export interface InventoryItem {
 export interface StockMovement {
   id: string;
   date: Date;
-  type: 'PURCHASE' | 'SALE' | 'INTERNAL_USE' | 'OWNER_WITHDRAWAL';
+  type: 'PURCHASE' | 'SALE' | 'INTERNAL_USE' | 'OWNER_WITHDRAWAL' | 'INITIAL_BALANCE';
   quantity: number;
   price: number;
   referenceNumber?: string;
@@ -87,14 +92,19 @@ export class InventoryService {
           p."measurementUnit" as unit,
           p."basePrice",
           p."salesIvaPercent",
+          p."purchasePrice",
+          p."purchaseIvaPercent",
+          p.brand,
           p."imageUrl",
           c.id as "categoryId",
           c.name as "categoryName",
+          prov.name as "providerName",
           COALESCE((SELECT SUM(quantity) FROM "PurchaseItem" WHERE "productId" = p.id), 0) -
           COALESCE((SELECT SUM(quantity) FROM "SaleItem" WHERE "productId" = p.id), 0) +
           COALESCE((SELECT SUM(CASE WHEN m.type = 'INITIAL_BALANCE' THEN i.quantity ELSE -i.quantity END) FROM "InternalMovementItem" i JOIN "InternalMovement" m ON i."internalMovementId" = m.id WHERE i."productId" = p.id), 0) as "currentStock"
         FROM "Product" p
         LEFT JOIN "Category" c ON p."categoryId" = c.id
+        LEFT JOIN "Provider" prov ON p."providerId" = prov.id
         ${whereClause}
       )
       SELECT * FROM StockCalculated
@@ -117,6 +127,10 @@ export class InventoryService {
       unit: row.unit,
       basePrice: Number(row.basePrice),
       salesIvaPercent: Number(row.salesIvaPercent),
+      purchasePrice: Number(row.purchasePrice),
+      purchaseIvaPercent: Number(row.purchaseIvaPercent),
+      brand: row.brand,
+      providerName: row.providerName,
       currentStock: Number(row.currentStock),
       imageUrl: row.imageUrl,
       category: row.categoryId ? {

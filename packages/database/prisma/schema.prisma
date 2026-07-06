@@ -38,6 +38,8 @@ model Product {
   utilityPercent      Decimal                @default(0)
   imageUrl            String?
   isPublished         Boolean                @default(true)
+  providerId          String?
+  provider            Provider?              @relation(fields: [providerId], references: [id])
   clientPricing       ClientPricing[]
   category            Category?              @relation(fields: [categoryId], references: [id])
   purchaseItems       PurchaseItem[]
@@ -64,6 +66,7 @@ model Provider {
   city           String?
   commercialName String?
   purchases      Purchase[]
+  products       Product[]
 }
 
 model Purchase {

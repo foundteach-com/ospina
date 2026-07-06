@@ -12,6 +12,7 @@ function CreateProductForm() {
   const [loading, setLoading] = useState(false);
   const [fetchingTemplate, setFetchingTemplate] = useState(false);
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+  const [providers, setProviders] = useState<{id: string, name: string}[]>([]);
   
   const [formData, setFormData] = useState({
     code: '',
@@ -25,6 +26,7 @@ function CreateProductForm() {
     utilityPercent: '0',
     salesIvaPercent: '19',
     categoryId: '',
+    providerId: '',
     stock: '0',
     imageUrl: '',
     isPublished: true
@@ -32,6 +34,7 @@ function CreateProductForm() {
 
   useEffect(() => {
     fetchCategories();
+    fetchProviders();
     const fromId = searchParams.get('from');
     if (fromId) {
       fetchTemplate(fromId);
@@ -60,6 +63,28 @@ function CreateProductForm() {
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  const fetchProviders = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+        const hostname = window.location.hostname;
+        if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+          apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+        }
+      }
+      const response = await fetch(`${apiUrl}/providers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProviders(data);
+      }
+    } catch (error) {
+      console.error('Error fetching providers:', error);
     }
   };
 
@@ -96,6 +121,7 @@ function CreateProductForm() {
           utilityPercent: data.utilityPercent?.toString() || '0',
           salesIvaPercent: data.salesIvaPercent?.toString() || '19',
           categoryId: data.categoryId || '',
+          providerId: data.providerId || '',
           stock: '0',
           imageUrl: data.imageUrl || '',
           isPublished: data.isPublished ?? true
@@ -154,6 +180,7 @@ function CreateProductForm() {
         utilityPercent: parseFloat(formData.utilityPercent),
         salesIvaPercent: parseFloat(formData.salesIvaPercent),
         categoryId: formData.categoryId || null,
+        providerId: formData.providerId || null,
         imageUrl: formData.imageUrl || null,
         isPublished: formData.isPublished,
         basePrice: sellingPriceNet, // Guardamos SIEMPRE el precio neto sin IVA
@@ -254,6 +281,20 @@ function CreateProductForm() {
                 <option value="">Seleccionar Categoría</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Proveedor Principal</label>
+              <select
+                name="providerId"
+                value={formData.providerId}
+                onChange={handleChange}
+                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+              >
+                <option value="">Seleccionar Proveedor</option>
+                {providers.map(prov => (
+                  <option key={prov.id} value={prov.id}>{prov.name}</option>
                 ))}
               </select>
             </div>

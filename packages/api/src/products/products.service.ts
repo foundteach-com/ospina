@@ -44,14 +44,14 @@ export class ProductsService {
       cursor,
       where,
       orderBy,
-      include: { category: true },
+      include: { category: true, provider: true },
     });
   }
 
   async findOne(id: string): Promise<Product | null> {
     return this.prisma.product.findUnique({
       where: { id },
-      include: { category: true },
+      include: { category: true, provider: true },
     });
   }
 

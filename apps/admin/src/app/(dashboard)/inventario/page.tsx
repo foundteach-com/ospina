@@ -27,6 +27,10 @@ interface InventoryItem {
   unit: string;
   basePrice: number;
   salesIvaPercent: number;
+  purchasePrice: number;
+  purchaseIvaPercent: number;
+  brand: string | null;
+  providerName: string | null;
   currentStock: number;
   imageUrl?: string;
   category?: {
@@ -167,10 +171,14 @@ export default function InventoryPage() {
     const dataToExport = sortedInventory.map(item => ({
       'Código': item.productCode,
       'Producto': item.productName,
+      'Marca': item.brand || '-',
       'Categoría': item.category?.name || '-',
+      'Proveedor': item.providerName || '-',
       'Unidad': item.unit,
-      'Precio (Sin IVA)': item.basePrice,
-      'Precio (+ IVA)': item.basePrice * (1 + (item.salesIvaPercent / 100)),
+      'P. Compra (Sin IVA)': item.purchasePrice,
+      'P. Compra (+ IVA)': item.purchasePrice * (1 + (item.purchaseIvaPercent / 100)),
+      'P. Venta (Sin IVA)': item.basePrice,
+      'P. Venta (+ IVA)': item.basePrice * (1 + (item.salesIvaPercent / 100)),
       'Stock Actual': item.currentStock,
       'Estado': getStockStatus(item.currentStock).label
     }));
@@ -419,6 +427,22 @@ export default function InventoryPage() {
                 </th>
                 <th 
                   className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('brand')}
+                >
+                  <div className="flex items-center">
+                    Marca {getSortIcon('brand')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('providerName')}
+                >
+                  <div className="flex items-center">
+                    Proveedor {getSortIcon('providerName')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
                   onClick={() => requestSort('unit')}
                 >
                   <div className="flex items-center">
@@ -427,14 +451,25 @@ export default function InventoryPage() {
                 </th>
                 <th 
                   className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
-                  onClick={() => requestSort('basePrice')}
+                  onClick={() => requestSort('purchasePrice')}
                 >
                   <div className="flex items-center justify-end">
-                    Precio (Sin IVA) {getSortIcon('basePrice')}
+                    P. Compra (Sin IVA) {getSortIcon('purchasePrice')}
                   </div>
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Precio (+ IVA)
+                  P. Compra (+ IVA)
+                </th>
+                <th 
+                  className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('basePrice')}
+                >
+                  <div className="flex items-center justify-end">
+                    P. Venta (Sin IVA) {getSortIcon('basePrice')}
+                  </div>
+                </th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  P. Venta (+ IVA)
                 </th>
                 <th 
                   className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
@@ -455,7 +490,7 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={13} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex items-center justify-center gap-3">
                       <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                       Cargando inventario...
@@ -464,7 +499,7 @@ export default function InventoryPage() {
                 </tr>
               ) : sortedInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={13} className="px-6 py-12 text-center text-gray-500">
                     {search || statusFilter || selectedCategory 
                       ? 'No se encontraron productos con los filtros aplicados'
                       : 'No hay productos en el inventario'}
@@ -495,8 +530,20 @@ export default function InventoryPage() {
                           {item.category?.name || 'Sin Categoría'}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                        {item.brand || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {item.providerName || '-'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
                         {item.unit}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
+                        ${item.purchasePrice.toLocaleString('es-CO')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-medium">
+                        ${(item.purchasePrice * (1 + (item.purchaseIvaPercent / 100))).toLocaleString('es-CO')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
                         ${item.basePrice.toLocaleString('es-CO')}
