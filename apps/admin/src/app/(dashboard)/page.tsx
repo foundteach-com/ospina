@@ -2,9 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import KPICard from '@/components/dashboard/KPICard';
-import BarChart from '@/components/charts/BarChart';
-import AreaChart from '@/components/charts/AreaChart';
+import Link from 'next/link';
+import {
+  Target,
+  DollarSign,
+  Scale,
+  Users,
+  Shield,
+  TrendingUp,
+  Cpu,
+  ShoppingCart,
+  Package,
+  Briefcase,
+  Wallet,
+  BarChart3,
+  ArrowUpRight
+} from 'lucide-react';
 
 interface User {
   name: string;
@@ -12,66 +25,45 @@ interface User {
   role: string;
 }
 
-interface DashboardStats {
-  salesToday: { total: number; count: number };
-  salesMonth: { total: number; count: number };
-  salesYear: { total: number; count: number };
-  totalClients: number;
-  totalProducts: number;
-  pendingSales: number;
-  cashFlowBalance: number;
-}
+const modules = [
+  {
+    title: 'Área Administrativa',
+    items: [
+      { name: 'Dirección', href: '/direccion', icon: Target, color: 'from-blue-500 to-blue-700', description: 'Panel ejecutivo con KPIs y gráficos de rendimiento' },
+      { name: 'Finanzas', href: '/finanzas', icon: DollarSign, color: 'from-green-500 to-emerald-700', description: 'Flujo de caja, presupuestos y reportes financieros' },
+      { name: 'Jurídico', href: '/juridico', icon: Scale, color: 'from-amber-500 to-orange-700', description: 'Contratos, actas y documentos legales' },
+      { name: 'Talento Humano', href: '/talento-humano', icon: Users, color: 'from-violet-500 to-purple-700', description: 'Empleados, contratos laborales y nómina' },
+      { name: 'SST', href: '/sst', icon: Shield, color: 'from-red-500 to-rose-700', description: 'Seguridad y salud en el trabajo' },
+    ]
+  },
+  {
+    title: 'Área Operativa',
+    items: [
+      { name: 'Comercial', href: '/comercial', icon: TrendingUp, color: 'from-cyan-500 to-blue-700', description: 'Ventas, cotizaciones y clientes' },
+      { name: 'Operaciones', href: '/operaciones', icon: Briefcase, color: 'from-indigo-500 to-indigo-700', description: 'Proyectos, tareas y listas de verificación' },
+      { name: 'Compras', href: '/compras', icon: ShoppingCart, color: 'from-amber-500 to-yellow-700', description: 'Órdenes de compra y proveedores' },
+      { name: 'Inventario', href: '/inventario', icon: Package, color: 'from-teal-500 to-teal-700', description: 'Stock, productos y movimientos' },
+      { name: 'Tecnología', href: '/tecnologia', icon: Cpu, color: 'from-gray-500 to-gray-700', description: 'Activos de TI y licencias de software' },
+    ]
+  }
+];
 
-interface MonthlyData {
-  month: string;
-  total: number;
-  count: number;
-  [key: string]: string | number;
-}
-
-interface TopProduct {
-  productId: string;
-  productName: string;
-  productCode: string;
-  totalQuantity: number;
-  salesCount: number;
-  [key: string]: string | number;
-}
-
-interface TopClient {
-  clientId: string;
-  clientName: string;
-  clientTaxId: string;
-  totalPurchases: number;
-  purchaseCount: number;
-  [key: string]: string | number;
-}
-
-interface CashFlowTrendData {
-  month: string;
-  income: number;
-  expense: number;
-  balance: number;
-  [key: string]: string | number;
-}
+const quickActions = [
+  { name: 'Nueva Venta', href: '/ventas/crear', icon: Wallet, color: 'bg-blue-600 hover:bg-blue-700' },
+  { name: 'Crear Cotización', href: '/cotizaciones/crear', icon: BarChart3, color: 'bg-emerald-600 hover:bg-emerald-700' },
+  { name: 'Registrar Compra', href: '/compras/crear', icon: ShoppingCart, color: 'bg-amber-600 hover:bg-amber-700' },
+  { name: 'Flujo de Caja', href: '/flujo-caja', icon: DollarSign, color: 'bg-purple-600 hover:bg-purple-700' },
+];
 
 export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [purchasesByMonth, setPurchasesByMonth] = useState<MonthlyData[]>([]);
-  const [salesByMonth, setSalesByMonth] = useState<MonthlyData[]>([]);
-  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
-  const [topClients, setTopClients] = useState<TopClient[]>([]);
-  const [cashFlowTrend, setCashFlowTrend] = useState<CashFlowTrendData[]>([]);
-  const [purchasesYear, setPurchasesYear] = useState<number>(new Date().getFullYear());
-  const [salesYear, setSalesYear] = useState<number>(new Date().getFullYear());
-  const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const userData = localStorage.getItem('user');
-    
+
     if (!token) {
       router.push('/login');
       return;
@@ -81,107 +73,29 @@ export default function AdminPage() {
       setUser(JSON.parse(userData));
     }
 
-    // Fetch dashboard data
-    fetchDashboardData(token);
-  }, [router, purchasesYear, salesYear]);
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleDateString('es-CO', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }));
+    };
 
-  const fetchDashboardData = async (token: string) => {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      };
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, [router]);
 
-      // Helper to handle fetch with auth check
-      const fetchWithAuth = async (url: string) => {
-        const res = await fetch(url, { headers });
-        if (res.status === 401) {
-          throw new Error('UNAUTHORIZED');
-        }
-        if (!res.ok) {
-          console.error(`Error fetching ${url}: ${res.statusText}`);
-          return []; // Return empty data or null for non-critical failures
-        }
-        return res.json();
-      };
-
-      try {
-        // Fetch all dashboard data in parallel
-        const [statsData, purchasesData, salesData, productsData, clientsData, cashFlowData] = await Promise.all([
-          fetchWithAuth(`${baseUrl}/dashboard/stats`).then(res => Array.isArray(res) ? {} : res), // Stats returns object
-          fetchWithAuth(`${baseUrl}/dashboard/purchases-by-month?year=${purchasesYear}`),
-          fetchWithAuth(`${baseUrl}/dashboard/sales-by-month?year=${salesYear}`),
-          fetchWithAuth(`${baseUrl}/dashboard/top-products?limit=5`),
-          fetchWithAuth(`${baseUrl}/dashboard/top-clients?limit=5`),
-          fetchWithAuth(`${baseUrl}/dashboard/cash-flow-trend?months=6`),
-        ]);
-
-        setStats(statsData || {});
-        setPurchasesByMonth(Array.isArray(purchasesData) ? purchasesData : []);
-        setSalesByMonth(Array.isArray(salesData) ? salesData : []);
-        setTopProducts(Array.isArray(productsData) ? productsData : []);
-        setTopClients(Array.isArray(clientsData) ? clientsData : []);
-        setCashFlowTrend(Array.isArray(cashFlowData) ? cashFlowData : []);
-      } catch (error: any) {
-        if (error.message === 'UNAUTHORIZED') {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user');
-          router.push('/login');
-          return;
-        }
-        throw error;
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Buenos días';
+    if (hour < 18) return 'Buenas tardes';
+    return 'Buenas noches';
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
-  };
-
-  const getMonthName = (dateString: string) => {
-    const [year, month] = dateString.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return new Intl.DateTimeFormat('es-CO', { month: 'short' }).format(date);
-  };
-
-  // Transform data to use month names
-  const purchasesData = purchasesByMonth.map(item => ({
-    ...item,
-    monthName: item.month.includes('-') ? getMonthName(item.month) : item.month
-  }));
-
-  const salesData = salesByMonth.map(item => ({
-    ...item,
-    monthName: item.month.includes('-') ? getMonthName(item.month) : item.month
-  }));
-
-  const formatPeriod = (dateString: string) => {
-    if (!dateString.includes('-')) return dateString;
-    const [year, month] = dateString.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    // Return lowercase format: "ene. 2026"
-    return new Intl.DateTimeFormat('es-CO', { month: 'short', year: 'numeric' }).format(date);
-  };
-
-  const cashFlowData = cashFlowTrend.map(item => ({
-    ...item,
-    period: formatPeriod(item.month),
-    Ingresos: item.income,
-    Egresos: item.expense,
-    Balance: item.balance
-  }));
-
-  if (!user || loading) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -190,186 +104,63 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Ejecutivo</h1>
-        <p className="text-gray-500">Bienvenido de vuelta, {user.name}. Aquí está el resumen de tu negocio.</p>
-      </header>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <KPICard
-          title="Ventas Hoy"
-          value={formatCurrency(stats?.salesToday?.total || 0)}
-          color="green"
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-          }
-        />
-        <KPICard
-          title="Ventas del Mes"
-          value={formatCurrency(stats?.salesMonth?.total || 0)}
-          color="blue"
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-              <polyline points="17 6 23 6 23 12"/>
-            </svg>
-          }
-        />
-        <KPICard
-          title="Clientes Activos"
-          value={stats?.totalClients || 0}
-          color="purple"
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          }
-        />
-        <KPICard
-          title="Balance Flujo de Caja"
-          value={formatCurrency(stats?.cashFlowBalance || 0)}
-          color={(stats?.cashFlowBalance ?? 0) >= 0 ? 'green' : 'red'}
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
-          }
-        />
+    <div className="max-w-7xl mx-auto space-y-10 pb-12">
+      {/* HEADER */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-3xl p-8 md:p-10 text-white shadow-2xl shadow-blue-600/20">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-16 -mb-16 blur-2xl"></div>
+        <div className="relative z-10">
+          <p className="text-blue-200 font-medium text-sm uppercase tracking-wider mb-2">{currentTime}</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            {getGreeting()}, {user.name?.split(' ')[0] || 'Usuario'} 👋
+          </h1>
+          <p className="text-blue-100 text-lg max-w-xl">
+            Bienvenido al centro de operaciones de Ospina Comercializadora.
+          </p>
+        </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Purchases by Month */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Compras por Mes</h3>
-            <select
-              value={purchasesYear}
-              onChange={(e) => setPurchasesYear(Number(e.target.value))}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      {/* ACCIONES RÁPIDAS */}
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Acciones Rápidas</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {quickActions.map(action => (
+            <Link
+              key={action.name}
+              href={action.href}
+              className={`${action.color} text-white rounded-2xl p-4 flex items-center gap-3 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]`}
             >
-              {Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => 2020 + i).map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-          <BarChart
-            data={purchasesData}
-            dataKey="total"
-            xAxisKey="monthName"
-            color="#f59e0b"
-            height={300}
-            yAxisFormatter={formatCurrency}
-            hideLegend={true}
-          />
-        </div>
-
-        {/* Sales by Month */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Ventas por Mes</h3>
-            <select
-              value={salesYear}
-              onChange={(e) => setSalesYear(Number(e.target.value))}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => 2020 + i).map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-          <BarChart
-            data={salesData}
-            dataKey="total"
-            xAxisKey="monthName"
-            color="#10b981"
-            height={300}
-            yAxisFormatter={formatCurrency}
-            hideLegend={true}
-          />
+              <action.icon className="w-6 h-6 shrink-0" />
+              <span className="font-semibold text-sm">{action.name}</span>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Second Row Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Top Products */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900">Top 5 Productos Más Vendidos</h3>
-          <div className="space-y-3">
-            {topProducts.length > 0 ? (
-              topProducts.map((product, index) => (
-                <div key={product.productId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{product.productName}</p>
-                      <p className="text-sm text-gray-500">{product.productCode}</p>
-                    </div>
+      {/* MÓDULOS */}
+      {modules.map(category => (
+        <div key={category.title}>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{category.title}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {category.items.map(item => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="group bg-white/70 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-12 h-12 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center text-white shadow-lg`}>
+                    <item.icon className="w-6 h-6" />
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">{product.totalQuantity} unidades</p>
-                    <p className="text-sm text-gray-500">{product.salesCount} ventas</p>
-                  </div>
+                  <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-blue-600 transition-colors" />
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-8">No hay datos disponibles</p>
-            )}
+                <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">{item.name}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{item.description}</p>
+              </Link>
+            ))}
           </div>
         </div>
-
-        {/* Top Clients */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900">Top 5 Clientes</h3>
-          <div className="space-y-3">
-            {topClients.length > 0 ? (
-              topClients.map((client, index) => (
-                <div key={client.clientId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{client.clientName}</p>
-                      <p className="text-sm text-gray-500">{client.clientTaxId}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">{formatCurrency(client.totalPurchases)}</p>
-                    <p className="text-sm text-gray-500">{client.purchaseCount} compras</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-8">No hay datos disponibles</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Cash Flow Trend */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <AreaChart
-          data={cashFlowData}
-          dataKeys={['Balance', 'Egresos', 'Ingresos']}
-          xAxisKey="period"
-          title="Flujo de Caja (Últimos 6 meses)"
-          colors={['#3b82f6', '#ef4444', '#10b981']}
-          height={300}
-          yAxisFormatter={formatCurrency}
-        />
-      </div>
+      ))}
     </div>
   );
 }
