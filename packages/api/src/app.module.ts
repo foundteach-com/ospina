@@ -24,6 +24,7 @@ import { OperationsModule } from './operations/operations.module';
 import { SstModule } from './sst/sst.module';
 import { LegalModule } from './legal/legal.module';
 import { ItModule } from './it/it.module';
+import { ComercialModule } from './comercial/comercial.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { ItModule } from './it/it.module';
     SstModule,
     LegalModule,
     ItModule,
+    ComercialModule,
   ],
   controllers: [AppController],
   providers: [AppService],
