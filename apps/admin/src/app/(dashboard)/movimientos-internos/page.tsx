@@ -220,7 +220,7 @@ export default function InternalMovementsPage() {
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">{m.description || '-'}</td>
                                 <td className="px-6 py-4 text-sm font-mono text-right font-medium">
-                                    ${Number(m.total).toLocaleString()}
+                                    ${Number(m.total).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500">
                                     {m.items.length} productos
@@ -317,7 +317,7 @@ export default function InternalMovementsPage() {
                                                 <div className="font-medium text-gray-900">{p.name}</div>
                                                 <div className="text-gray-500 text-xs flex justify-between">
                                                     <span>Code: {p.code}</span>
-                                                    <span>Costo: ${Number(p.purchasePrice).toLocaleString()}</span>
+                                                    <span>Costo: ${Number(p.purchasePrice).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                 </div>
                                             </div>
                                         )) : (
@@ -363,7 +363,7 @@ export default function InternalMovementsPage() {
                                                 <td className="px-4 py-2">
                                                     <div className="font-medium text-gray-900">{item.product?.name}</div>
                                                     <div className="text-xs text-gray-500">
-                                                        Costo Unit: ${Number(item.product?.purchasePrice).toLocaleString()}
+                                                        Costo Unit: ${Number(item.product?.purchasePrice).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-2 text-center font-mono">

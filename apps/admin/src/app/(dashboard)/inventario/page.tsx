@@ -553,16 +553,16 @@ export default function InventoryPage() {
                         {item.unit}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
-                        ${(item.purchasePrice / (1 + (item.purchaseIvaPercent / 100))).toLocaleString('es-CO')}
+                        ${(item.purchasePrice / (1 + (item.purchaseIvaPercent / 100))).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-medium">
-                        ${item.purchasePrice.toLocaleString('es-CO')}
+                        ${item.purchasePrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
-                        ${item.basePrice.toLocaleString('es-CO')}
+                        ${item.basePrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-medium">
-                        ${(item.basePrice * (1 + (item.salesIvaPercent / 100))).toLocaleString('es-CO')}
+                        ${(item.basePrice * (1 + (item.salesIvaPercent / 100))).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono font-bold">
                         {item.currentStock.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

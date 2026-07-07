@@ -216,7 +216,7 @@ export default function ProductMovementsPage() {
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                 <div className="text-sm text-gray-500 font-medium mb-1">Precio (Sin IVA)</div>
                 <div className="text-xl font-bold text-gray-900 font-mono">
-                  ${product.basePrice.toLocaleString('es-CO')}
+                  ${product.basePrice.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -228,7 +228,7 @@ export default function ProductMovementsPage() {
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                 <div className="text-sm text-gray-500 font-medium mb-1">Precio (+ IVA)</div>
                 <div className="text-xl font-bold text-gray-900 font-mono">
-                  ${priceWithIva.toLocaleString('es-CO')}
+                  ${priceWithIva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
               </div>
               <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 relative overflow-hidden group">
