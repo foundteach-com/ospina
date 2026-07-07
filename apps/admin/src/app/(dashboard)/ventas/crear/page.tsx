@@ -166,9 +166,11 @@ export default function CreateSalePage() {
       if (response.ok) {
         const data = await response.json();
         const inv: Record<string, number> = {};
-        data.forEach((item: { productId: string; currentStock: number }) => {
-          inv[item.productId] = item.currentStock;
-        });
+        if (data.data && Array.isArray(data.data)) {
+          data.data.forEach((item: { productId: string; currentStock: number }) => {
+            inv[item.productId] = item.currentStock;
+          });
+        }
         setInventory(inv);
       }
     } catch (error) {

@@ -74,9 +74,11 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
           setProducts(productsData);
           
           const inv: Record<string, number> = {};
-          invData.forEach((item: { productId: string; currentStock: number }) => {
-            inv[item.productId] = item.currentStock;
-          });
+          if (invData.data && Array.isArray(invData.data)) {
+            invData.data.forEach((item: { productId: string; currentStock: number }) => {
+              inv[item.productId] = item.currentStock;
+            });
+          }
           setInventory(inv);
 
           setFormData({
