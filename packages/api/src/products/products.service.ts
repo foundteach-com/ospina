@@ -63,27 +63,39 @@ export class ProductsService {
   }
 
   async remove(id: string): Promise<Product> {
-    // Check for dependencies
-    const purchaseCount = await this.prisma.purchaseItem.count({
-      where: { productId: id },
-    });
-    const saleCount = await this.prisma.saleItem.count({
-      where: { productId: id },
-    });
-    const cotizacionCount = await this.prisma.cotizacionItem.count({
-      where: { productId: id },
-    });
-    const internalMovementCount = await this.prisma.internalMovementItem.count({
-      where: { productId: id },
-    });
-    const clientPricingCount = await this.prisma.clientPricing.count({
-      where: { productId: id },
-    });
+    // Verificar dependencias que bloquean la eliminación (compras, ventas, cotizaciones, precios)
+    const purchaseCount = await this.prisma.purchaseItem.count({ where: { productId: id } });
+    const saleCount = await this.prisma.saleItem.count({ where: { productId: id } });
+    const cotizacionCount = await this.prisma.cotizacionItem.count({ where: { productId: id } });
+    const clientPricingCount = await this.prisma.clientPricing.count({ where: { productId: id } });
 
-    if (purchaseCount > 0 || saleCount > 0 || cotizacionCount > 0 || internalMovementCount > 0 || clientPricingCount > 0) {
-      throw new BadRequestException('No se puede eliminar el producto porque tiene movimientos de inventario, cotizaciones o precios registrados.');
+    if (purchaseCount > 0 || saleCount > 0 || cotizacionCount > 0 || clientPricingCount > 0) {
+      throw new BadRequestException('No se puede eliminar el producto porque tiene compras, ventas, cotizaciones o precios especiales registrados.');
     }
 
+    // Si solo tiene movimientos internos (como el saldo inicial), procedemos a eliminarlos primero
+    // ya que no hay onDelete: Cascade en la relación producto -> movimiento interno.
+    const internalItems = await this.prisma.internalMovementItem.findMany({
+      where: { productId: id },
+      select: { id: true, internalMovementId: true }
+    });
+
+    for (const item of internalItems) {
+      // Eliminar el ítem
+      await this.prisma.internalMovementItem.delete({ where: { id: item.id } });
+      
+      // Si el movimiento interno padre quedó vacío, lo eliminamos también
+      const remainingItems = await this.prisma.internalMovementItem.count({
+        where: { internalMovementId: item.internalMovementId }
+      });
+      if (remainingItems === 0) {
+        await this.prisma.internalMovement.delete({
+          where: { id: item.internalMovementId }
+        });
+      }
+    }
+
+    // Finalmente eliminar el producto
     return this.prisma.product.delete({
       where: { id },
     });
