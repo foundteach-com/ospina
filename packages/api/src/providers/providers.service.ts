@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -44,8 +44,15 @@ export class ProvidersService {
   }
 
   remove(id: string) {
-    return this.prisma.provider.delete({
-      where: { id },
+    return this.prisma.purchase.count({ where: { providerId: id } }).then((purchaseCount) => {
+      return this.prisma.product.count({ where: { providerId: id } }).then((productCount) => {
+        if (purchaseCount > 0 || productCount > 0) {
+          throw new BadRequestException('No se puede eliminar el proveedor porque tiene compras o productos registrados.');
+        }
+        return this.prisma.provider.delete({
+          where: { id },
+        });
+      });
     });
   }
 }

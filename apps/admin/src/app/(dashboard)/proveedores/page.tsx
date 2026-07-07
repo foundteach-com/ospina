@@ -140,9 +140,10 @@ export default function ProvidersPage() {
           type: 'success'
         });
       } else {
+        const errorData = await response.json().catch(() => ({}));
         showAlert({
           title: 'Error al eliminar',
-          message: 'No pudimos eliminar este proveedor. Verifica si tiene compras asociadas.',
+          message: errorData.message || 'No pudimos eliminar este proveedor.',
           type: 'danger'
         });
       }

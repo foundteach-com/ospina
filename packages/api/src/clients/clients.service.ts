@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -41,6 +41,13 @@ export class ClientsService {
   }
 
   async remove(id: string) {
+    const saleCount = await this.prisma.sale.count({ where: { clientId: id } });
+    const clientPricingCount = await this.prisma.clientPricing.count({ where: { clientId: id } });
+    
+    if (saleCount > 0 || clientPricingCount > 0) {
+      throw new BadRequestException('No se puede eliminar el cliente porque tiene ventas o precios especiales registrados.');
+    }
+
     return this.prisma.client.delete({
       where: { id },
     });

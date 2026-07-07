@@ -160,7 +160,8 @@ export default function InventoryPage() {
         fetchStats();
         fetchInventory();
       } else {
-        alert('No se pudo eliminar el producto.');
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.message || 'No se pudo eliminar el producto.');
       }
     } catch (error) {
       console.error('Error deleting product:', error);

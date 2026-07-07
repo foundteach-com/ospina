@@ -70,9 +70,18 @@ export class ProductsService {
     const saleCount = await this.prisma.saleItem.count({
       where: { productId: id },
     });
+    const cotizacionCount = await this.prisma.cotizacionItem.count({
+      where: { productId: id },
+    });
+    const internalMovementCount = await this.prisma.internalMovementItem.count({
+      where: { productId: id },
+    });
+    const clientPricingCount = await this.prisma.clientPricing.count({
+      where: { productId: id },
+    });
 
-    if (purchaseCount > 0 || saleCount > 0) {
-      throw new BadRequestException('No se puede eliminar el producto porque tiene movimientos de inventario registrados (compras o ventas).');
+    if (purchaseCount > 0 || saleCount > 0 || cotizacionCount > 0 || internalMovementCount > 0 || clientPricingCount > 0) {
+      throw new BadRequestException('No se puede eliminar el producto porque tiene movimientos de inventario, cotizaciones o precios registrados.');
     }
 
     return this.prisma.product.delete({

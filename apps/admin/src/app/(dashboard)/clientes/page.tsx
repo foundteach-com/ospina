@@ -118,9 +118,13 @@ export default function ClientsPage() {
       });
       if (response.ok) {
         fetchClients();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.message || 'No se pudo eliminar el cliente.');
       }
     } catch (error) {
       console.error('Error deleting client:', error);
+      alert('Ocurrió un error al intentar eliminar el cliente.');
     }
   };
 
