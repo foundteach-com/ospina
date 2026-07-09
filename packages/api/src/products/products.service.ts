@@ -101,6 +101,17 @@ export class ProductsService {
     });
   }
 
+  async checkCodeExists(code: string, excludeId?: string): Promise<{ exists: boolean }> {
+    const product = await this.prisma.product.findFirst({
+      where: {
+        code: { equals: code, mode: 'insensitive' },
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true },
+    });
+    return { exists: !!product };
+  }
+
   async findAllCategories() {
     return this.prisma.category.findMany({
       orderBy: { name: 'asc' },

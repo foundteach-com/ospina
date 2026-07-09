@@ -13,6 +13,8 @@ function CreateProductForm() {
   const [fetchingTemplate, setFetchingTemplate] = useState(false);
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [providers, setProviders] = useState<{id: string, name: string}[]>([]);
+  const [codeExists, setCodeExists] = useState(false);
+  const [checkingCode, setCheckingCode] = useState(false);
   
   const [formData, setFormData] = useState({
     code: '',
@@ -40,6 +42,43 @@ function CreateProductForm() {
       fetchTemplate(fromId);
     }
   }, [searchParams]);
+
+  // Debounced code validation
+  useEffect(() => {
+    const code = formData.code.trim();
+    if (!code) {
+      setCodeExists(false);
+      setCheckingCode(false);
+      return;
+    }
+
+    setCheckingCode(true);
+    const handler = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        let apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        if (typeof window !== 'undefined' && (apiUrl.includes('localhost') || !apiUrl)) {
+          const hostname = window.location.hostname;
+          if (hostname.includes('ospinacomercializadoraysuministros.com')) {
+            apiUrl = 'https://api.ospinacomercializadoraysuministros.com';
+          }
+        }
+        const response = await fetch(`${apiUrl}/products/check-code/${encodeURIComponent(code)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCodeExists(data.exists);
+        }
+      } catch (error) {
+        console.error('Error checking code:', error);
+      } finally {
+        setCheckingCode(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [formData.code]);
 
   const fetchCategories = async () => {
     try {
@@ -247,16 +286,33 @@ function CreateProductForm() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Código Interno *</label>
-              <input
-                type="text"
-                name="code"
-                required
-                value={formData.code}
-                onChange={handleChange}
-                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-mono"
-                placeholder="Ej: ART-001"
-              />
+              <label className={`block text-sm font-medium mb-2 ${codeExists ? 'text-rose-600' : 'text-gray-700'}`}>Código Interno *</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="code"
+                  required
+                  value={formData.code}
+                  onChange={handleChange}
+                  className={`w-full bg-white border rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 transition-all font-mono ${
+                    codeExists
+                      ? 'border-rose-400 focus:ring-rose-500/50 bg-rose-50/50'
+                      : 'border-gray-300 focus:ring-blue-500/50'
+                  }`}
+                  placeholder="Ej: ART-001"
+                />
+                {checkingCode && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+              {codeExists && (
+                <p className="mt-1.5 text-sm text-rose-600 font-medium flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Este código ya está en uso por otro producto
+                </p>
+              )}
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Producto *</label>
@@ -522,7 +578,7 @@ function CreateProductForm() {
           </Link>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || codeExists}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Guardando...' : 'Guardar Producto'}

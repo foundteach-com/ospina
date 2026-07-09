@@ -50,6 +50,12 @@ export class ProductsController {
     return this.productsService.findAllCategories();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('check-code/:code')
+  checkCode(@Param('code') code: string, @Query('excludeId') excludeId?: string) {
+    return this.productsService.checkCodeExists(code, excludeId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
