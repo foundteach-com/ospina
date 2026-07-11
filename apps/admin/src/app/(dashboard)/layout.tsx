@@ -45,8 +45,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 flex">
-      <aside className="w-64 border-r border-gray-200 bg-white h-screen sticky top-0 flex flex-col justify-between">
-        <div className="p-5">
+      <aside className="w-64 border-r border-gray-200 bg-white h-screen sticky top-0 flex flex-col">
+        <div className="border-b border-gray-200 p-5">
           <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-sm font-semibold text-white">
               A
@@ -58,7 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <div className="border-t border-gray-200 p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
           <Link
             href="/"
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
@@ -133,6 +133,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </svg>
             Mi cuenta
           </Link>
+        </div>
+
+        <div className="border-t border-gray-200 p-4">
           <button
             onClick={handleLogout}
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100"
