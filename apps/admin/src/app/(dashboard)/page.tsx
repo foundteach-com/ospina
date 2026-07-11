@@ -1,9 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { BarChart as RechartsBarChart, Bar, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const purchaseDataByYear: Record<string, Array<{ month: string; value: number }>> = {
+const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+const transformApiData = (apiData: Array<{ month: string; total: number; count: number }>) => {
+  return apiData.map(item => ({
+    month: monthLabels[parseInt(item.month.split('-')[1]) - 1],
+    value: Math.round(item.total / 1000),
+  }));
+};
+
+const fallbackPurchaseData: Record<string, Array<{ month: string; value: number }>> = {
   '2024': [
     { month: 'Ene', value: 140 },
     { month: 'Feb', value: 180 },
@@ -11,6 +20,12 @@ const purchaseDataByYear: Record<string, Array<{ month: string; value: number }>
     { month: 'Abr', value: 260 },
     { month: 'May', value: 300 },
     { month: 'Jun', value: 280 },
+    { month: 'Jul', value: 310 },
+    { month: 'Ago', value: 330 },
+    { month: 'Sep', value: 350 },
+    { month: 'Oct', value: 370 },
+    { month: 'Nov', value: 390 },
+    { month: 'Dic', value: 420 },
   ],
   '2025': [
     { month: 'Ene', value: 210 },
@@ -19,6 +34,12 @@ const purchaseDataByYear: Record<string, Array<{ month: string; value: number }>
     { month: 'Abr', value: 310 },
     { month: 'May', value: 340 },
     { month: 'Jun', value: 360 },
+    { month: 'Jul', value: 380 },
+    { month: 'Ago', value: 400 },
+    { month: 'Sep', value: 420 },
+    { month: 'Oct', value: 440 },
+    { month: 'Nov', value: 460 },
+    { month: 'Dic', value: 490 },
   ],
   '2026': [
     { month: 'Ene', value: 190 },
@@ -27,10 +48,16 @@ const purchaseDataByYear: Record<string, Array<{ month: string; value: number }>
     { month: 'Abr', value: 290 },
     { month: 'May', value: 320 },
     { month: 'Jun', value: 350 },
+    { month: 'Jul', value: 0 },
+    { month: 'Ago', value: 0 },
+    { month: 'Sep', value: 0 },
+    { month: 'Oct', value: 0 },
+    { month: 'Nov', value: 0 },
+    { month: 'Dic', value: 0 },
   ],
 };
 
-const salesDataByYear: Record<string, Array<{ month: string; value: number }>> = {
+const fallbackSalesData: Record<string, Array<{ month: string; value: number }>> = {
   '2024': [
     { month: 'Ene', value: 210 },
     { month: 'Feb', value: 240 },
@@ -38,6 +65,12 @@ const salesDataByYear: Record<string, Array<{ month: string; value: number }>> =
     { month: 'Abr', value: 310 },
     { month: 'May', value: 360 },
     { month: 'Jun', value: 390 },
+    { month: 'Jul', value: 420 },
+    { month: 'Ago', value: 450 },
+    { month: 'Sep', value: 480 },
+    { month: 'Oct', value: 510 },
+    { month: 'Nov', value: 540 },
+    { month: 'Dic', value: 570 },
   ],
   '2025': [
     { month: 'Ene', value: 250 },
@@ -46,6 +79,12 @@ const salesDataByYear: Record<string, Array<{ month: string; value: number }>> =
     { month: 'Abr', value: 340 },
     { month: 'May', value: 380 },
     { month: 'Jun', value: 410 },
+    { month: 'Jul', value: 440 },
+    { month: 'Ago', value: 470 },
+    { month: 'Sep', value: 500 },
+    { month: 'Oct', value: 530 },
+    { month: 'Nov', value: 560 },
+    { month: 'Dic', value: 600 },
   ],
   '2026': [
     { month: 'Ene', value: 270 },
@@ -54,6 +93,12 @@ const salesDataByYear: Record<string, Array<{ month: string; value: number }>> =
     { month: 'Abr', value: 370 },
     { month: 'May', value: 400 },
     { month: 'Jun', value: 440 },
+    { month: 'Jul', value: 0 },
+    { month: 'Ago', value: 0 },
+    { month: 'Sep', value: 0 },
+    { month: 'Oct', value: 0 },
+    { month: 'Nov', value: 0 },
+    { month: 'Dic', value: 0 },
   ],
 };
 
@@ -94,23 +139,66 @@ const KPICard = ({ label, value, change, icon, colorClass }: KPIIndicator) => (
 export default function AdminPage() {
   const [purchaseYear, setPurchaseYear] = useState('2026');
   const [salesYear, setSalesYear] = useState('2026');
+  const [purchasesRealData, setPurchasesRealData] = useState<Array<{ month: string; value: number }> | null>(null);
+  const [salesRealData, setSalesRealData] = useState<Array<{ month: string; value: number }> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const purchasesByMonth = purchaseDataByYear[purchaseYear] || purchaseDataByYear['2026'];
-  const salesByMonth = salesDataByYear[salesYear] || salesDataByYear['2026'];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        };
+
+        const [purchasesRes, salesRes] = await Promise.all([
+          fetch(`${apiUrl}/dashboard/purchases-by-month?year=${purchaseYear}`, { headers }),
+          fetch(`${apiUrl}/dashboard/sales-by-month?year=${salesYear}`, { headers }),
+        ]);
+
+        if (purchasesRes.ok) {
+          const purchasesData = await purchasesRes.json();
+          setPurchasesRealData(transformApiData(purchasesData));
+        }
+
+        if (salesRes.ok) {
+          const salesData = await salesRes.json();
+          setSalesRealData(transformApiData(salesData));
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [purchaseYear, salesYear]);
+
+  const purchasesByMonth = purchasesRealData || fallbackPurchaseData[purchaseYear] || fallbackPurchaseData['2026'];
+  const salesByMonth = salesRealData || fallbackSalesData[salesYear] || fallbackSalesData['2026'];
 
   const metrics = useMemo(() => {
     const totalPurchases = purchasesByMonth.reduce((sum, item) => sum + item.value, 0);
     const totalSales = salesByMonth.reduce((sum, item) => sum + item.value, 0);
-    const margin = ((totalSales - totalPurchases) / totalPurchases) * 100;
-    const avgPurchase = totalPurchases / purchasesByMonth.length;
-    const avgSales = totalSales / salesByMonth.length;
-    const conversionRate = (totalSales / totalPurchases) * 100;
+    const margin = totalPurchases > 0 ? ((totalSales - totalPurchases) / totalPurchases) * 100 : 0;
+    const avgPurchase = purchasesByMonth.length > 0 ? totalPurchases / purchasesByMonth.length : 0;
+    const avgSales = salesByMonth.length > 0 ? totalSales / salesByMonth.length : 0;
+    const conversionRate = totalPurchases > 0 ? (totalSales / totalPurchases) * 100 : 0;
 
-    const prevYearPurchases = (purchaseYear === '2026' ? purchaseDataByYear['2025'] : purchaseDataByYear[purchaseYear === '2025' ? '2024' : '2025']).reduce((sum, item) => sum + item.value, 0);
-    const purchaseGrowth = ((totalPurchases - prevYearPurchases) / prevYearPurchases) * 100;
+    const prevYearNum = parseInt(purchaseYear) - 1;
+    const prevYearKey = prevYearNum.toString();
+    const prevYearPurchases = (fallbackPurchaseData[prevYearKey] || fallbackPurchaseData['2025']).reduce((sum, item) => sum + item.value, 0);
+    const purchaseGrowth = prevYearPurchases > 0 ? ((totalPurchases - prevYearPurchases) / prevYearPurchases) * 100 : 0;
 
-    const prevYearSales = (salesYear === '2026' ? salesDataByYear['2025'] : salesDataByYear[salesYear === '2025' ? '2024' : '2025']).reduce((sum, item) => sum + item.value, 0);
-    const salesGrowth = ((totalSales - prevYearSales) / prevYearSales) * 100;
+    const prevYearSalesNum = parseInt(salesYear) - 1;
+    const prevYearSalesKey = prevYearSalesNum.toString();
+    const prevYearSales = (fallbackSalesData[prevYearSalesKey] || fallbackSalesData['2025']).reduce((sum, item) => sum + item.value, 0);
+    const salesGrowth = prevYearSales > 0 ? ((totalSales - prevYearSales) / prevYearSales) * 100 : 0;
 
     return {
       totalPurchases,
@@ -122,7 +210,7 @@ export default function AdminPage() {
       purchaseGrowth,
       salesGrowth,
     };
-  }, [purchaseYear, salesYear]);
+  }, [purchasesByMonth, salesByMonth, purchaseYear, salesYear]);
 
   const combinedData = useMemo(() => {
     return purchasesByMonth.map((item, index) => ({
@@ -133,10 +221,20 @@ export default function AdminPage() {
   }, [purchasesByMonth, salesByMonth]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-100 p-8">
+    <div className={`min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-100 p-8 ${isLoading ? 'opacity-75' : ''}`}>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Dashboard de Gestión</h1>
-        <p className="mt-2 text-gray-600 font-medium">Análisis integral de compras, ventas e indicadores de desempeño</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Dashboard de Gestión</h1>
+            <p className="mt-2 text-gray-600 font-medium">Análisis integral de compras, ventas e indicadores de desempeño</p>
+          </div>
+          {isLoading && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 border border-blue-300 rounded-lg">
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-blue-700">Cargando datos...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mb-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
