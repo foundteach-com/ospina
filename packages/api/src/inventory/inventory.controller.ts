@@ -12,6 +12,7 @@ export class InventoryController {
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('measurementQuantity') measurementQuantity?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -19,6 +20,7 @@ export class InventoryController {
       categoryId,
       status,
       search,
+      measurementQuantity: measurementQuantity ? parseFloat(measurementQuantity) : undefined,
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
     });

@@ -40,6 +40,7 @@ export class InventoryService {
     categoryId?: string;
     status?: string;
     search?: string;
+    measurementQuantity?: number;
     page?: number;
     limit?: number;
   }): Promise<{ data: InventoryItem[]; total: number; page: number; totalPages: number }> {
@@ -53,6 +54,9 @@ export class InventoryService {
     }
     if (params?.search) {
       filters.push(Prisma.sql`(p.name ILIKE ${'%' + params.search + '%'} OR p.code ILIKE ${'%' + params.search + '%'})`);
+    }
+    if (params?.measurementQuantity !== undefined) {
+      filters.push(Prisma.sql`p."measurementQuantity" = ${params.measurementQuantity}`);
     }
 
     const whereClause = filters.length > 0 ? Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}` : Prisma.empty;
