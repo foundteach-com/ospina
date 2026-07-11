@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { BarChart as RechartsBarChart, Bar, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import KPICard from '@/components/dashboard/KPICard';
 
 const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -101,40 +102,6 @@ const fallbackSalesData: Record<string, Array<{ month: string; value: number }>>
     { month: 'Dic', value: 0 },
   ],
 };
-
-interface KPIIndicator {
-  label: string;
-  value: string | number;
-  change?: number;
-  changeLabel?: string;
-  icon: React.ReactNode;
-  colorClass: string;
-}
-
-const TrendIndicator = ({ change, label }: { change?: number; label?: string }) => {
-  if (change === undefined) return null;
-  const isPositive = change >= 0;
-  return (
-    <div className={`flex items-center gap-1 text-xs font-semibold ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={isPositive ? '' : 'rotate-180'}>
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-        <polyline points="17 6 23 6 23 12"/>
-      </svg>
-      <span>{isPositive ? '+' : ''}{change.toFixed(1)}% {label || 'vs anterior'}</span>
-    </div>
-  );
-};
-
-const KPICard = ({ label, value, change, icon, colorClass }: KPIIndicator) => (
-  <div className={`${colorClass} rounded-2xl border p-6 transition-all hover:shadow-lg hover:scale-105 cursor-pointer group`}>
-    <div className="flex items-start justify-between mb-4">
-      <div className="opacity-10 group-hover:opacity-20 transition-opacity">{icon}</div>
-    </div>
-    <p className="text-sm font-medium text-gray-600 mb-2">{label}</p>
-    <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
-    {change !== undefined && <TrendIndicator change={change} />}
-  </div>
-);
 
 export default function AdminPage() {
   const [purchaseYear, setPurchaseYear] = useState('2026');
@@ -239,32 +206,32 @@ export default function AdminPage() {
 
       <div className="mb-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard
-          label="Compras Totales"
+          title="Compras Totales"
           value={`$${metrics.totalPurchases.toFixed(0)}k`}
           change={metrics.purchaseGrowth}
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>}
-          colorClass="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200"
+          color="blue"
         />
         <KPICard
-          label="Ventas Totales"
+          title="Ventas Totales"
           value={`$${metrics.totalSales.toFixed(0)}k`}
           change={metrics.salesGrowth}
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
-          colorClass="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200"
+          color="green"
         />
         <KPICard
-          label="Margen Bruto"
+          title="Margen Bruto"
           value={`${metrics.margin.toFixed(1)}%`}
           change={metrics.margin > 25 ? 5.2 : -2.1}
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>}
-          colorClass="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200"
+          color="orange"
         />
         <KPICard
-          label="Tasa Conversión"
+          title="Tasa Conversión"
           value={`${metrics.conversionRate.toFixed(1)}%`}
           change={3.8}
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11"/></svg>}
-          colorClass="bg-gradient-to-br from-violet-50 to-violet-100 border border-violet-200"
+          color="purple"
         />
       </div>
 
