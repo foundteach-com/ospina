@@ -48,6 +48,7 @@ export default function InventoryPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [unitFilter, setUnitFilter] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'productName', direction: 'asc' });
 
   // Pagination and Stats
@@ -59,7 +60,7 @@ export default function InventoryPage() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, selectedCategory]);
+  }, [debouncedSearch, statusFilter, selectedCategory, unitFilter]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -76,7 +77,7 @@ export default function InventoryPage() {
   useEffect(() => {
     fetchInventory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, statusFilter, selectedCategory, currentPage, sortConfig]);
+  }, [debouncedSearch, statusFilter, selectedCategory, unitFilter, currentPage, sortConfig]);
 
   const fetchStats = async () => {
     try {
@@ -116,6 +117,7 @@ export default function InventoryPage() {
       if (debouncedSearch) params.append('search', debouncedSearch);
       if (statusFilter) params.append('status', statusFilter);
       if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (unitFilter) params.append('unit', unitFilter);
       params.append('page', currentPage.toString());
       params.append('limit', '10');
 
@@ -395,6 +397,23 @@ export default function InventoryPage() {
             <option value="MEDIO">Stock Medio</option>
             <option value="BAJO">Stock Bajo</option>
             <option value="AGOTADO">Agotado</option>
+          </select>
+        </div>
+        <div className="w-full md:w-1/3 relative">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <select
+            value={unitFilter}
+            onChange={(e) => setUnitFilter(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
+          >
+            <option value="">Todas las Cantidades</option>
+            <option value="kg">Kilogramos</option>
+            <option value="g">Gramos</option>
+            <option value="lb">Libras</option>
+            <option value="unidad">Unidades</option>
+            <option value="caja">Cajas</option>
+            <option value="ml">Mililitros</option>
+            <option value="lt">Litros</option>
           </select>
         </div>
       </div>
