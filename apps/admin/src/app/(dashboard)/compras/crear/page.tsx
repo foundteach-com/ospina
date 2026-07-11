@@ -96,7 +96,10 @@ export default function CreatePurchasePage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setProviders(data);
+        const sortedProviders = [...data].sort((a, b) =>
+          a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+        );
+        setProviders(sortedProviders);
       }
     } catch (error) {
       console.error('Error fetching providers:', error);
