@@ -50,6 +50,7 @@ export default function InventoryPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [measurementQuantityFilter, setMeasurementQuantityFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [showAllProducts, setShowAllProducts] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'productName', direction: 'asc' });
 
   // Pagination and Stats
@@ -78,7 +79,7 @@ export default function InventoryPage() {
   useEffect(() => {
     fetchInventory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, statusFilter, selectedCategory, measurementQuantityFilter, currentPage, sortConfig]);
+  }, [debouncedSearch, statusFilter, selectedCategory, measurementQuantityFilter, currentPage, sortConfig, showAllProducts]);
 
   const fetchStats = async () => {
     try {
@@ -120,7 +121,7 @@ export default function InventoryPage() {
       if (selectedCategory) params.append('categoryId', selectedCategory);
       if (measurementQuantityFilter) params.append('measurementQuantity', measurementQuantityFilter);
       params.append('page', currentPage.toString());
-      params.append('limit', '10');
+      params.append('limit', showAllProducts ? '10000' : '10');
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/inventory?${params.toString()}`,
@@ -638,26 +639,53 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {totalPages > 1 && (
+      {(totalPages > 1 || showAllProducts) && (
         <div className="mt-4 flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Mostrando página <span className="font-medium text-gray-900">{currentPage}</span> de <span className="font-medium text-gray-900">{totalPages}</span> ({totalItems} productos en total)
+            {showAllProducts ? (
+              <>Mostrando todos los <span className="font-medium text-gray-900">{totalItems}</span> productos</>
+            ) : (
+              <>Mostrando página <span className="font-medium text-gray-900">{currentPage}</span> de <span className="font-medium text-gray-900">{totalPages}</span> ({totalItems} productos en total)</>
+            )}
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Anterior
-            </button>
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Siguiente
-            </button>
+            {showAllProducts ? (
+              <button
+                onClick={() => {
+                  setShowAllProducts(false);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                Mostrar paginación
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Siguiente
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAllProducts(true);
+                    setCurrentPage(1);
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  Mostrar todos
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
