@@ -77,8 +77,8 @@ export class DashboardService {
 
   async getPurchasesByMonth(year?: number) {
     const targetYear = year || new Date().getFullYear();
-    const startDate = new Date(targetYear, 0, 1); // January 1st
-    const endDate = new Date(targetYear, 11, 31, 23, 59, 59); // December 31st
+    const startDate = new Date(targetYear, 0, 1);
+    const endDate = new Date(targetYear, 11, 31, 23, 59, 59);
 
     const purchases = await this.prisma.purchase.findMany({
       where: {
@@ -87,25 +87,33 @@ export class DashboardService {
           lte: endDate,
         },
       },
-      select: {
-        date: true,
-        total: true,
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
       },
       orderBy: { date: 'asc' },
     });
 
-    // Group by month
     const purchasesByMonth = purchases.reduce((acc, purchase) => {
       const monthKey = `${purchase.date.getFullYear()}-${String(purchase.date.getMonth() + 1).padStart(2, '0')}`;
       if (!acc[monthKey]) {
         acc[monthKey] = { month: monthKey, total: 0, count: 0 };
       }
-      acc[monthKey].total += Number(purchase.total);
+
+      const totalWithIva = purchase.items.reduce((sum, item) => {
+        const ivaPerc = item.product?.purchaseIvaPercent ? Number(item.product.purchaseIvaPercent) : 19;
+        const totalLine = Number(item.quantity) * Number(item.purchasePrice);
+        return sum + totalLine;
+      }, 0);
+
+      acc[monthKey].total += totalWithIva;
       acc[monthKey].count += 1;
       return acc;
     }, {} as Record<string, { month: string; total: number; count: number }>);
 
-    // Ensure all 12 months are present
     const allMonths = [];
     for (let i = 0; i < 12; i++) {
       const monthKey = `${targetYear}-${String(i + 1).padStart(2, '0')}`;
@@ -119,8 +127,8 @@ export class DashboardService {
 
   async getSalesByMonth(year?: number) {
     const targetYear = year || new Date().getFullYear();
-    const startDate = new Date(targetYear, 0, 1); // January 1st
-    const endDate = new Date(targetYear, 11, 31, 23, 59, 59); // December 31st
+    const startDate = new Date(targetYear, 0, 1);
+    const endDate = new Date(targetYear, 11, 31, 23, 59, 59);
 
     const sales = await this.prisma.sale.findMany({
       where: {
@@ -130,25 +138,31 @@ export class DashboardService {
         },
         status: { not: 'CANCELLED' },
       },
-      select: {
-        date: true,
-        total: true,
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
       },
       orderBy: { date: 'asc' },
     });
 
-    // Group by month
     const salesByMonth = sales.reduce((acc, sale) => {
       const monthKey = `${sale.date.getFullYear()}-${String(sale.date.getMonth() + 1).padStart(2, '0')}`;
       if (!acc[monthKey]) {
         acc[monthKey] = { month: monthKey, total: 0, count: 0 };
       }
-      acc[monthKey].total += Number(sale.total);
+
+      const totalWithIva = sale.items.reduce((sum, item) => {
+        return sum + Number(item.quantity) * Number(item.salePrice);
+      }, 0);
+
+      acc[monthKey].total += totalWithIva;
       acc[monthKey].count += 1;
       return acc;
     }, {} as Record<string, { month: string; total: number; count: number }>);
 
-    // Ensure all 12 months are present
     const allMonths = [];
     for (let i = 0; i < 12; i++) {
       const monthKey = `${targetYear}-${String(i + 1).padStart(2, '0')}`;
