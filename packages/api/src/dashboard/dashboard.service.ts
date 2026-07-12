@@ -105,7 +105,8 @@ export class DashboardService {
 
       const totalWithIva = purchase.items.reduce((sum, item) => {
         const ivaPerc = item.product?.purchaseIvaPercent ? Number(item.product.purchaseIvaPercent) : 19;
-        const totalLine = Number(item.quantity) * Number(item.purchasePrice);
+        const baseTotal = Number(item.quantity) * Number(item.purchasePrice);
+        const totalLine = baseTotal * (1 + ivaPerc / 100);
         return sum + totalLine;
       }, 0);
 
