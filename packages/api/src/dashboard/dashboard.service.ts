@@ -311,6 +311,43 @@ export class DashboardService {
     return enrichedClients.filter((item): item is NonNullable<typeof item> => item !== null);
   }
 
+  async getTopProviders(limit: number = 5) {
+    const topProviders = await this.prisma.purchase.groupBy({
+      by: ['providerId'],
+      _sum: {
+        total: true,
+      },
+      _count: {
+        _all: true,
+      },
+      orderBy: {
+        _sum: {
+          total: 'desc',
+        },
+      },
+      take: limit,
+    });
+
+    const enrichedProviders = await Promise.all(
+      topProviders.map(async (item: any) => {
+        const provider = await this.prisma.provider.findUnique({
+          where: { id: item.providerId },
+          select: { name: true, taxId: true },
+        });
+
+        return {
+          providerId: item.providerId,
+          providerName: provider?.name || 'Proveedor Desconocido',
+          providerTaxId: provider?.taxId || 'N/A',
+          totalPurchases: item._sum?.total || 0,
+          purchaseCount: item._count?._all || 0,
+        };
+      })
+    );
+
+    return enrichedProviders;
+  }
+
   private async getCashFlowSummary() {
     const cashFlows = await this.prisma.cashFlow.findMany();
 

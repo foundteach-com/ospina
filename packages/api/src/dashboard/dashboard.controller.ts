@@ -46,4 +46,10 @@ export class DashboardController {
     const limitNum = limit ? parseInt(limit, 10) : 5;
     return this.dashboardService.getTopClients(limitNum);
   }
+
+  @Get('top-providers')
+  getTopProviders(@Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit, 10) : 5;
+    return this.dashboardService.getTopProviders(limitNum);
+  }
 }
