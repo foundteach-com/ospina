@@ -61,7 +61,7 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/sales/${id}`, { headers }),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients`, { headers }),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, { headers }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory`, { headers }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory?limit=10000`, { headers }),
         ]);
 
         if (saleRes.ok && clientsRes.ok && productsRes.ok && invRes.ok) {

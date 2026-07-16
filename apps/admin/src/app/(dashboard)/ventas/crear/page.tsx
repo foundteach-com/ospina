@@ -160,7 +160,7 @@ export default function CreateSalePage() {
   const fetchInventory = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory?limit=10000`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
