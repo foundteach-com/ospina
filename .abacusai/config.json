@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add apps/admin/src/app/\\…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1 | …)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:api 2>&1 | tai…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:admin 2>&1 | t…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add packages/api/src/das…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main --verbo…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:admin 2>&1 | t…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:admin 2>&1 | h…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add apps/admin/src/app/\\…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:admin 2>&1 | h…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add apps/admin/src/app/\\…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:admin 2>&1 | h…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add apps/admin/src/app/\\…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:admin 2>&1 | g…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add apps/admin/src/app/\\…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:api 2>&1 | gre…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:api 2>&1 | tai…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add packages/api/src/das…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && npm run build:admin 2>&1 | g…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add apps/admin/src/app/\\…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git push origin main 2>&1)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina/packages/api && npx tsc --noEmi…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git --no-pager log --oneline…)",
+      "Bash(cd /Users/devmannez/Library/CloudStorage/OneDrive-FoundTeachEdTechS.A.S/proyectos/ospina && git add \"apps/admin/src/app/…)"
+    ]
+  }
+}

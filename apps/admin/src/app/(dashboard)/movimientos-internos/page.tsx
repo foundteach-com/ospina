@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDialog } from '@/context/DialogContext';
 
 interface Product {
   id: string;
@@ -39,6 +40,10 @@ export default function InternalMovementsPage() {
   const [showModal, setShowModal] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userRole, setUserRole] = useState<string>('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const { confirm, showAlert } = useDialog();
   
   // Form State
   const [formData, setFormData] = useState({
@@ -54,6 +59,11 @@ export default function InternalMovementsPage() {
   const [itemQuantity, setItemQuantity] = useState(1);
 
   useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserRole(user.role);
+    }
     fetchMovements();
   }, []);
 
@@ -62,7 +72,7 @@ export default function InternalMovementsPage() {
     if (showModal && products.length === 0) {
       fetchProducts();
     }
-  }, [showModal]);
+  }, [showModal, products.length]);
 
   const fetchMovements = async () => {
     try {
@@ -121,17 +131,84 @@ export default function InternalMovementsPage() {
     setSelectedItems(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleEdit = (movement: InternalMovement) => {
+    setEditingId(movement.id);
+    setFormData({
+      date: movement.date.split('T')[0],
+      type: movement.type,
+      description: movement.description || '',
+    });
+    setSelectedItems(movement.items.map(item => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      product: item.product,
+    })));
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    const isConfirmed = await confirm({
+      title: '¿Eliminar Movimiento?',
+      message: 'Esta acción borrará el registro del movimiento permanentemente. ¿Deseas continuar?',
+      confirmText: 'Sí, eliminar',
+      type: 'danger'
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/internal-movements/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchMovements();
+        showAlert({
+          title: 'Eliminado',
+          message: 'El movimiento ha sido eliminado exitosamente.',
+          type: 'success'
+        });
+      } else {
+        showAlert({
+          title: 'Error al eliminar',
+          message: 'No pudimos eliminar este registro.',
+          type: 'danger'
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting movement:', error);
+      showAlert({
+        title: 'Error de conexión',
+        message: 'Ocurrió un problema al intentar borrar el registro.',
+        type: 'danger'
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedItems.length === 0) {
-      alert('Debes agregar al menos un producto');
+      showAlert({
+        title: 'Atención',
+        message: 'Debes agregar al menos un producto',
+        type: 'warning'
+      });
       return;
     }
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/internal-movements`, {
-        method: 'POST',
+      const url = editingId 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/internal-movements/${editingId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/internal-movements`;
+      const method = editingId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -147,6 +224,7 @@ export default function InternalMovementsPage() {
 
       if (response.ok) {
         setShowModal(false);
+        setEditingId(null);
         setFormData({
             date: getTodayLocal(),
             type: 'OWNER_WITHDRAWAL',
@@ -154,11 +232,25 @@ export default function InternalMovementsPage() {
         });
         setSelectedItems([]);
         fetchMovements();
+        showAlert({
+          title: 'Éxito',
+          message: editingId ? 'Movimiento actualizado correctamente' : 'Movimiento registrado correctamente',
+          type: 'success'
+        });
       } else {
-        alert('Error al guardar el movimiento');
+        showAlert({
+          title: 'Error',
+          message: 'Error al guardar el movimiento',
+          type: 'danger'
+        });
       }
     } catch (error) {
       console.error('Error saving movement:', error);
+      showAlert({
+        title: 'Error de conexión',
+        message: 'Ocurrió un problema al guardar el registro.',
+        type: 'danger'
+      });
     }
   };
   
@@ -175,7 +267,16 @@ export default function InternalMovementsPage() {
           <p className="text-gray-500">Control de retiros de dueño y consumo interno</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingId(null);
+            setFormData({
+              date: getTodayLocal(),
+              type: 'OWNER_WITHDRAWAL',
+              description: '',
+            });
+            setSelectedItems([]);
+            setShowModal(true);
+          }}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -194,12 +295,13 @@ export default function InternalMovementsPage() {
                         <th className="px-6 py-4 text-sm font-semibold text-gray-500">Descripción</th>
                         <th className="px-6 py-4 text-sm font-semibold text-gray-500 text-right">Costo Total</th>
                         <th className="px-6 py-4 text-sm font-semibold text-gray-500">Detalles</th>
+                        <th className="px-6 py-4 text-sm font-semibold text-gray-500 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                     {movements.length === 0 ? (
                          <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                                 {loading ? 'Cargando...' : 'No hay movimientos registrados.'}
                             </td>
                          </tr>
@@ -229,6 +331,26 @@ export default function InternalMovementsPage() {
                                         {m.items.length > 2 && '...'}
                                     </div>
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    {userRole !== 'VIEWER' && (
+                                      <div className="flex justify-end gap-1">
+                                        <button 
+                                          onClick={() => handleEdit(m)} 
+                                          title="Editar"
+                                          className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
+                                        >
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                        </button>
+                                        <button 
+                                          onClick={() => handleDelete(m.id)} 
+                                          title="Eliminar"
+                                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
+                                        >
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        </button>
+                                      </div>
+                                    )}
+                                 </td>
                             </tr>
                         ))
                     )}
@@ -242,7 +364,7 @@ export default function InternalMovementsPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-gray-200 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-              <h2 className="text-xl font-bold text-gray-900">Registrar Movimiento</h2>
+              <h2 className="text-xl font-bold text-gray-900">{editingId ? 'Editar Movimiento' : 'Registrar Movimiento'}</h2>
               <button 
                 onClick={() => setShowModal(false)}
                 className="text-gray-500 hover:text-gray-900"
@@ -311,7 +433,6 @@ export default function InternalMovementsPage() {
                                                 onClick={() => {
                                                     setItemProductId(p.id);
                                                     setSearchTerm(p.name);
-                                                    // console.log("Selected", p.id);
                                                 }}
                                             >
                                                 <div className="font-medium text-gray-900">{p.name}</div>
@@ -399,7 +520,7 @@ export default function InternalMovementsPage() {
                     onClick={handleSubmit}
                     className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-lg shadow-blue-600/20"
                 >
-                    Guardar Registro
+                    {editingId ? 'Guardar Cambios' : 'Guardar Registro'}
                 </button>
             </div>
           </div>

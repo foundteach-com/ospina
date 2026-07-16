@@ -65,19 +65,70 @@ export class InternalMovementsService {
     });
   }
 
-  /* 
-  async update(id: string, data: any) {
-    // Implementation for update if needed. 
-    // Updating movements with inventory effects is complex, so let's stick to create/delete for now or simple updates.
-    return this.prisma.internalMovement.update({
+  async findOne(id: string) {
+    return this.prisma.internalMovement.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+  }
+
+  async update(
+    id: string,
+    data: {
+      date: string | Date;
+      type: InternalMovementType;
+      description?: string;
+      items: { productId: string; quantity: number }[];
+    }
+  ) {
+    let total = 0;
+    const itemsWithPrice = await Promise.all(
+      data.items.map(async (item) => {
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId },
+        });
+        const unitPrice = product ? Number(product.purchasePrice) : 0;
+        total += unitPrice * item.quantity;
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: unitPrice,
+        };
+      })
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.internalMovementItem.deleteMany({
+        where: { internalMovementId: id },
+      });
+
+      return tx.internalMovement.update({
         where: { id },
         data: {
-            description: data.description,
-            // Simple fields update
-        }
-    })
+          date: new Date(data.date),
+          type: data.type,
+          description: data.description,
+          total,
+          items: {
+            create: itemsWithPrice,
+          },
+        },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+    });
   }
-  */
 
   async remove(id: string) {
     return this.prisma.internalMovement.delete({
