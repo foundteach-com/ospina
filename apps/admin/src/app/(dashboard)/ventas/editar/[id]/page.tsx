@@ -70,7 +70,7 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
           const productsData = await productsRes.json();
           const invData = await invRes.json();
 
-          setClients(clientsData);
+          setClients(clientsData.sort((a: Client, b: Client) => a.name.localeCompare(b.name, 'es')));
           setProducts(productsData);
           
           const inv: Record<string, number> = {};

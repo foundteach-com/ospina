@@ -135,7 +135,7 @@ export default function CreateSalePage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setClients(data);
+        setClients(data.sort((a: Client, b: Client) => a.name.localeCompare(b.name, 'es')));
       }
     } catch (error) {
       console.error('Error fetching clients:', error);
