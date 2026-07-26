@@ -23,6 +23,7 @@ export class SalesController {
     data: {
       clientId: string;
       referenceNumber?: string;
+      purchaseOrder?: string;
       date: string;
       notes?: string;
       documentUrl?: string;
@@ -68,6 +69,7 @@ export class SalesController {
     data: {
       clientId?: string;
       referenceNumber?: string;
+      purchaseOrder?: string;
       date?: string;
       notes?: string;
       documentUrl?: string;

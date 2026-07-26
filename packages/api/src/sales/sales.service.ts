@@ -9,6 +9,7 @@ export class SalesService {
   async create(data: {
     clientId: string;
     referenceNumber?: string;
+    purchaseOrder?: string;
     date: Date;
     notes?: string;
     documentUrl?: string;
@@ -48,6 +49,7 @@ export class SalesService {
       data: {
         clientId: data.clientId,
         referenceNumber: data.referenceNumber,
+        purchaseOrder: data.purchaseOrder,
         date: data.date,
         notes: data.notes,
         documentUrl: data.documentUrl,
@@ -119,6 +121,7 @@ export class SalesService {
     data: {
       clientId?: string;
       referenceNumber?: string;
+      purchaseOrder?: string;
       date?: Date;
       notes?: string;
       documentUrl?: string;
@@ -144,6 +147,7 @@ export class SalesService {
       data: {
         clientId: data.clientId,
         referenceNumber: data.referenceNumber,
+        purchaseOrder: data.purchaseOrder,
         date: data.date,
         status: data.status as any,
         paymentStatus: data.paymentStatus as any,

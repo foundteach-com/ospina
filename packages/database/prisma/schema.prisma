@@ -141,6 +141,7 @@ enum PaymentMethod {
 model Sale {
   id              String        @id @default(cuid())
   referenceNumber String?
+  purchaseOrder   String?
   date            DateTime
   total           Decimal
   status          SaleStatus    @default(PENDING)
