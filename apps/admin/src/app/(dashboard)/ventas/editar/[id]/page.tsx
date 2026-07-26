@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { roundToTwo } from '@/lib/formatters';
@@ -25,6 +25,10 @@ interface SaleItem {
   quantity: number;
   salePrice: number;
   availableStock?: number;
+  searchStr?: string;
+  name?: string;
+  code?: string;
+  showDropdown?: boolean;
 }
 
 export default function EditSalePage({ params }: { params: Promise<{ id: string }> }) {
@@ -51,6 +55,23 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
   });
 
   const [items, setItems] = useState<SaleItem[]>([]);
+  const dropdownRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      setItems((prevItems) =>
+        prevItems.map((item, index) => {
+          if (item.showDropdown && dropdownRefs.current[index] && !dropdownRefs.current[index]?.contains(event.target as Node)) {
+            return { ...item, showDropdown: false };
+          }
+          return item;
+        })
+      );
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,12 +122,17 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
             productId: string; 
             quantity: string; 
             salePrice: string; 
+            product: { name: string; code: string };
           }) => ({
             id: item.id,
             productId: item.productId,
             quantity: parseFloat(item.quantity),
             salePrice: parseFloat(item.salePrice),
-            availableStock: (inv[item.productId] || 0) + parseFloat(item.quantity) // Current stock + what was already sold in this sale
+            availableStock: (inv[item.productId] || 0) + parseFloat(item.quantity), // Current stock + what was already sold in this sale
+            searchStr: item.product.code,
+            name: item.product.name,
+            code: item.product.code,
+            showDropdown: false
           })));
         } else {
           alert('Error al cargar datos de la venta');
@@ -154,7 +180,7 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', quantity: 1, salePrice: 0, availableStock: 0 }]);
+    setItems([...items, { productId: '', quantity: 1, salePrice: 0, availableStock: 0, searchStr: '', name: '', code: '', showDropdown: false }]);
   };
 
   const removeItem = (index: number) => {
@@ -169,20 +195,28 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
     });
   };
 
-  const handleProductChange = (index: number, productId: string) => {
-    const product = products.find(p => p.id === productId);
-    const stock = inventory[productId] || 0;
-    
-    // If selecting the same product that was already in the sale, we need to account for its quantity
-    // Actually, it's easier to just use the calculated availableStock if it was already there
+  const handleSearchChange = (index: number, value: string) => {
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = { ...newItems[index], searchStr: value, showDropdown: true };
+      return newItems;
+    });
+  };
+
+  const selectProduct = (index: number, product: Product) => {
+    const stock = inventory[product.id] || 0;
     
     setItems(prevItems => {
       const newItems = [...prevItems];
       newItems[index] = { 
         ...newItems[index], 
-        productId,
-        availableStock: stock, // Reset to real current stock if changing product
-        salePrice: product ? roundToTwo(parseFloat(product.basePrice)) : 0
+        productId: product.id,
+        searchStr: product.code,
+        name: product.name,
+        code: product.code,
+        availableStock: stock,
+        salePrice: product ? roundToTwo(parseFloat(product.basePrice)) : 0,
+        showDropdown: false
       };
       return newItems;
     });
@@ -453,19 +487,44 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Producto
                   </label>
-                  <select
-                    value={item.productId}
-                    onChange={(e) => handleProductChange(index, e.target.value)}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
-                    required
-                  >
-                    <option value="">Seleccionar producto</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} ({product.code})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={(el) => { dropdownRefs.current[index] = el; }}>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={item.searchStr || ''}
+                        onChange={(e) => handleSearchChange(index, e.target.value)}
+                        placeholder="Buscar por código o nombre..."
+                        className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors pl-10"
+                        required={!item.productId}
+                      />
+                      <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+
+                    {item.showDropdown && (item.searchStr || '').trim().length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        {products
+                          .filter(p => p.code.toLowerCase().includes((item.searchStr || '').toLowerCase()) || p.name.toLowerCase().includes((item.searchStr || '').toLowerCase()))
+                          .map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => selectProduct(index, p)}
+                              className="px-4 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0"
+                            >
+                              <div className="text-sm font-medium text-gray-900">{p.name}</div>
+                              <div className="text-xs text-gray-500 font-mono">Cód: {p.code} | Stock: {inventory[p.id] || 0}</div>
+                            </div>
+                        ))}
+                        {products.filter(p => p.code.toLowerCase().includes((item.searchStr || '').toLowerCase()) || p.name.toLowerCase().includes((item.searchStr || '').toLowerCase())).length === 0 && (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">No hay coincidencias</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {item.name && (
+                    <div className="mt-1 text-xs text-gray-500 font-medium truncate">
+                      Seleccionado: {item.name}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-span-2">
