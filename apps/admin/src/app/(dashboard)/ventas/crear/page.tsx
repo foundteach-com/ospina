@@ -48,6 +48,7 @@ export default function CreateSalePage() {
   const [formData, setFormData] = useState({
     clientId: '',
     referenceNumber: '',
+    purchaseOrder: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
     paymentStatus: 'PENDING',
@@ -434,6 +435,19 @@ export default function CreateSalePage() {
                 value={formData.referenceNumber}
                 onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
                 placeholder="Opcional: Factura, recibo, etc."
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Orden de Compra
+              </label>
+              <input
+                type="text"
+                value={formData.purchaseOrder}
+                onChange={(e) => setFormData({ ...formData, purchaseOrder: e.target.value })}
+                placeholder="Opcional: O.C. del cliente"
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
             </div>

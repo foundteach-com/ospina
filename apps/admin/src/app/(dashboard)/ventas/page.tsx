@@ -8,6 +8,7 @@ interface Sale {
   id: string;
   date: string;
   referenceNumber?: string;
+  purchaseOrder?: string;
   total: string;
   status: string;
   paymentType: 'CONTADO' | 'CREDITO';
@@ -88,7 +89,8 @@ export default function SalesPage() {
   useEffect(() => {
     let filtered = sales.filter(s => 
       (s.client?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.referenceNumber || '').toLowerCase().includes(searchTerm.toLowerCase())
+      (s.referenceNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.purchaseOrder || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (sortConfig !== null) {
@@ -321,6 +323,14 @@ export default function SalesPage() {
                   </div>
                 </th>
                 <th 
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+                  onClick={() => requestSort('purchaseOrder')}
+                >
+                  <div className="flex items-center">
+                    Orden de Compra {getSortIcon('purchaseOrder')}
+                  </div>
+                </th>
+                <th 
                   className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
                   onClick={() => requestSort('total')}
                 >
@@ -367,6 +377,9 @@ export default function SalesPage() {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full border ${statusColors[sale.status]}`}>
                       {statusLabels[sale.status]}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {sale.purchaseOrder || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 font-bold">
                     ${parseFloat(sale.total).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
