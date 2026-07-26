@@ -30,6 +30,7 @@ export class PurchasesController {
       paymentType?: string;
       paymentDays?: number;
       paymentDate?: string;
+      paymentMethod?: string;
       items: {
         productId: string;
         quantity: number;
@@ -44,6 +45,7 @@ export class PurchasesController {
       date: new Date(data.date),
       paymentType: data.paymentType as any,
       paymentDate: data.paymentDate ? new Date(data.paymentDate) : undefined,
+      paymentMethod: data.paymentMethod as any,
     });
   }
 
@@ -76,6 +78,7 @@ export class PurchasesController {
       paymentType?: string;
       paymentDays?: number;
       paymentDate?: string;
+      paymentMethod?: string;
       items?: {
         productId: string;
         quantity: number;
@@ -90,6 +93,7 @@ export class PurchasesController {
       date: data.date ? new Date(data.date) : undefined,
       paymentType: data.paymentType as any,
       paymentDate: data.paymentDate ? new Date(data.paymentDate) : undefined,
+      paymentMethod: data.paymentMethod as any,
     });
   }
 

@@ -45,6 +45,7 @@ export default function CreatePurchasePage() {
     invoiceUrl: '', 
     status: 'PENDING',
     paymentType: 'CONTADO',
+    paymentMethod: 'EFECTIVO',
     paymentDays: '',
     paymentDate: '',
   });
@@ -416,6 +417,23 @@ export default function CreatePurchasePage() {
               >
                 <option value="CONTADO">Contado</option>
                 <option value="CREDITO">Crédito</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medio de Pago
+              </label>
+              <select
+                value={formData.paymentMethod}
+                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors"
+              >
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia</option>
+                <option value="CONSIGNACION">Consignación</option>
+                <option value="DATAFONO">Datáfono</option>
+                <option value="OTRO">Otro</option>
               </select>
             </div>
 

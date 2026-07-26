@@ -79,6 +79,7 @@ model Purchase {
   paymentType     PaymentType    @default(CONTADO)
   paymentDays     Int?
   paymentDate     DateTime?
+  paymentMethod   PaymentMethod?
   notes           String?
   invoiceUrl      String?
   createdAt       DateTime       @default(now())

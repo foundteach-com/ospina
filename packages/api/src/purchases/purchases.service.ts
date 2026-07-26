@@ -16,6 +16,7 @@ export class PurchasesService {
     paymentType?: any;
     paymentDays?: number;
     paymentDate?: Date;
+    paymentMethod?: any;
     items: {
       productId: string;
       quantity: number;
@@ -59,6 +60,7 @@ export class PurchasesService {
         paymentType: data.paymentType || 'CONTADO',
         paymentDays: data.paymentDays,
         paymentDate: data.paymentDate,
+        paymentMethod: data.paymentMethod,
         total,
         items: {
           create: data.items.map((item) => ({
@@ -130,6 +132,7 @@ export class PurchasesService {
       paymentType?: any;
       paymentDays?: number;
       paymentDate?: Date;
+      paymentMethod?: any;
       items?: {
         productId: string;
         quantity: number;
@@ -178,6 +181,7 @@ export class PurchasesService {
         paymentType: data.paymentType,
         paymentDays: data.paymentDays,
         paymentDate: data.paymentDate,
+        paymentMethod: data.paymentMethod,
         ...(total !== undefined && { total }),
         ...(data.items && {
           items: {
