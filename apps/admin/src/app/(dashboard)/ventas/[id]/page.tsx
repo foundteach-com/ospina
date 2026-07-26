@@ -20,6 +20,7 @@ interface Sale {
   id: string;
   date: string;
   referenceNumber?: string;
+  purchaseOrder?: string;
   total: string;
   status: string;
   notes?: string;
@@ -191,6 +192,10 @@ export default function SaleDetailsPage({ params }: { params: Promise<{ id: stri
               <div className="text-gray-900">
                 {new Date(sale.date).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
               </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Orden de Compra</div>
+              <div className="text-gray-900 font-medium">{sale.purchaseOrder || '-'}</div>
             </div>
             <div>
               <div className="text-xs text-gray-500 mb-1">Estado</div>

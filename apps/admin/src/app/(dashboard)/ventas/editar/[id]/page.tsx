@@ -482,7 +482,7 @@ export default function EditSalePage({ params }: { params: Promise<{ id: string 
 
           <div className="space-y-4">
             {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div key={index} className="grid grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div className="col-span-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Producto
