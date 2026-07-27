@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Activity, CheckCircle2, X, Save } from 'lucide-react';
+import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Activity, CheckCircle2, X, Save, Edit3, Trash2 } from 'lucide-react';
 
 interface OpTask {
   id: string;
   name: string;
+  description?: string | null;
   priority: string;
   status: string;
   dueDate: string | null;
   scheduledDate: string | null;
+  observations?: string | null;
+  processId?: string;
   process?: { id: string; name: string; color: string; code: string };
 }
 
@@ -46,6 +49,18 @@ const priorityColors: Record<string, string> = {
   LOW: 'text-emerald-700 bg-emerald-50 border-emerald-200',
 };
 
+// Formateador seguro de fechas sin desfase UTC
+function formatDateSafe(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Sin fecha';
+  const cleanDate = dateStr.split('T')[0];
+  const parts = cleanDate.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return dateStr;
+}
+
 export default function TasksListPage() {
   const [tasks, setTasks] = useState<OpTask[]>([]);
   const [processes, setProcesses] = useState<OpProcess[]>([]);
@@ -53,7 +68,7 @@ export default function TasksListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
-  // Modal State
+  // Create Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -67,6 +82,11 @@ export default function TasksListPage() {
     time: '',
     observations: ''
   });
+
+  // Detail/Edit Modal State
+  const [selectedTask, setSelectedTask] = useState<OpTask | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -111,10 +131,18 @@ export default function TasksListPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem('access_token');
+      
+      // Ajustar fechas a ISO al mediodía para evitar desfase de zona horaria
+      const payload = {
+        ...form,
+        scheduledDate: form.scheduledDate ? `${form.scheduledDate}T12:00:00.000Z` : null,
+        dueDate: form.dueDate ? `${form.dueDate}T12:00:00.000Z` : null,
+      };
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setIsModalOpen(false);
@@ -131,6 +159,33 @@ export default function TasksListPage() {
     }
   };
 
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
+    setUpdatingStatus(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        if (selectedTask) {
+          setSelectedTask({ ...selectedTask, status: newStatus });
+        }
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const openTaskDetail = (task: OpTask) => {
+    setSelectedTask(task);
+    setIsDetailModalOpen(true);
+  };
+
   const filtered = tasks.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'ALL' || t.status === filterStatus;
@@ -145,7 +200,7 @@ export default function TasksListPage() {
           <p className="text-gray-500 mt-2">Gestiona y haz seguimiento de todas las actividades operativas.</p>
         </div>
         <div className="flex gap-3">
-          <Link href="/operaciones/tareas/kanban" className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm">
+          <Link href="/operaciones/kanban" className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm">
             Vista Kanban
           </Link>
           <button
@@ -222,7 +277,12 @@ export default function TasksListPage() {
                 filtered.map(t => (
                   <tr key={t.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="py-4 px-6">
-                      <div className="font-semibold text-gray-900 leading-tight">{t.name}</div>
+                      <button 
+                        onClick={() => openTaskDetail(t)}
+                        className="font-semibold text-gray-900 hover:text-blue-600 text-left leading-tight transition-colors"
+                      >
+                        {t.name}
+                      </button>
                     </td>
                     <td className="py-4 px-6">
                       {t.process ? (
@@ -237,7 +297,7 @@ export default function TasksListPage() {
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-1.5 text-gray-500">
                         <CalendarIcon size={14} className="text-gray-400" />
-                        {t.scheduledDate ? new Date(t.scheduledDate).toLocaleDateString() : 'Sin fecha'}
+                        {formatDateSafe(t.scheduledDate)}
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -251,7 +311,10 @@ export default function TasksListPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm hover:underline">
+                      <button 
+                        onClick={() => openTaskDetail(t)}
+                        className="text-blue-600 hover:text-blue-800 font-semibold text-sm hover:underline"
+                      >
                         Detalles
                       </button>
                     </td>
@@ -262,6 +325,95 @@ export default function TasksListPage() {
           </table>
         </div>
       </div>
+
+      {/* Modal Ver Detalle / Editar Estado de Tarea */}
+      {isDetailModalOpen && selectedTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[selectedTask.status]}`}>
+                  {statusLabels[selectedTask.status]}
+                </span>
+                {selectedTask.process && (
+                  <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    {selectedTask.process.code}
+                  </span>
+                )}
+              </div>
+              <button 
+                onClick={() => setIsDetailModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">{selectedTask.name}</h2>
+                {selectedTask.process && (
+                  <p className="text-sm text-gray-500 mt-1">Proceso: {selectedTask.process.name}</p>
+                )}
+              </div>
+
+              {selectedTask.description && (
+                <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-700 border border-gray-100">
+                  <p className="font-semibold text-xs text-gray-400 uppercase tracking-wider mb-1">Descripción</p>
+                  <p>{selectedTask.description}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 text-sm bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <div>
+                  <span className="text-gray-500 text-xs block">Fecha Programada</span>
+                  <span className="font-semibold text-gray-800 flex items-center gap-1.5 mt-0.5">
+                    <CalendarIcon size={14} className="text-blue-500" />
+                    {formatDateSafe(selectedTask.scheduledDate)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-xs block">Fecha Límite</span>
+                  <span className="font-semibold text-gray-800 flex items-center gap-1.5 mt-0.5">
+                    <Clock size={14} className="text-blue-500" />
+                    {formatDateSafe(selectedTask.dueDate)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cambiar Estado */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Cambiar Estado de la Tarea</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const).map(st => (
+                    <button
+                      key={st}
+                      disabled={updatingStatus}
+                      onClick={() => handleUpdateTaskStatus(selectedTask.id, st)}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                        selectedTask.status === st 
+                          ? 'ring-2 ring-blue-500 shadow-sm ' + statusColors[st]
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {statusLabels[st]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-medium text-sm shadow-sm"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Crear Tarea */}
       {isModalOpen && (

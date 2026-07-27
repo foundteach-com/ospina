@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Activity, MoreVertical, X, Save } from 'lucide-react';
+import { Plus, Search, Activity, MoreVertical, X, Save, Edit3, Trash2 } from 'lucide-react';
 
 interface OpProcess {
   id: string;
@@ -20,9 +20,12 @@ export default function ProcessesCatalogPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Modal state
+  // Create / Edit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProcess, setEditingProcess] = useState<OpProcess | null>(null);
   const [saving, setSaving] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     name: '',
     code: '',
@@ -53,19 +56,47 @@ export default function ProcessesCatalogPage() {
     }
   };
 
+  const openCreateModal = () => {
+    setEditingProcess(null);
+    setForm({ name: '', code: '', description: '', objective: '', color: '#3b82f6', status: 'ACTIVE' });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (processItem: OpProcess) => {
+    setEditingProcess(processItem);
+    setForm({
+      name: processItem.name || '',
+      code: processItem.code || '',
+      description: processItem.description || '',
+      objective: processItem.objective || '',
+      color: processItem.color || '#3b82f6',
+      status: processItem.status || 'ACTIVE'
+    });
+    setActiveMenuId(null);
+    setIsModalOpen(true);
+  };
+
   const handleSaveProcess = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.code) return;
     setSaving(true);
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/processes`, {
-        method: 'POST',
+      const isEdit = !!editingProcess;
+      const url = isEdit 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/operations/processes/${editingProcess.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/operations/processes`;
+      
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(form)
       });
       if (res.ok) {
         setIsModalOpen(false);
+        setEditingProcess(null);
         setForm({ name: '', code: '', description: '', objective: '', color: '#3b82f6', status: 'ACTIVE' });
         fetchProcesses();
       }
@@ -82,14 +113,14 @@ export default function ProcessesCatalogPage() {
   );
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8" onClick={() => setActiveMenuId(null)}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Catálogo de Procesos</h1>
           <p className="text-gray-500 mt-2">Gestiona los procesos principales de la empresa.</p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreateModal}
           className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
         >
           <Plus size={20} />
@@ -129,9 +160,34 @@ export default function ProcessesCatalogPage() {
                       <h3 className="font-bold text-gray-900 leading-tight mt-1 text-lg">{p.name}</h3>
                     </div>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-900 p-1 rounded-md hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical size={20} />
-                  </button>
+
+                  {/* Menú de 3 puntos */}
+                  <div className="relative">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuId(activeMenuId === p.id ? null : p.id);
+                      }}
+                      className="text-gray-400 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+
+                    {activeMenuId === p.id && (
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 animate-in fade-in slide-in-from-top-2 duration-150"
+                      >
+                        <button
+                          onClick={() => openEditModal(p)}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 font-medium transition-colors"
+                        >
+                          <Edit3 size={16} />
+                          Editar Proceso
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <p className="text-sm text-gray-500 mb-6 flex-1">
@@ -166,12 +222,14 @@ export default function ProcessesCatalogPage() {
         )}
       </div>
 
-      {/* Modal Crear Proceso */}
+      {/* Modal Crear / Editar Proceso */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-xl font-bold text-gray-900">Crear Nuevo Proceso</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingProcess ? 'Editar Proceso' : 'Crear Nuevo Proceso'}
+              </h2>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -270,7 +328,7 @@ export default function ProcessesCatalogPage() {
                   {saving ? 'Guardando...' : (
                     <>
                       <Save size={18} />
-                      Crear Proceso
+                      {editingProcess ? 'Guardar Cambios' : 'Crear Proceso'}
                     </>
                   )}
                 </button>
