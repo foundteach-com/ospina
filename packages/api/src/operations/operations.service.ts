@@ -148,6 +148,11 @@ export class OperationsService {
           observations: data.observations ? String(data.observations) : 'Cambio de estado',
         },
       });
+
+      // Auto-generate next recurrence task if completing a recurring task
+      if (data.status === 'COMPLETED' && task.frequency && task.frequency !== 'CUSTOM' as any) {
+        await this.handleNextRecurrenceTask(task);
+      }
     }
 
     return this.prisma.opTask.update({
@@ -157,6 +162,107 @@ export class OperationsService {
         process: true,
       },
     });
+  }
+
+  private async handleNextRecurrenceTask(currentTask: OpTask) {
+    // Check end condition
+    const currentCount = (currentTask.currentOccurrence || 1);
+    
+    if (currentTask.recurrenceEndType === 'AFTER_COUNT' && currentTask.recurrenceCount) {
+      if (currentCount >= currentTask.recurrenceCount) {
+        return; // Finalizó por límite de ocurrencias
+      }
+    }
+
+    const nextDate = this.calculateNextOccurrenceDate(currentTask);
+    if (!nextDate) return;
+
+    if (currentTask.recurrenceEndType === 'ON_DATE' && currentTask.recurrenceEndDate) {
+      if (nextDate > currentTask.recurrenceEndDate) {
+        return; // Finalizó por fecha límite
+      }
+    }
+
+    // Clone and create next task
+    await this.prisma.opTask.create({
+      data: {
+        name: currentTask.name,
+        description: currentTask.description,
+        processId: currentTask.processId,
+        priority: currentTask.priority,
+        status: 'PENDING',
+        frequency: currentTask.frequency,
+        recurrenceInterval: currentTask.recurrenceInterval,
+        daysOfWeek: currentTask.daysOfWeek,
+        monthlyType: currentTask.monthlyType,
+        monthDay: currentTask.monthDay,
+        weekOfMonth: currentTask.weekOfMonth,
+        recurrenceEndType: currentTask.recurrenceEndType,
+        recurrenceEndDate: currentTask.recurrenceEndDate,
+        recurrenceCount: currentTask.recurrenceCount,
+        currentOccurrence: currentCount + 1,
+        scheduledDate: nextDate,
+        dueDate: nextDate,
+        responsibleId: currentTask.responsibleId,
+        observations: currentTask.observations,
+      },
+    });
+  }
+
+  private calculateNextOccurrenceDate(task: OpTask): Date | null {
+    const baseDate = task.scheduledDate ? new Date(task.scheduledDate) : new Date();
+    const interval = task.recurrenceInterval || 1;
+    const freq = String(task.frequency);
+
+    const next = new Date(baseDate);
+
+    if (freq === 'DAILY') {
+      next.setDate(next.getDate() + interval);
+      return next;
+    }
+
+    if (freq === 'WEEKLY') {
+      // If daysOfWeek specified (e.g. "MON,WED,FRI")
+      if (task.daysOfWeek) {
+        const daysMap: Record<string, number> = { SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 };
+        const targetDays = task.daysOfWeek.split(',').map(d => daysMap[d.trim()]).filter(d => d !== undefined).sort();
+        
+        if (targetDays.length > 0) {
+          const currentDay = baseDate.getDay();
+          // Find next day in the same week
+          const nextDayInWeek = targetDays.find(d => d > currentDay);
+          if (nextDayInWeek !== undefined) {
+            next.setDate(next.getDate() + (nextDayInWeek - currentDay));
+            return next;
+          } else {
+            // Jump to first target day in the next interval week
+            const daysUntilNextWeek = (7 - currentDay) + targetDays[0] + (7 * (interval - 1));
+            next.setDate(next.getDate() + daysUntilNextWeek);
+            return next;
+          }
+        }
+      }
+      // Standard weekly interval
+      next.setDate(next.getDate() + (7 * interval));
+      return next;
+    }
+
+    if (freq === 'MONTHLY') {
+      if (task.monthlyType === 'DAY_OF_MONTH' && task.monthDay) {
+        next.setMonth(next.getMonth() + interval);
+        next.setDate(Math.min(task.monthDay, 28)); // Safe day
+        return next;
+      }
+      next.setMonth(next.getMonth() + interval);
+      return next;
+    }
+
+    if (freq === 'ANNUAL') {
+      next.setFullYear(next.getFullYear() + interval);
+      return next;
+    }
+
+    return null;
   }
 
   async removeTask(id: string): Promise<OpTask> {

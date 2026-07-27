@@ -564,6 +564,17 @@ model OpTask {
   relatedModule   String?
   relatedRecordId String?
 
+  // Recurrencia Avanzada
+  recurrenceInterval Int?         @default(1)
+  daysOfWeek         String?      // Ej: "MON,WED,FRI"
+  monthlyType        String?      // DAY_OF_MONTH, DAY_OF_WEEK
+  monthDay           Int?         // 1..31
+  weekOfMonth        Int?         // 1..4, -1 (último)
+  recurrenceEndType  String?      @default("NEVER") // NEVER, ON_DATE, AFTER_COUNT
+  recurrenceEndDate  DateTime?
+  recurrenceCount    Int?         // Número de repeticiones tope
+  currentOccurrence  Int?         @default(1) // Ocurrencia actual
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   deletedAt       DateTime?

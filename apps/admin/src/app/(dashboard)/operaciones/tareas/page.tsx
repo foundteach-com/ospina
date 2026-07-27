@@ -87,7 +87,15 @@ export default function TasksListPage() {
     scheduledDate: '',
     dueDate: '',
     time: '',
-    observations: ''
+    observations: '',
+    recurrenceInterval: 1,
+    daysOfWeek: '',
+    monthlyType: 'DAY_OF_MONTH',
+    monthDay: 15,
+    weekOfMonth: 1,
+    recurrenceEndType: 'NEVER',
+    recurrenceEndDate: '',
+    recurrenceCount: 10,
   });
 
   // Detail Modal State
@@ -136,12 +144,14 @@ export default function TasksListPage() {
     setEditingTask(null);
     setForm({
       name: '', description: '', processId: '', priority: 'MEDIUM', frequency: 'CUSTOM',
-      scheduledDate: '', dueDate: '', time: '', observations: ''
+      scheduledDate: '', dueDate: '', time: '', observations: '',
+      recurrenceInterval: 1, daysOfWeek: '', monthlyType: 'DAY_OF_MONTH', monthDay: 15,
+      weekOfMonth: 1, recurrenceEndType: 'NEVER', recurrenceEndDate: '', recurrenceCount: 10
     });
     setIsModalOpen(true);
   };
 
-  const openEditModal = (task: OpTask) => {
+  const openEditModal = (task: any) => {
     setEditingTask(task);
     setForm({
       name: task.name || '',
@@ -152,7 +162,15 @@ export default function TasksListPage() {
       scheduledDate: formatDateInput(task.scheduledDate),
       dueDate: formatDateInput(task.dueDate),
       time: '',
-      observations: task.observations || ''
+      observations: task.observations || '',
+      recurrenceInterval: task.recurrenceInterval || 1,
+      daysOfWeek: task.daysOfWeek || '',
+      monthlyType: task.monthlyType || 'DAY_OF_MONTH',
+      monthDay: task.monthDay || 15,
+      weekOfMonth: task.weekOfMonth || 1,
+      recurrenceEndType: task.recurrenceEndType || 'NEVER',
+      recurrenceEndDate: formatDateInput(task.recurrenceEndDate),
+      recurrenceCount: task.recurrenceCount || 10
     });
     setIsDetailModalOpen(false);
     setIsModalOpen(true);
@@ -169,6 +187,7 @@ export default function TasksListPage() {
         ...form,
         scheduledDate: form.scheduledDate ? `${form.scheduledDate}T12:00:00.000Z` : null,
         dueDate: form.dueDate ? `${form.dueDate}T12:00:00.000Z` : null,
+        recurrenceEndDate: form.recurrenceEndDate ? `${form.recurrenceEndDate}T12:00:00.000Z` : null,
       };
 
       const isEdit = !!editingTask;
@@ -186,10 +205,6 @@ export default function TasksListPage() {
       if (res.ok) {
         setIsModalOpen(false);
         setEditingTask(null);
-        setForm({
-          name: '', description: '', processId: '', priority: 'MEDIUM', frequency: 'CUSTOM',
-          scheduledDate: '', dueDate: '', time: '', observations: ''
-        });
         fetchTasks();
       }
     } catch (error) {
@@ -544,9 +559,9 @@ export default function TasksListPage() {
 
               <hr className="border-gray-100" />
 
-              {/* Configuración y Programación */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider">Programación</h3>
+              {/* Configuración y Programación Avanzada */}
+              <div className="space-y-5">
+                <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider">Programación y Recurrencia</h3>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
@@ -556,37 +571,40 @@ export default function TasksListPage() {
                       value={form.priority}
                       onChange={(e) => setForm({ ...form, priority: e.target.value })}
                     >
-                      <option value="LOW">Baja (Opcional/Rutina)</option>
+                      <option value="LOW">Baja (Rutina)</option>
                       <option value="MEDIUM">Media (Normal)</option>
-                      <option value="HIGH">Alta (Urgente/Crítica)</option>
+                      <option value="HIGH">Alta (Urgente)</option>
                     </select>
                   </div>
+
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-gray-700">Frecuencia</label>
+                    <label className="text-sm font-semibold text-gray-700">Frecuencia de Recurrencia</label>
                     <select
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-blue-700 bg-blue-50/50"
                       value={form.frequency}
                       onChange={(e) => setForm({ ...form, frequency: e.target.value })}
                     >
-                      <option value="CUSTOM">Única vez (Personalizada)</option>
-                      <option value="DAILY">Diaria</option>
-                      <option value="WEEKLY">Semanal</option>
-                      <option value="MONTHLY">Mensual</option>
+                      <option value="CUSTOM">Única vez (No se repite)</option>
+                      <option value="DAILY">Diaria (Todos los días / Intervalo)</option>
+                      <option value="WEEKLY">Semanal (Días específicos)</option>
+                      <option value="MONTHLY">Mensual (Día del mes)</option>
+                      <option value="ANNUAL">Anual (Cada año)</option>
                     </select>
                   </div>
-                  
+
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-gray-700">Fecha Programada</label>
+                    <label className="text-sm font-semibold text-gray-700">Fecha de Inicio / Programada <span className="text-red-500">*</span></label>
                     <input
+                      required
                       type="date"
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                       value={form.scheduledDate}
                       onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })}
                     />
                   </div>
-                  
+
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-gray-700">Fecha Límite (Vencimiento)</label>
+                    <label className="text-sm font-semibold text-gray-700">Fecha Límite Primera Ejecución</label>
                     <input
                       type="date"
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
@@ -595,6 +613,176 @@ export default function TasksListPage() {
                     />
                   </div>
                 </div>
+
+                {/* OPCIONES DE RECURRENCIA DINÁMICAS */}
+                {form.frequency !== 'CUSTOM' && (
+                  <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-5 space-y-4">
+                    
+                    {/* Intervalo de repetición */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-gray-700">Repetir cada:</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        className="w-20 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-center font-bold outline-none"
+                        value={form.recurrenceInterval}
+                        onChange={(e) => setForm({ ...form, recurrenceInterval: parseInt(e.target.value) || 1 })}
+                      />
+                      <span className="text-sm text-gray-600 font-medium">
+                        {form.frequency === 'DAILY' && 'día(s)'}
+                        {form.frequency === 'WEEKLY' && 'semana(s)'}
+                        {form.frequency === 'MONTHLY' && 'mes(es)'}
+                        {form.frequency === 'ANNUAL' && 'año(s)'}
+                      </span>
+                    </div>
+
+                    {/* Días de la semana para frecuencia SEMANAL */}
+                    {form.frequency === 'WEEKLY' && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Repetir en estos días:</label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { code: 'MON', label: 'Lun' },
+                            { code: 'TUE', label: 'Mar' },
+                            { code: 'WED', label: 'Mié' },
+                            { code: 'THU', label: 'Jue' },
+                            { code: 'FRI', label: 'Vie' },
+                            { code: 'SAT', label: 'Sáb' },
+                            { code: 'SUN', label: 'Dom' },
+                          ].map(d => {
+                            const isSelected = form.daysOfWeek.includes(d.code);
+                            return (
+                              <button
+                                type="button"
+                                key={d.code}
+                                onClick={() => {
+                                  let current = form.daysOfWeek ? form.daysOfWeek.split(',') : [];
+                                  if (isSelected) {
+                                    current = current.filter(c => c !== d.code);
+                                  } else {
+                                    current.push(d.code);
+                                  }
+                                  setForm({ ...form, daysOfWeek: current.join(',') });
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                  isSelected 
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
+                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
+                                }`}
+                              >
+                                {d.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Opciones para frecuencia MENSUAL */}
+                    {form.frequency === 'MONTHLY' && (
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Modo de repetición mensual:</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <label className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-xl cursor-pointer hover:border-blue-300">
+                            <input
+                              type="radio"
+                              name="monthlyType"
+                              value="DAY_OF_MONTH"
+                              checked={form.monthlyType === 'DAY_OF_MONTH'}
+                              onChange={() => setForm({ ...form, monthlyType: 'DAY_OF_MONTH' })}
+                            />
+                            <span className="text-xs font-semibold text-gray-700">Día fijo del mes (ej: día 15)</span>
+                          </label>
+                          <label className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-xl cursor-pointer hover:border-blue-300">
+                            <input
+                              type="radio"
+                              name="monthlyType"
+                              value="DAY_OF_WEEK"
+                              checked={form.monthlyType === 'DAY_OF_WEEK'}
+                              onChange={() => setForm({ ...form, monthlyType: 'DAY_OF_WEEK' })}
+                            />
+                            <span className="text-xs font-semibold text-gray-700">Día relativo (ej: primer Lunes)</span>
+                          </label>
+                        </div>
+                        {form.monthlyType === 'DAY_OF_MONTH' && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-600">Día del mes (1 - 31):</span>
+                            <input
+                              type="number"
+                              min={1}
+                              max={31}
+                              className="w-20 px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none"
+                              value={form.monthDay}
+                              onChange={(e) => setForm({ ...form, monthDay: parseInt(e.target.value) || 1 })}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* CONDICIONES DE FINALIZACIÓN */}
+                    <div className="pt-3 border-t border-blue-100 space-y-3">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Finaliza la recurrencia:</label>
+                      
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recurrenceEndType"
+                            value="NEVER"
+                            checked={form.recurrenceEndType === 'NEVER'}
+                            onChange={() => setForm({ ...form, recurrenceEndType: 'NEVER' })}
+                          />
+                          <span className="font-semibold">Nunca (Tarea operativa continua sin fin)</span>
+                        </label>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="recurrenceEndType"
+                            value="ON_DATE"
+                            checked={form.recurrenceEndType === 'ON_DATE'}
+                            onChange={() => setForm({ ...form, recurrenceEndType: 'ON_DATE' })}
+                          />
+                          <span className="text-xs text-gray-700 font-semibold">En una fecha determinada:</span>
+                          {form.recurrenceEndType === 'ON_DATE' && (
+                            <input
+                              type="date"
+                              className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-medium outline-none"
+                              value={form.recurrenceEndDate}
+                              onChange={(e) => setForm({ ...form, recurrenceEndDate: e.target.value })}
+                            />
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="recurrenceEndType"
+                            value="AFTER_COUNT"
+                            checked={form.recurrenceEndType === 'AFTER_COUNT'}
+                            onChange={() => setForm({ ...form, recurrenceEndType: 'AFTER_COUNT' })}
+                          />
+                          <span className="text-xs text-gray-700 font-semibold">Después de:</span>
+                          {form.recurrenceEndType === 'AFTER_COUNT' && (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min={1}
+                                max={999}
+                                className="w-16 px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-center outline-none"
+                                value={form.recurrenceCount}
+                                onChange={(e) => setForm({ ...form, recurrenceCount: parseInt(e.target.value) || 1 })}
+                              />
+                              <span className="text-xs text-gray-600">repeticiones</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-6 border-t border-gray-100 flex justify-end gap-3 pb-2">
