@@ -18,72 +18,101 @@ export class OperationsController {
   constructor(private readonly operationsService: OperationsService) {}
 
   // ==========================================
-  // PROYECTOS
+  // DASHBOARD
+  // ==========================================
+  @Get('dashboard/indicators')
+  getDashboardIndicators() {
+    return this.operationsService.getDashboardIndicators();
+  }
+
+  // ==========================================
+  // PROCESSES (PROCESOS)
   // ==========================================
 
-  @Post('projects')
-  createProject(@Body() data: { name: string; description?: string; startDate?: string; endDate?: string; status?: string }) {
-    return this.operationsService.createProject({
+  @Post('processes')
+  createProcess(@Body() data: any) {
+    return this.operationsService.createProcess({
       name: data.name,
+      code: data.code,
       description: data.description,
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
+      objective: data.objective,
       status: data.status,
+      color: data.color,
+      icon: data.icon,
+      responsibleId: data.responsibleId,
     });
   }
 
-  @Get('projects')
-  findAllProjects(
+  @Get('processes')
+  findAllProcesses(
     @Query('status') status?: string,
     @Query('skip') skip?: string,
     @Query('take') take?: string,
   ) {
-    return this.operationsService.findAllProjects({
+    return this.operationsService.findAllProcesses({
       skip: skip ? parseInt(skip) : undefined,
       take: take ? parseInt(take) : undefined,
       where: status ? { status } : undefined,
     });
   }
 
-  @Get('projects/:id')
-  findOneProject(@Param('id') id: string) {
-    return this.operationsService.findOneProject(id);
+  @Get('processes/:id')
+  findOneProcess(@Param('id') id: string) {
+    return this.operationsService.findOneProcess(id);
   }
 
-  @Patch('projects/:id')
-  updateProject(
+  @Patch('processes/:id')
+  updateProcess(
     @Param('id') id: string,
-    @Body() data: { name?: string; description?: string; startDate?: string; endDate?: string; status?: string },
+    @Body() data: any,
   ) {
-    return this.operationsService.updateProject(id, {
+    return this.operationsService.updateProcess(id, {
       name: data.name,
+      code: data.code,
       description: data.description,
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
+      objective: data.objective,
       status: data.status,
+      color: data.color,
+      icon: data.icon,
+      responsibleId: data.responsibleId,
     });
   }
 
-  @Delete('projects/:id')
-  removeProject(@Param('id') id: string) {
-    return this.operationsService.removeProject(id);
+  @Delete('processes/:id')
+  removeProcess(@Param('id') id: string) {
+    return this.operationsService.removeProcess(id);
   }
 
   // ==========================================
-  // TAREAS
+  // TASKS (TAREAS)
   // ==========================================
 
   @Post('tasks')
-  createTask(@Body() data: { title: string; description?: string; dueDate?: string; status?: string; assignedTo?: string; projectId?: string }) {
-    return this.operationsService.createTask(data);
+  createTask(@Body() data: any) {
+    return this.operationsService.createTask({
+      name: data.name,
+      description: data.description,
+      priority: data.priority,
+      status: data.status,
+      frequency: data.frequency,
+      dayOfWeek: data.dayOfWeek ? parseInt(data.dayOfWeek) : undefined,
+      scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+      time: data.time,
+      responsibleId: data.responsibleId,
+      observations: data.observations,
+      relatedModule: data.relatedModule,
+      relatedRecordId: data.relatedRecordId,
+      process: { connect: { id: data.processId } },
+    });
   }
 
   @Get('tasks')
   findAllTasks(
-    @Query('projectId') projectId?: string,
+    @Query('processId') processId?: string,
     @Query('status') status?: string,
   ) {
-    return this.operationsService.findAllTasks({ projectId, status });
+    return this.operationsService.findAllTasks({ processId, status });
   }
 
   @Get('tasks/:id')
@@ -94,46 +123,38 @@ export class OperationsController {
   @Patch('tasks/:id')
   updateTask(
     @Param('id') id: string,
-    @Body() data: { title?: string; description?: string; dueDate?: string; status?: string; assignedTo?: string },
+    @Body() data: any,
   ) {
     return this.operationsService.updateTask(id, {
-      title: data.title,
+      name: data.name,
       description: data.description,
-      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+      priority: data.priority,
       status: data.status,
-      assignedTo: data.assignedTo,
+      frequency: data.frequency,
+      dayOfWeek: data.dayOfWeek ? parseInt(data.dayOfWeek) : undefined,
+      scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+      time: data.time,
+      responsibleId: data.responsibleId,
+      observations: data.observations,
+      relatedModule: data.relatedModule,
+      relatedRecordId: data.relatedRecordId,
     });
   }
 
   @Patch('tasks/:id/status')
   updateTaskStatus(
     @Param('id') id: string,
-    @Body() data: { status: string },
+    @Body() data: { status: string; observations?: string },
   ) {
-    return this.operationsService.updateTaskStatus(id, data.status);
+    return this.operationsService.updateTask(id, { 
+      status: data.status as any, 
+      observations: data.observations 
+    });
   }
 
   @Delete('tasks/:id')
   removeTask(@Param('id') id: string) {
     return this.operationsService.removeTask(id);
-  }
-
-  // ==========================================
-  // CHECKLISTS
-  // ==========================================
-
-  @Post('checklists')
-  createChecklist(@Body() data: { title: string; description?: string; taskId?: string }) {
-    return this.operationsService.createChecklist(data);
-  }
-
-  @Patch('checklists/:id/toggle')
-  toggleChecklist(@Param('id') id: string) {
-    return this.operationsService.toggleChecklist(id);
-  }
-
-  @Delete('checklists/:id')
-  removeChecklist(@Param('id') id: string) {
-    return this.operationsService.removeChecklist(id);
   }
 }

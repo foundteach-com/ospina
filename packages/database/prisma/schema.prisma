@@ -499,3 +499,129 @@ model PurchaseOrder {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+// ==========================================
+// MÓDULO OPERACIONES
+// ==========================================
+
+model OpProcess {
+  id            String         @id @default(cuid())
+  name          String
+  code          String         @unique
+  description   String?
+  objective     String?
+  responsibleId String?
+  status        String         @default("ACTIVE") // ACTIVE, INACTIVE
+  color         String?        @default("#3B82F6")
+  icon          String?        @default("Activity")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  tasks         OpTask[]
+  procedures    OpProcedure[]
+}
+
+enum OpTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum OpTaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum OpTaskFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  BIANNUAL
+  ANNUAL
+  CUSTOM
+}
+
+model OpTask {
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  processId       String
+  priority        OpTaskPriority  @default(MEDIUM)
+  status          OpTaskStatus    @default(PENDING)
+  frequency       OpTaskFrequency?
+  dayOfWeek       Int?
+  scheduledDate   DateTime?
+  dueDate         DateTime?
+  time            String?
+  responsibleId   String?
+  observations    String?
+  relatedModule   String?
+  relatedRecordId String?
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+
+  process         OpProcess       @relation(fields: [processId], references: [id])
+  history         OpTaskHistory[]
+}
+
+model OpTaskHistory {
+  id            String       @id @default(cuid())
+  taskId        String
+  userId        String?
+  oldStatus     OpTaskStatus?
+  newStatus     OpTaskStatus
+  observations  String?
+  createdAt     DateTime     @default(now())
+
+  task          OpTask       @relation(fields: [taskId], references: [id])
+}
+
+model OpProcedure {
+  id            String        @id @default(cuid())
+  processId     String
+  name          String
+  objective     String?
+  scope         String?
+  responsibleId String?
+  inputs        String?
+  outputs       String?
+  resources     String?
+  steps         String?
+  observations  String?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  process       OpProcess     @relation(fields: [processId], references: [id])
+  checklists    OpChecklist[]
+}
+
+model OpChecklist {
+  id            String             @id @default(cuid())
+  procedureId   String?
+  name          String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  procedure     OpProcedure?       @relation(fields: [procedureId], references: [id])
+  items         OpChecklistItem[]
+}
+
+model OpChecklistItem {
+  id            String       @id @default(cuid())
+  checklistId   String
+  description   String
+  isCompleted   Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  checklist     OpChecklist  @relation(fields: [checklistId], references: [id])
+}

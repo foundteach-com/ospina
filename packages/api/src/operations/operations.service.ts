@@ -1,131 +1,131 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, Project, Task, Checklist } from '@prisma/client';
+import {
+  Prisma,
+  OpProcess,
+  OpTask,
+  OpProcedure,
+  OpChecklist,
+} from '@prisma/client';
 
 @Injectable()
 export class OperationsService {
   constructor(private prisma: PrismaService) {}
 
   // ==========================================
-  // PROYECTOS
+  // PROCESSES (PROCESOS)
   // ==========================================
 
-  async createProject(data: Prisma.ProjectCreateInput): Promise<Project> {
-    return this.prisma.project.create({ data });
+  async createProcess(data: Prisma.OpProcessCreateInput): Promise<OpProcess> {
+    return this.prisma.opProcess.create({ data });
   }
 
-  async findAllProjects(params?: {
+  async findAllProcesses(params?: {
     skip?: number;
     take?: number;
-    where?: Prisma.ProjectWhereInput;
-    orderBy?: Prisma.ProjectOrderByWithRelationInput;
-  }): Promise<{ projects: Project[]; total: number }> {
+    where?: Prisma.OpProcessWhereInput;
+    orderBy?: Prisma.OpProcessOrderByWithRelationInput;
+  }): Promise<{ processes: OpProcess[]; total: number }> {
     const { skip, take, where, orderBy } = params || {};
-    const [projects, total] = await Promise.all([
-      this.prisma.project.findMany({
+    const [processes, total] = await Promise.all([
+      this.prisma.opProcess.findMany({
         skip,
         take,
-        where,
+        where: { ...where, deletedAt: null },
         orderBy: orderBy || { createdAt: 'desc' },
         include: {
           tasks: {
+            where: { deletedAt: null },
             select: { id: true, status: true },
           },
         },
       }),
-      this.prisma.project.count({ where }),
+      this.prisma.opProcess.count({ where: { ...where, deletedAt: null } }),
     ]);
-    return { projects, total };
+    return { processes, total };
   }
 
-  async findOneProject(id: string) {
-    const project = await this.prisma.project.findUnique({
-      where: { id },
+  async findOneProcess(id: string) {
+    const process = await this.prisma.opProcess.findFirst({
+      where: { id, deletedAt: null },
       include: {
         tasks: {
+          where: { deletedAt: null },
           orderBy: { createdAt: 'asc' },
+        },
+        procedures: {
+          where: { deletedAt: null },
           include: {
             checklists: {
-              orderBy: { createdAt: 'asc' },
+              include: { items: true },
             },
           },
         },
       },
     });
-    if (!project) {
-      throw new NotFoundException(`Proyecto con ID "${id}" no encontrado`);
+    if (!process) {
+      throw new NotFoundException(`Proceso con ID "${id}" no encontrado`);
     }
-    return project;
+    return process;
   }
 
-  async updateProject(id: string, data: Prisma.ProjectUpdateInput): Promise<Project> {
-    await this.findOneProject(id);
-    return this.prisma.project.update({
+  async updateProcess(
+    id: string,
+    data: Prisma.OpProcessUpdateInput,
+  ): Promise<OpProcess> {
+    await this.findOneProcess(id); // Validate exists
+    return this.prisma.opProcess.update({
       where: { id },
       data,
     });
   }
 
-  async removeProject(id: string): Promise<Project> {
-    await this.findOneProject(id);
-    return this.prisma.project.delete({ where: { id } });
+  async removeProcess(id: string): Promise<OpProcess> {
+    await this.findOneProcess(id);
+    // Soft delete
+    return this.prisma.opProcess.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 
   // ==========================================
-  // TAREAS
+  // TASKS (TAREAS)
   // ==========================================
 
-  async createTask(data: {
-    title: string;
-    description?: string;
-    dueDate?: string;
-    status?: string;
-    assignedTo?: string;
-    projectId?: string;
-  }): Promise<Task> {
-    return this.prisma.task.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-        status: data.status || 'TODO',
-        assignedTo: data.assignedTo,
-        project: data.projectId
-          ? { connect: { id: data.projectId } }
-          : undefined,
-      },
+  async createTask(data: Prisma.OpTaskCreateInput): Promise<OpTask> {
+    return this.prisma.opTask.create({
+      data,
       include: {
-        checklists: true,
+        process: true,
       },
     });
   }
 
   async findAllTasks(params?: {
-    projectId?: string;
+    processId?: string;
     status?: string;
-  }): Promise<Task[]> {
-    const where: Prisma.TaskWhereInput = {};
-    if (params?.projectId) where.projectId = params.projectId;
-    if (params?.status) where.status = params.status;
+  }): Promise<OpTask[]> {
+    const where: Prisma.OpTaskWhereInput = { deletedAt: null };
+    if (params?.processId) where.processId = params.processId;
+    if (params?.status) where.status = params.status as any;
 
-    return this.prisma.task.findMany({
+    return this.prisma.opTask.findMany({
       where,
-      orderBy: { createdAt: 'asc' },
+      orderBy: { scheduledDate: 'asc' },
       include: {
-        checklists: {
-          orderBy: { createdAt: 'asc' },
-        },
+        process: true,
       },
     });
   }
 
   async findOneTask(id: string) {
-    const task = await this.prisma.task.findUnique({
-      where: { id },
+    const task = await this.prisma.opTask.findFirst({
+      where: { id, deletedAt: null },
       include: {
-        project: true,
-        checklists: {
-          orderBy: { createdAt: 'asc' },
+        process: true,
+        history: {
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
@@ -135,63 +135,85 @@ export class OperationsService {
     return task;
   }
 
-  async updateTask(id: string, data: Prisma.TaskUpdateInput): Promise<Task> {
-    await this.findOneTask(id);
-    return this.prisma.task.update({
+  async updateTask(id: string, data: Prisma.OpTaskUpdateInput): Promise<OpTask> {
+    const task = await this.findOneTask(id);
+
+    // If status changed, record history
+    if (data.status && data.status !== task.status) {
+      await this.prisma.opTaskHistory.create({
+        data: {
+          taskId: id,
+          oldStatus: task.status,
+          newStatus: data.status as any,
+          observations: data.observations ? String(data.observations) : 'Cambio de estado',
+        },
+      });
+    }
+
+    return this.prisma.opTask.update({
       where: { id },
       data,
       include: {
-        checklists: true,
+        process: true,
       },
     });
   }
 
-  async updateTaskStatus(id: string, status: string): Promise<Task> {
+  async removeTask(id: string): Promise<OpTask> {
     await this.findOneTask(id);
-    return this.prisma.task.update({
+    return this.prisma.opTask.update({
       where: { id },
-      data: { status },
-      include: {
-        checklists: true,
-      },
+      data: { deletedAt: new Date(), status: 'CANCELLED' },
     });
-  }
-
-  async removeTask(id: string): Promise<Task> {
-    await this.findOneTask(id);
-    return this.prisma.task.delete({ where: { id } });
   }
 
   // ==========================================
-  // CHECKLISTS
+  // DASHBOARD INDICATORS
   // ==========================================
+  async getDashboardIndicators() {
+    const [
+      totalTasks,
+      pendingTasks,
+      completedTasks,
+      activeProcesses
+    ] = await Promise.all([
+      this.prisma.opTask.count({ where: { deletedAt: null } }),
+      this.prisma.opTask.count({ where: { deletedAt: null, status: 'PENDING' } }),
+      this.prisma.opTask.count({ where: { deletedAt: null, status: 'COMPLETED' } }),
+      this.prisma.opProcess.count({ where: { deletedAt: null, status: 'ACTIVE' } })
+    ]);
 
-  async createChecklist(data: {
-    title: string;
-    description?: string;
-    taskId?: string;
-  }): Promise<Checklist> {
-    return this.prisma.checklist.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        task: data.taskId ? { connect: { id: data.taskId } } : undefined,
+    // Additional logic for 'overdue' tasks, 'completed today', etc. can be added here
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const completedToday = await this.prisma.opTaskHistory.count({
+      where: {
+        newStatus: 'COMPLETED',
+        createdAt: {
+          gte: today,
+          lt: tomorrow,
+        },
       },
     });
-  }
 
-  async toggleChecklist(id: string): Promise<Checklist> {
-    const checklist = await this.prisma.checklist.findUnique({ where: { id } });
-    if (!checklist) {
-      throw new NotFoundException(`Checklist con ID "${id}" no encontrado`);
-    }
-    return this.prisma.checklist.update({
-      where: { id },
-      data: { isCompleted: !checklist.isCompleted },
+    const overdueTasks = await this.prisma.opTask.count({
+      where: {
+        deletedAt: null,
+        status: { notIn: ['COMPLETED', 'CANCELLED'] },
+        dueDate: { lt: new Date() },
+      },
     });
-  }
 
-  async removeChecklist(id: string): Promise<Checklist> {
-    return this.prisma.checklist.delete({ where: { id } });
+    return {
+      totalTasks,
+      pendingTasks,
+      completedTasks,
+      completedToday,
+      activeProcesses,
+      overdueTasks,
+    };
   }
 }
