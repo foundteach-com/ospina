@@ -116,7 +116,8 @@ export default function TasksListPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setTasks(data || []);
+        const list = Array.isArray(data) ? data : (data.tasks || data.data || []);
+        setTasks(list);
       }
     } catch (err) {
       console.error('Error fetching tasks:', err);

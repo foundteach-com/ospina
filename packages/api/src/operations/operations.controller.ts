@@ -88,42 +88,52 @@ export class OperationsController {
   // ==========================================
 
   @Post('tasks')
-  createTask(@Body() data: any) {
-    return this.operationsService.createTask({
-      name: data.name,
-      description: data.description,
-      priority: data.priority,
-      status: data.status,
-      frequency: data.frequency,
-      dayOfWeek: data.dayOfWeek ? parseInt(data.dayOfWeek) : undefined,
-      scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
-      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-      time: data.time,
-      responsibleId: data.responsibleId,
-      observations: data.observations,
-      relatedModule: data.relatedModule,
-      relatedRecordId: data.relatedRecordId,
-      
-      // Campos de Recurrencia Avanzada
-      recurrenceInterval: data.recurrenceInterval ? parseInt(data.recurrenceInterval) : 1,
-      daysOfWeek: data.daysOfWeek || null,
-      monthlyType: data.monthlyType || null,
-      monthDay: data.monthDay ? parseInt(data.monthDay) : null,
-      weekOfMonth: data.weekOfMonth ? parseInt(data.weekOfMonth) : null,
-      recurrenceEndType: data.recurrenceEndType || 'NEVER',
-      recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
-      recurrenceCount: data.recurrenceCount ? parseInt(data.recurrenceCount) : null,
+  async createTask(@Body() data: any) {
+    try {
+      return await this.operationsService.createTask({
+        name: data.name,
+        description: data.description,
+        priority: data.priority,
+        status: data.status || 'PENDING',
+        frequency: data.frequency,
+        dayOfWeek: data.dayOfWeek ? parseInt(data.dayOfWeek) : undefined,
+        scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+        time: data.time,
+        responsibleId: data.responsibleId,
+        observations: data.observations,
+        relatedModule: data.relatedModule,
+        relatedRecordId: data.relatedRecordId,
+        
+        // Campos de Recurrencia Avanzada
+        recurrenceInterval: data.recurrenceInterval ? parseInt(data.recurrenceInterval) : 1,
+        daysOfWeek: data.daysOfWeek || null,
+        monthlyType: data.monthlyType || null,
+        monthDay: data.monthDay ? parseInt(data.monthDay) : null,
+        weekOfMonth: data.weekOfMonth ? parseInt(data.weekOfMonth) : null,
+        recurrenceEndType: data.recurrenceEndType || 'NEVER',
+        recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
+        recurrenceCount: data.recurrenceCount ? parseInt(data.recurrenceCount) : null,
 
-      process: { connect: { id: data.processId } },
-    });
+        process: { connect: { id: data.processId } },
+      });
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
   }
 
   @Get('tasks')
-  findAllTasks(
+  async findAllTasks(
     @Query('processId') processId?: string,
     @Query('status') status?: string,
   ) {
-    return this.operationsService.findAllTasks({ processId, status });
+    try {
+      return await this.operationsService.findAllTasks({ processId, status });
+    } catch (error) {
+      console.error('Error fetching tasks from DB:', error);
+      return [];
+    }
   }
 
   @Get('tasks/:id')
