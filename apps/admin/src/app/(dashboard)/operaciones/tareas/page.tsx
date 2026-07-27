@@ -12,6 +12,7 @@ interface OpTask {
   status: string;
   dueDate: string | null;
   scheduledDate: string | null;
+  frequency?: string | null;
   observations?: string | null;
   processId?: string;
   process?: { id: string; name: string; color: string; code: string };
@@ -61,6 +62,11 @@ function formatDateSafe(dateStr: string | null | undefined): string {
   return dateStr;
 }
 
+function formatDateInput(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  return dateStr.split('T')[0];
+}
+
 export default function TasksListPage() {
   const [tasks, setTasks] = useState<OpTask[]>([]);
   const [processes, setProcesses] = useState<OpProcess[]>([]);
@@ -68,8 +74,9 @@ export default function TasksListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
-  // Create Modal State
+  // Create / Edit Task Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<OpTask | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -83,7 +90,7 @@ export default function TasksListPage() {
     observations: ''
   });
 
-  // Detail/Edit Modal State
+  // Detail Modal State
   const [selectedTask, setSelectedTask] = useState<OpTask | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -125,6 +132,32 @@ export default function TasksListPage() {
     }
   };
 
+  const openCreateModal = () => {
+    setEditingTask(null);
+    setForm({
+      name: '', description: '', processId: '', priority: 'MEDIUM', frequency: 'CUSTOM',
+      scheduledDate: '', dueDate: '', time: '', observations: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (task: OpTask) => {
+    setEditingTask(task);
+    setForm({
+      name: task.name || '',
+      description: task.description || '',
+      processId: task.processId || task.process?.id || '',
+      priority: task.priority || 'MEDIUM',
+      frequency: task.frequency || 'CUSTOM',
+      scheduledDate: formatDateInput(task.scheduledDate),
+      dueDate: formatDateInput(task.dueDate),
+      time: '',
+      observations: task.observations || ''
+    });
+    setIsDetailModalOpen(false);
+    setIsModalOpen(true);
+  };
+
   const handleSaveTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.processId) return;
@@ -132,20 +165,27 @@ export default function TasksListPage() {
     try {
       const token = localStorage.getItem('access_token');
       
-      // Ajustar fechas a ISO al mediodía para evitar desfase de zona horaria
       const payload = {
         ...form,
         scheduledDate: form.scheduledDate ? `${form.scheduledDate}T12:00:00.000Z` : null,
         dueDate: form.dueDate ? `${form.dueDate}T12:00:00.000Z` : null,
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks`, {
-        method: 'POST',
+      const isEdit = !!editingTask;
+      const url = isEdit 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${editingTask.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks`;
+      
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload)
       });
       if (res.ok) {
         setIsModalOpen(false);
+        setEditingTask(null);
         setForm({
           name: '', description: '', processId: '', priority: 'MEDIUM', frequency: 'CUSTOM',
           scheduledDate: '', dueDate: '', time: '', observations: ''
@@ -205,7 +245,7 @@ export default function TasksListPage() {
           </Link>
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
-            onClick={() => setIsModalOpen(true)}
+            onClick={openCreateModal}
           >
             <Plus size={20} />
             Nueva Tarea
@@ -311,12 +351,22 @@ export default function TasksListPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <button 
-                        onClick={() => openTaskDetail(t)}
-                        className="text-blue-600 hover:text-blue-800 font-semibold text-sm hover:underline"
-                      >
-                        Detalles
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => openEditModal(t)}
+                          className="text-gray-500 hover:text-blue-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 text-xs font-semibold"
+                          title="Editar Tarea"
+                        >
+                          <Edit3 size={15} />
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => openTaskDetail(t)}
+                          className="text-blue-600 hover:text-blue-800 font-semibold text-xs hover:underline py-1.5 px-2"
+                        >
+                          Detalles
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -341,12 +391,21 @@ export default function TasksListPage() {
                   </span>
                 )}
               </div>
-              <button 
-                onClick={() => setIsDetailModalOpen(false)}
-                className="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => openEditModal(selectedTask)}
+                  className="text-gray-600 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-full transition-colors flex items-center gap-1 text-xs font-semibold"
+                  title="Editar Tarea"
+                >
+                  <Edit3 size={18} />
+                </button>
+                <button 
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 space-y-6">
@@ -403,7 +462,14 @@ export default function TasksListPage() {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-between items-center">
+              <button
+                onClick={() => openEditModal(selectedTask)}
+                className="text-blue-600 hover:text-blue-800 font-semibold text-sm flex items-center gap-1.5"
+              >
+                <Edit3 size={16} />
+                Editar Tarea
+              </button>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
                 className="bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-medium text-sm shadow-sm"
@@ -415,12 +481,14 @@ export default function TasksListPage() {
         </div>
       )}
 
-      {/* Modal Crear Tarea */}
+      {/* Modal Crear / Editar Tarea */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-xl font-bold text-gray-900">Programar Tarea</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingTask ? 'Editar Tarea' : 'Programar Tarea'}
+              </h2>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-200 rounded-full transition-colors"
@@ -545,7 +613,7 @@ export default function TasksListPage() {
                   {saving ? 'Guardando...' : (
                     <>
                       <Save size={18} />
-                      Crear Tarea
+                      {editingTask ? 'Guardar Cambios' : 'Crear Tarea'}
                     </>
                   )}
                 </button>
