@@ -15,6 +15,7 @@ import {
   Save,
   X,
   Plus,
+  Trash2,
 } from 'lucide-react';
 import TaskModal from '@/components/operations/TaskModal';
 
@@ -183,8 +184,14 @@ export default function OperationsDashboard() {
     overdueTasks: 0,
   });
 
-  // Task creation modal
+  // Task creation / edit modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<OpTask | null>(null);
+
+  // Delete confirmation state
+  const [taskToDelete, setTaskToDelete] = useState<OpTask | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchIndicators();
@@ -258,6 +265,38 @@ export default function OperationsDashboard() {
     } catch (err) {
       console.error('Error updating task:', err);
     }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!taskToDelete) return;
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${taskToDelete.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setTasks(prev => prev.filter(t => t.id !== taskToDelete.id));
+        fetchIndicators();
+        setIsDeleteModalOpen(false);
+        setTaskToDelete(null);
+      }
+    } catch (err) {
+      console.error('Error deleting task:', err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const openDeleteModal = (task: OpTask) => {
+    setTaskToDelete(task);
+    setIsDeleteModalOpen(true);
+  };
+
+  const openEditModal = (task: OpTask) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
   };
 
   const menuItems = [
@@ -355,6 +394,7 @@ export default function OperationsDashboard() {
                 <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Límite</th>
                 <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Prioridad</th>
                 <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -450,6 +490,26 @@ export default function OperationsDashboard() {
                         )}
                       />
                     </td>
+
+                    {/* Acciones */}
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => openEditModal(task)}
+                          className="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                          title="Editar tarea"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(task)}
+                          className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          title="Eliminar tarea"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -458,14 +518,56 @@ export default function OperationsDashboard() {
         </div>
       </div>
 
+      {/* ── Delete Confirmation Modal ─────────────────────────────────────── */}
+      {isDeleteModalOpen && taskToDelete && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <Trash2 size={22} className="text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Eliminar Tarea</h3>
+                  <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+                </div>
+              </div>
+              <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-6">
+                <p className="text-sm font-semibold text-gray-800">{taskToDelete.name}</p>
+                {taskToDelete.process && (
+                  <p className="text-xs text-gray-500 mt-1">Proceso: {taskToDelete.process.code} — {taskToDelete.process.name}</p>
+                )}
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
+                  disabled={deleting}
+                  className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteTask}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
+                >
+                  {deleting ? 'Eliminando...' : (<><Trash2 size={16} /> Eliminar Tarea</>)}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Quick Create Task Modal ────────────────────────────────────────── */}
       <TaskModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => { setIsModalOpen(false); setEditingTask(null); }}
         onSaved={() => {
           fetchTasks();
           fetchIndicators();
         }}
+        editingTask={editingTask}
         processes={processes}
       />
     </div>
