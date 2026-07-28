@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Activity, CheckCircle2, X, Save, Edit3, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, Calendar as CalendarIcon, Clock, Activity, CheckCircle2, X, Save, Edit3, Trash2, ChevronDown } from 'lucide-react';
 
 interface OpTask {
   id: string;
@@ -67,6 +67,107 @@ function formatDateInput(dateStr: string | null | undefined): string {
   return dateStr.split('T')[0];
 }
 
+// ─── Inline Dropdown Component ────────────────────────────────────────────────
+function InlineSelect({
+  value,
+  options,
+  onChange,
+  renderValue,
+}: {
+  value: string;
+  options: { value: string; label: string; className?: string }[];
+  onChange: (val: string) => void;
+  renderValue: (val: string) => React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1 hover:opacity-80 transition-opacity group"
+      >
+        {renderValue(value)}
+        <ChevronDown size={11} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[150px] animate-in fade-in slide-in-from-top-1 duration-150">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold hover:bg-gray-50 transition-colors ${
+                opt.value === value ? 'opacity-50 cursor-default' : ''
+              }`}
+            >
+              <span className={`px-2 py-0.5 rounded-full border ${opt.className || ''}`}>{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Inline Name Edit ─────────────────────────────────────────────────────────
+function InlineNameEdit({
+  taskId,
+  value,
+  onSave,
+}: {
+  taskId: string;
+  value: string;
+  onSave: (id: string, name: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const commit = () => {
+    if (draft.trim() && draft !== value) onSave(taskId, draft.trim());
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => { setDraft(value); setEditing(true); }}
+        className="font-semibold text-gray-900 hover:text-blue-600 text-left leading-tight transition-colors group flex items-center gap-1.5"
+      >
+        {value}
+        <Edit3 size={11} className="opacity-0 group-hover:opacity-40 transition-opacity flex-shrink-0" />
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
+        className="text-sm font-semibold text-gray-900 border-b-2 border-blue-500 outline-none bg-transparent w-full min-w-0"
+      />
+      <button onClick={commit} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded flex-shrink-0"><Save size={12} /></button>
+      <button onClick={() => setEditing(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded flex-shrink-0"><X size={12} /></button>
+    </div>
+  );
+}
+
 export default function TasksListPage() {
   const [tasks, setTasks] = useState<OpTask[]>([]);
   const [processes, setProcesses] = useState<OpProcess[]>([]);
@@ -116,13 +217,30 @@ export default function TasksListPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.tasks || data.data || []);
-        setTasks(list);
+        // API returns a plain array directly
+        setTasks(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error('Error fetching tasks:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ── Inline field update ────────────────────────────────────────────────────
+  const updateTaskField = async (taskId: string, patch: Record<string, any>) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(patch),
+      });
+      if (res.ok) {
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...patch } : t));
+      }
+    } catch (err) {
+      console.error('Error updating task:', err);
     }
   };
 
@@ -184,8 +302,9 @@ export default function TasksListPage() {
     try {
       const token = localStorage.getItem('access_token');
       
-      const payload = {
+      const payload: Record<string, any> = {
         ...form,
+        // Only include dates if they were entered
         scheduledDate: form.scheduledDate ? `${form.scheduledDate}T12:00:00.000Z` : null,
         dueDate: form.dueDate ? `${form.dueDate}T12:00:00.000Z` : null,
         recurrenceEndDate: form.recurrenceEndDate ? `${form.recurrenceEndDate}T12:00:00.000Z` : null,
@@ -207,6 +326,9 @@ export default function TasksListPage() {
         setIsModalOpen(false);
         setEditingTask(null);
         fetchTasks();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error('Error response:', errData);
       }
     } catch (error) {
       console.error('Error saving task:', error);
@@ -309,78 +431,117 @@ export default function TasksListPage() {
                 <th className="py-4 px-6 font-semibold">Tarea</th>
                 <th className="py-4 px-6 font-semibold">Proceso</th>
                 <th className="py-4 px-6 font-semibold">Programada</th>
-                <th className="py-4 px-6 font-semibold">Prioridad</th>
-                <th className="py-4 px-6 font-semibold">Estado</th>
+                <th className="py-4 px-6 font-semibold">Límite</th>
+                <th className="py-4 px-6 font-semibold">Prioridad ✎</th>
+                <th className="py-4 px-6 font-semibold">Estado ✎</th>
                 <th className="py-4 px-6 font-semibold text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-gray-500">
+                  <td colSpan={7} className="py-12 text-center text-gray-500">
                     <Activity size={32} className="mx-auto text-gray-300 mb-3 animate-pulse" />
                     Cargando tareas...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-gray-500">
+                  <td colSpan={7} className="py-12 text-center text-gray-500">
                     <CheckCircle2 size={32} className="mx-auto text-gray-300 mb-3" />
                     No se encontraron tareas con estos filtros.
                   </td>
                 </tr>
               ) : (
                 filtered.map(t => (
-                  <tr key={t.id} className="hover:bg-blue-50/30 transition-colors group">
-                    <td className="py-4 px-6">
-                      <button 
-                        onClick={() => openTaskDetail(t)}
-                        className="font-semibold text-gray-900 hover:text-blue-600 text-left leading-tight transition-colors"
-                      >
-                        {t.name}
-                      </button>
+                  <tr key={t.id} className="hover:bg-blue-50/20 transition-colors group">
+                    {/* Nombre — inline editable */}
+                    <td className="py-3.5 px-6 max-w-[200px]">
+                      <InlineNameEdit
+                        taskId={t.id}
+                        value={t.name}
+                        onSave={(id, name) => updateTaskField(id, { name })}
+                      />
                     </td>
-                    <td className="py-4 px-6">
+
+                    {/* Proceso */}
+                    <td className="py-3.5 px-6">
                       {t.process ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: t.process.color }} />
+                          <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: t.process.color }} />
                           <span className="text-gray-700 font-medium text-xs bg-gray-100 px-2 py-1 rounded">{t.process.code}</span>
                         </div>
                       ) : (
-                        <span className="text-gray-400">-</span>
+                        <span className="text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-1.5 text-gray-500">
-                        <CalendarIcon size={14} className="text-gray-400" />
+
+                    {/* Fecha programada */}
+                    <td className="py-3.5 px-6">
+                      <div className="flex items-center gap-1.5 text-gray-500 text-xs">
+                        <CalendarIcon size={13} className="text-gray-400 flex-shrink-0" />
                         {formatDateSafe(t.scheduledDate)}
                       </div>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide border uppercase ${priorityColors[t.priority]}`}>
-                        {priorityLabels[t.priority]}
-                      </span>
+
+                    {/* Fecha límite */}
+                    <td className="py-3.5 px-6 text-xs text-gray-500">
+                      {formatDateSafe(t.dueDate)}
                     </td>
-                    <td className="py-4 px-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[t.status]}`}>
-                        {statusLabels[t.status]}
-                      </span>
+
+                    {/* Prioridad — inline dropdown */}
+                    <td className="py-3.5 px-6">
+                      <InlineSelect
+                        value={t.priority}
+                        options={[
+                          { value: 'HIGH', label: 'Alta', className: priorityColors.HIGH },
+                          { value: 'MEDIUM', label: 'Media', className: priorityColors.MEDIUM },
+                          { value: 'LOW', label: 'Baja', className: priorityColors.LOW },
+                        ]}
+                        onChange={val => updateTaskField(t.id, { priority: val })}
+                        renderValue={val => (
+                          <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide border uppercase ${priorityColors[val]}`}>
+                            {priorityLabels[val]}
+                          </span>
+                        )}
+                      />
                     </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex justify-end gap-2">
+
+                    {/* Estado — inline dropdown */}
+                    <td className="py-3.5 px-6">
+                      <InlineSelect
+                        value={t.status}
+                        options={[
+                          { value: 'PENDING', label: 'Pendiente', className: statusColors.PENDING },
+                          { value: 'IN_PROGRESS', label: 'En Progreso', className: statusColors.IN_PROGRESS },
+                          { value: 'COMPLETED', label: 'Completada', className: statusColors.COMPLETED },
+                          { value: 'CANCELLED', label: 'Cancelada', className: statusColors.CANCELLED },
+                        ]}
+                        onChange={val => updateTaskField(t.id, { status: val })}
+                        renderValue={val => (
+                          <span className={`px-3 py-0.5 rounded-full text-[11px] font-semibold border ${statusColors[val]}`}>
+                            {statusLabels[val]}
+                          </span>
+                        )}
+                      />
+                    </td>
+
+                    {/* Acciones */}
+                    <td className="py-3.5 px-6 text-right">
+                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => openEditModal(t)}
-                          className="text-gray-500 hover:text-blue-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1 text-xs font-semibold"
-                          title="Editar Tarea"
+                          className="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                          title="Editar completo"
                         >
                           <Edit3 size={15} />
-                          Editar
                         </button>
                         <button 
                           onClick={() => openTaskDetail(t)}
-                          className="text-blue-600 hover:text-blue-800 font-semibold text-xs hover:underline py-1.5 px-2"
+                          className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                          title="Ver detalles"
                         >
-                          Detalles
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
                       </div>
                     </td>
@@ -594,9 +755,11 @@ export default function TasksListPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-gray-700">Fecha de Inicio / Programada <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-semibold text-gray-700">
+                      Fecha de Inicio / Programada
+                      <span className="ml-1 text-xs font-normal text-gray-400">(opcional)</span>
+                    </label>
                     <input
-                      required
                       type="date"
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
                       value={form.scheduledDate}
@@ -605,7 +768,10 @@ export default function TasksListPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-gray-700">Fecha Límite Primera Ejecución</label>
+                    <label className="text-sm font-semibold text-gray-700">
+                      Fecha Límite Primera Ejecución
+                      <span className="ml-1 text-xs font-normal text-gray-400">(opcional)</span>
+                    </label>
                     <input
                       type="date"
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
