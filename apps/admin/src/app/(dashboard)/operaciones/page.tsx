@@ -16,6 +16,7 @@ import {
   X,
   Plus,
 } from 'lucide-react';
+import TaskModal from '@/components/operations/TaskModal';
 
 interface OpTask {
   id: string;
@@ -182,16 +183,8 @@ export default function OperationsDashboard() {
     overdueTasks: 0,
   });
 
-  // Task creation modal (inline)
+  // Task creation modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    processId: '',
-    priority: 'MEDIUM',
-    scheduledDate: '',
-    dueDate: '',
-  });
 
   useEffect(() => {
     fetchIndicators();
@@ -264,40 +257,6 @@ export default function OperationsDashboard() {
       }
     } catch (err) {
       console.error('Error updating task:', err);
-    }
-  };
-
-  const handleSaveNewTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name.trim() || !form.processId) return;
-    setSaving(true);
-    try {
-      const token = localStorage.getItem('access_token');
-      const payload: Record<string, any> = {
-        name: form.name.trim(),
-        processId: form.processId,
-        priority: form.priority,
-        status: 'PENDING',
-        frequency: 'CUSTOM',
-      };
-      if (form.scheduledDate) payload.scheduledDate = `${form.scheduledDate}T12:00:00.000Z`;
-      if (form.dueDate) payload.dueDate = `${form.dueDate}T12:00:00.000Z`;
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        setIsModalOpen(false);
-        setForm({ name: '', processId: '', priority: 'MEDIUM', scheduledDate: '', dueDate: '' });
-        fetchTasks();
-        fetchIndicators();
-      }
-    } catch (err) {
-      console.error('Error creating task:', err);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -500,98 +459,15 @@ export default function OperationsDashboard() {
       </div>
 
       {/* ── Quick Create Task Modal ────────────────────────────────────────── */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-xl font-bold text-gray-900">Nueva Tarea</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveNewTask} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Nombre de la Tarea <span className="text-red-500">*</span></label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Ej. Revisión de inventario físico"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                  value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Proceso Relacionado <span className="text-red-500">*</span></label>
-                <select
-                  required
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                  value={form.processId}
-                  onChange={e => setForm({ ...form, processId: e.target.value })}
-                >
-                  <option value="" disabled>Seleccione un proceso...</option>
-                  {processes.map(p => (
-                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Prioridad</label>
-                  <select
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    value={form.priority}
-                    onChange={e => setForm({ ...form, priority: e.target.value })}
-                  >
-                    <option value="LOW">Baja</option>
-                    <option value="MEDIUM">Media</option>
-                    <option value="HIGH">Alta (Urgente)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Fecha Programada <span className="text-xs font-normal text-gray-400">(opcional)</span></label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    value={form.scheduledDate}
-                    onChange={e => setForm({ ...form, scheduledDate: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Fecha Límite <span className="text-xs font-normal text-gray-400">(opcional)</span></label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    value={form.dueDate}
-                    onChange={e => setForm({ ...form, dueDate: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-400">Para configurar recurrencia avanzada, usa <Link href="/operaciones/tareas" className="text-blue-600 hover:underline font-medium">Lista de Tareas → Nueva Tarea</Link>.</p>
-
-              <div className="pt-2 border-t border-gray-100 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
-                >
-                  {saving ? 'Guardando...' : <><Plus size={16} /> Crear Tarea</>}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSaved={() => {
+          fetchTasks();
+          fetchIndicators();
+        }}
+        processes={processes}
+      />
     </div>
   );
 }
