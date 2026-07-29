@@ -122,6 +122,10 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
         payload.daysOfWeek = 'MON';
       }
 
+      if (payload.frequency === 'ANNUAL' && !payload.daysOfWeek) {
+        payload.daysOfWeek = 'MON';
+      }
+
       const isEdit = !!editingTask;
       const url = isEdit 
         ? `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${editingTask.id}`
@@ -406,7 +410,51 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
                           </select>
                         </div>
                       </div>
+                      </div>
                     )}
+                  </div>
+                )}
+
+                {/* Opciones para frecuencia ANUAL */}
+                {form.frequency === 'ANNUAL' && (
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Configuración anual (Opcional):</label>
+                    <div className="flex flex-col gap-2 p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+                      <span className="text-xs font-medium text-gray-600">Semana del año para ejecutar la tarea:</span>
+                      <div className="flex gap-2">
+                        <select
+                          className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-blue-500/50"
+                          value={form.weekOfMonth}
+                          onChange={(e) => setForm({ ...form, weekOfMonth: parseInt(e.target.value) || 1 })}
+                        >
+                          <option value={1}>Primera semana del año</option>
+                          <option value={2}>Segunda semana del año</option>
+                          <option value={3}>Tercera semana del año</option>
+                          <option value={4}>Cuarta semana del año</option>
+                          <option value={-1}>Última semana del año</option>
+                          <option value={-2}>Penúltima semana del año</option>
+                          <optgroup label="Semanas específicas">
+                            {[...Array(48)].map((_, i) => (
+                              <option key={i+5} value={i+5}>Semana {i+5}</option>
+                            ))}
+                          </optgroup>
+                        </select>
+                        
+                        <select
+                          className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-blue-500/50"
+                          value={form.daysOfWeek || 'MON'}
+                          onChange={(e) => setForm({ ...form, daysOfWeek: e.target.value })}
+                        >
+                          <option value="MON">Lunes</option>
+                          <option value="TUE">Martes</option>
+                          <option value="WED">Miércoles</option>
+                          <option value="THU">Jueves</option>
+                          <option value="FRI">Viernes</option>
+                          <option value="SAT">Sábado</option>
+                          <option value="SUN">Domingo</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 )}
 
