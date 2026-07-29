@@ -118,6 +118,10 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
         recurrenceEndDate: form.recurrenceEndDate ? `${form.recurrenceEndDate}T12:00:00.000Z` : null,
       };
 
+      if (payload.frequency === 'MONTHLY' && payload.monthlyType === 'DAY_OF_WEEK' && !payload.daysOfWeek) {
+        payload.daysOfWeek = 'MON';
+      }
+
       const isEdit = !!editingTask;
       const url = isEdit 
         ? `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${editingTask.id}`
@@ -359,7 +363,7 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
                       </label>
                     </div>
                     {form.monthlyType === 'DAY_OF_MONTH' && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs font-medium text-gray-600">Día del mes (1 - 31):</span>
                         <input
                           type="number"
@@ -369,6 +373,38 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
                           value={form.monthDay}
                           onChange={(e) => setForm({ ...form, monthDay: parseInt(e.target.value) || 1 })}
                         />
+                      </div>
+                    )}
+                    {form.monthlyType === 'DAY_OF_WEEK' && (
+                      <div className="flex flex-col gap-2 mt-2 p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+                        <span className="text-xs font-medium text-gray-600">Configurar día relativo:</span>
+                        <div className="flex gap-2">
+                          <select
+                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-blue-500/50"
+                            value={form.weekOfMonth}
+                            onChange={(e) => setForm({ ...form, weekOfMonth: parseInt(e.target.value) || 1 })}
+                          >
+                            <option value={1}>Primer</option>
+                            <option value={2}>Segundo</option>
+                            <option value={3}>Tercer</option>
+                            <option value={4}>Cuarto</option>
+                            <option value={-1}>Último</option>
+                          </select>
+                          
+                          <select
+                            className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-none focus:ring-1 focus:ring-blue-500/50"
+                            value={form.daysOfWeek || 'MON'}
+                            onChange={(e) => setForm({ ...form, daysOfWeek: e.target.value })}
+                          >
+                            <option value="MON">Lunes</option>
+                            <option value="TUE">Martes</option>
+                            <option value="WED">Miércoles</option>
+                            <option value="THU">Jueves</option>
+                            <option value="FRI">Viernes</option>
+                            <option value="SAT">Sábado</option>
+                            <option value="SUN">Domingo</option>
+                          </select>
+                        </div>
                       </div>
                     )}
                   </div>
