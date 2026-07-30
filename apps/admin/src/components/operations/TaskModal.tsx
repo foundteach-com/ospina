@@ -410,7 +410,6 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
                           </select>
                         </div>
                       </div>
-                      </div>
                     )}
                   </div>
                 )}
