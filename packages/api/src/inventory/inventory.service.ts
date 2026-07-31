@@ -124,7 +124,7 @@ export class InventoryService {
     `;
 
     // Safe dynamic order by
-    const validSortColumns = ['productName', 'productCode', 'currentStock', 'basePrice', 'categoryName', 'providerName'];
+    const validSortColumns = ['productName', 'productCode', 'currentStock', 'basePrice', 'categoryName', 'providerName', 'measurementQuantity', 'unit'];
     const sortBy = params?.sortBy && validSortColumns.includes(params.sortBy) ? params.sortBy : 'productName';
     const sortOrder = params?.sortOrder?.toUpperCase() === 'DESC' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
     

@@ -26,9 +26,9 @@ interface InventoryItem {
   productCode: string;
   productName: string;
   unit: string | null;
+  measurementQuantity: number | null;
   currentStock: number;
   basePrice: number;
-  category?: { name: string };
   providerName: string | null;
 }
 
@@ -727,8 +727,11 @@ function InventarioSection() {
                     <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('productName')}>
                       <div className="flex items-center gap-1">Producto <SortIcon column="productName" /></div>
                     </th>
-                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('categoryName')}>
-                      <div className="flex items-center gap-1">Categoría <SortIcon column="categoryName" /></div>
+                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('measurementQuantity')}>
+                      <div className="flex items-center justify-end gap-1">Cant. Medida <SortIcon column="measurementQuantity" /></div>
+                    </th>
+                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('unit')}>
+                      <div className="flex items-center gap-1">Unidad <SortIcon column="unit" /></div>
                     </th>
                     <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('basePrice')}>
                       <div className="flex items-center justify-end gap-1">Precio Base <SortIcon column="basePrice" /></div>
@@ -741,14 +744,14 @@ function InventarioSection() {
                 <tbody className="divide-y divide-gray-100">
                   {loadingTable ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-gray-400">
+                      <td colSpan={6} className="py-12 text-center text-gray-400">
                         <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
                         Cargando productos...
                       </td>
                     </tr>
                   ) : tableData.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-gray-400">
+                      <td colSpan={6} className="py-12 text-center text-gray-400">
                         <EmptyState />
                       </td>
                     </tr>
@@ -757,13 +760,16 @@ function InventarioSection() {
                       <tr key={item.productId} className="hover:bg-gray-50/80 transition-colors">
                         <td className="py-3 px-4 font-mono text-xs text-gray-500">{item.productCode}</td>
                         <td className="py-3 px-4 font-medium text-gray-800">{item.productName}</td>
+                        <td className="py-3 px-4 text-right text-gray-700">
+                          {item.measurementQuantity != null ? item.measurementQuantity : <span className="text-gray-400 text-xs italic">—</span>}
+                        </td>
                         <td className="py-3 px-4 text-gray-600">
-                          {item.category?.name ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                              {item.category.name}
+                          {item.unit ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700">
+                              {item.unit}
                             </span>
                           ) : (
-                            <span className="text-gray-400 text-xs italic">Sin categoría</span>
+                            <span className="text-gray-400 text-xs italic">—</span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(item.basePrice)}</td>
@@ -774,7 +780,7 @@ function InventarioSection() {
                             item.currentStock > 0 ? 'bg-amber-100 text-amber-700' :
                             'bg-red-100 text-red-700'
                           }`}>
-                            {item.currentStock} {item.unit && <span className="ml-1 opacity-70 font-normal">{item.unit}</span>}
+                            {item.currentStock}
                           </span>
                         </td>
                       </tr>
