@@ -16,9 +16,21 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { ChevronUp, ChevronDown, Search } from 'lucide-react';
 import KPICard from '@/components/dashboard/KPICard';
 import ChartCard from '@/components/dashboard/ChartCard';
 import { formatCurrency } from '@/lib/formatters';
+
+interface InventoryItem {
+  productId: string;
+  productCode: string;
+  productName: string;
+  unit: string | null;
+  currentStock: number;
+  basePrice: number;
+  category?: { name: string };
+  providerName: string | null;
+}
 
 interface MonthData {
   month: string;
@@ -443,14 +455,32 @@ const STOCK_COLORS: Record<string, string> = {
 };
 
 function InventarioSection() {
-  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
 
+  // Table state
+  const [loadingTable, setLoadingTable] = useState(true);
+  const [tableData, setTableData] = useState<InventoryItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [sortBy, setSortBy] = useState('productName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const limit = 10;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Load stats
   useEffect(() => {
     let active = true;
-    const load = async () => {
-      setLoading(true);
+    const loadStats = async () => {
+      setLoadingStats(true);
       try {
         const [statsData, lowStockData] = await Promise.all([
           apiFetch('/inventory/stats'),
@@ -460,14 +490,58 @@ function InventarioSection() {
         setStats(statsData);
         setLowStock(Array.isArray(lowStockData?.data) ? lowStockData.data : []);
       } catch (err) {
-        console.error('Error cargando inventario:', err);
+        console.error('Error cargando stats de inventario:', err);
       } finally {
-        if (active) setLoading(false);
+        if (active) setLoadingStats(false);
       }
     };
-    load();
+    loadStats();
     return () => { active = false; };
   }, []);
+
+  // Load table data
+  useEffect(() => {
+    let active = true;
+    const loadTable = async () => {
+      setLoadingTable(true);
+      try {
+        const queryParams = new URLSearchParams({
+          page: String(page),
+          limit: String(limit),
+          sortBy,
+          sortOrder,
+        });
+        if (debouncedSearch) queryParams.append('search', debouncedSearch);
+        if (statusFilter) queryParams.append('status', statusFilter);
+
+        const data = await apiFetch(`/inventory?${queryParams.toString()}`);
+        if (!active) return;
+        setTableData(Array.isArray(data?.data) ? data.data : []);
+        setTotalPages(data?.totalPages || 1);
+      } catch (err) {
+        console.error('Error cargando tabla de inventario:', err);
+      } finally {
+        if (active) setLoadingTable(false);
+      }
+    };
+    loadTable();
+    return () => { active = false; };
+  }, [page, debouncedSearch, statusFilter, sortBy, sortOrder]);
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+    setPage(1); // Reset page on sort
+  };
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortBy !== column) return <div className="w-4 h-4 opacity-0 group-hover:opacity-30 transition-opacity"><ChevronDown size={16} /></div>;
+    return sortOrder === 'asc' ? <ChevronUp size={16} className="text-blue-600" /> : <ChevronDown size={16} className="text-blue-600" />;
+  };
 
   const pieData = stats
     ? [
@@ -486,7 +560,7 @@ function InventarioSection() {
         <h2 className="text-xl font-bold text-gray-800">Estado del Inventario</h2>
       </div>
 
-      {loading ? (
+      {loadingStats ? (
         <div className="flex items-center justify-center py-32">
           <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
         </div>
@@ -587,6 +661,134 @@ function InventarioSection() {
               )}
             </ChartCard>
           </div>
+          
+          {/* Tabla Interactiva de Inventario */}
+          <ChartCard title="Listado de Productos" subtitle="Inventario general detallado">
+            <div className="mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o código..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+              <div className="w-full md:w-auto flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-500">Estado:</span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Todos los Estados</option>
+                  <option value="ALTO">Stock Alto</option>
+                  <option value="MEDIO">Stock Medio</option>
+                  <option value="BAJO">Stock Bajo</option>
+                  <option value="AGOTADO">Agotado</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-gray-100">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                  <tr>
+                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('productCode')}>
+                      <div className="flex items-center gap-1">Código <SortIcon column="productCode" /></div>
+                    </th>
+                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('productName')}>
+                      <div className="flex items-center gap-1">Producto <SortIcon column="productName" /></div>
+                    </th>
+                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('categoryName')}>
+                      <div className="flex items-center gap-1">Categoría <SortIcon column="categoryName" /></div>
+                    </th>
+                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('basePrice')}>
+                      <div className="flex items-center justify-end gap-1">Precio Base <SortIcon column="basePrice" /></div>
+                    </th>
+                    <th className="py-3 px-4 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('currentStock')}>
+                      <div className="flex items-center justify-end gap-1">Stock <SortIcon column="currentStock" /></div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loadingTable ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-gray-400">
+                        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+                        Cargando productos...
+                      </td>
+                    </tr>
+                  ) : tableData.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-gray-400">
+                        <EmptyState />
+                      </td>
+                    </tr>
+                  ) : (
+                    tableData.map((item) => (
+                      <tr key={item.productId} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="py-3 px-4 font-mono text-xs text-gray-500">{item.productCode}</td>
+                        <td className="py-3 px-4 font-medium text-gray-800">{item.productName}</td>
+                        <td className="py-3 px-4 text-gray-600">
+                          {item.category?.name ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                              {item.category.name}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs italic">Sin categoría</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right text-gray-700">{formatCurrency(item.basePrice)}</td>
+                        <td className="py-3 px-4 text-right">
+                          <span className={`inline-flex items-center justify-center min-w-[40px] px-2.5 py-1 rounded-full text-xs font-bold ${
+                            item.currentStock >= 50 ? 'bg-emerald-100 text-emerald-700' :
+                            item.currentStock > 10 ? 'bg-blue-100 text-blue-700' :
+                            item.currentStock > 0 ? 'bg-amber-100 text-amber-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {item.currentStock} {item.unit && <span className="ml-1 opacity-70 font-normal">{item.unit}</span>}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginación */}
+            {!loadingTable && totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+                <span className="text-sm text-gray-500">
+                  Página <span className="font-semibold text-gray-700">{page}</span> de <span className="font-semibold text-gray-700">{totalPages}</span>
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
+          </ChartCard>
         </>
       )}
     </div>

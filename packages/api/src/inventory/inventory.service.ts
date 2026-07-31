@@ -43,6 +43,8 @@ export class InventoryService {
     measurementQuantity?: number;
     page?: number;
     limit?: number;
+    sortBy?: string;
+    sortOrder?: string;
   }): Promise<{ data: InventoryItem[]; total: number; page: number; totalPages: number }> {
     const page = params?.page || 1;
     const limit = params?.limit || 10;
@@ -88,7 +90,7 @@ export class InventoryService {
       ${havingClause}
     `;
 
-    const dataQuery = Prisma.sql`
+    const baseDataQuery = Prisma.sql`
       WITH StockCalculated AS (
         SELECT 
           p.id as "productId",
@@ -115,7 +117,20 @@ export class InventoryService {
       )
       SELECT * FROM StockCalculated
       ${havingClause}
-      ORDER BY "productName" ASC
+    `;
+
+    // Safe dynamic order by
+    const validSortColumns = ['productName', 'productCode', 'currentStock', 'basePrice', 'categoryName', 'providerName'];
+    const sortBy = params?.sortBy && validSortColumns.includes(params.sortBy) ? params.sortBy : 'productName';
+    const sortOrder = params?.sortOrder?.toUpperCase() === 'DESC' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+    
+    // Prisma raw queries do not support dynamic identifiers inside $queryRaw template literals directly via ${} for column names, 
+    // but since we validated the sortBy string against a strict allowlist, we can use Prisma.raw to safely inject the identifier.
+    const orderClause = Prisma.sql`ORDER BY ${Prisma.raw(`"${sortBy}"`)} ${sortOrder}`;
+
+    const dataQuery = Prisma.sql`
+      ${baseDataQuery}
+      ${orderClause}
       LIMIT ${limit} OFFSET ${offset}
     `;
 

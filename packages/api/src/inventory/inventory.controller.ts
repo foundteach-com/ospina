@@ -15,6 +15,8 @@ export class InventoryController {
     @Query('measurementQuantity') measurementQuantity?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
     return this.inventoryService.getInventory({
       categoryId,
@@ -23,6 +25,8 @@ export class InventoryController {
       measurementQuantity: measurementQuantity ? parseFloat(measurementQuantity) : undefined,
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
+      sortBy,
+      sortOrder,
     });
   }
 
