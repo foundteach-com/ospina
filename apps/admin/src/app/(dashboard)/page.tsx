@@ -467,6 +467,8 @@ function InventarioSection() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [providerFilter, setProviderFilter] = useState('');
+  const [providers, setProviders] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState('productName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const limit = 10;
@@ -482,13 +484,15 @@ function InventarioSection() {
     const loadStats = async () => {
       setLoadingStats(true);
       try {
-        const [statsData, lowStockData] = await Promise.all([
+        const [statsData, lowStockData, providersData] = await Promise.all([
           apiFetch('/inventory/stats'),
           apiFetch('/inventory/low-stock?threshold=10'),
+          apiFetch('/providers'),
         ]);
         if (!active) return;
         setStats(statsData);
         setLowStock(Array.isArray(lowStockData?.data) ? lowStockData.data : []);
+        setProviders(Array.isArray(providersData) ? providersData : []);
       } catch (err) {
         console.error('Error cargando stats de inventario:', err);
       } finally {
@@ -513,6 +517,7 @@ function InventarioSection() {
         });
         if (debouncedSearch) queryParams.append('search', debouncedSearch);
         if (statusFilter) queryParams.append('status', statusFilter);
+        if (providerFilter) queryParams.append('providerId', providerFilter);
 
         const data = await apiFetch(`/inventory?${queryParams.toString()}`);
         if (!active) return;
@@ -526,7 +531,7 @@ function InventarioSection() {
     };
     loadTable();
     return () => { active = false; };
-  }, [page, debouncedSearch, statusFilter, sortBy, sortOrder]);
+  }, [page, debouncedSearch, statusFilter, providerFilter, sortBy, sortOrder]);
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -679,7 +684,22 @@ function InventarioSection() {
                 />
               </div>
               <div className="w-full md:w-auto flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-500">Estado:</span>
+                <span className="text-sm font-medium text-gray-500">Proveedor:</span>
+                <select
+                  value={providerFilter}
+                  onChange={(e) => {
+                    setProviderFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[150px] md:max-w-[200px]"
+                >
+                  <option value="">Todos</option>
+                  {providers.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+
+                <span className="text-sm font-medium text-gray-500 ml-2">Estado:</span>
                 <select
                   value={statusFilter}
                   onChange={(e) => {

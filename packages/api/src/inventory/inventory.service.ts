@@ -38,6 +38,7 @@ export class InventoryService {
 
   async getInventory(params?: {
     categoryId?: string;
+    providerId?: string;
     status?: string;
     search?: string;
     measurementQuantity?: number;
@@ -53,6 +54,9 @@ export class InventoryService {
     const filters: Prisma.Sql[] = [];
     if (params?.categoryId) {
       filters.push(Prisma.sql`p."categoryId" = ${params.categoryId}`);
+    }
+    if (params?.providerId) {
+      filters.push(Prisma.sql`p."providerId" = ${params.providerId}`);
     }
     if (params?.search) {
       filters.push(Prisma.sql`(p.name ILIKE ${'%' + params.search + '%'} OR p.code ILIKE ${'%' + params.search + '%'})`);

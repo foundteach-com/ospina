@@ -10,6 +10,7 @@ export class InventoryController {
   @Get()
   getInventory(
     @Query('categoryId') categoryId?: string,
+    @Query('providerId') providerId?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
     @Query('measurementQuantity') measurementQuantity?: string,
@@ -20,6 +21,7 @@ export class InventoryController {
   ) {
     return this.inventoryService.getInventory({
       categoryId,
+      providerId,
       status,
       search,
       measurementQuantity: measurementQuantity ? parseFloat(measurementQuantity) : undefined,
