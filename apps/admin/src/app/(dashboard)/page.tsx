@@ -531,7 +531,7 @@ function InventarioSection() {
                       outerRadius={120}
                       innerRadius={60}
                       paddingAngle={3}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
                       {pieData.map((entry, i) => (
