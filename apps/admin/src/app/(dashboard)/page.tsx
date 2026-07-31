@@ -468,6 +468,7 @@ function InventarioSection() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [providerFilter, setProviderFilter] = useState('');
+  const [measurementQuantityFilter, setMeasurementQuantityFilter] = useState('');
   const [providers, setProviders] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState('productName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -518,6 +519,7 @@ function InventarioSection() {
         if (debouncedSearch) queryParams.append('search', debouncedSearch);
         if (statusFilter) queryParams.append('status', statusFilter);
         if (providerFilter) queryParams.append('providerId', providerFilter);
+        if (measurementQuantityFilter) queryParams.append('measurementQuantity', measurementQuantityFilter);
 
         const data = await apiFetch(`/inventory?${queryParams.toString()}`);
         if (!active) return;
@@ -531,7 +533,7 @@ function InventarioSection() {
     };
     loadTable();
     return () => { active = false; };
-  }, [page, debouncedSearch, statusFilter, providerFilter, sortBy, sortOrder]);
+  }, [page, debouncedSearch, statusFilter, providerFilter, measurementQuantityFilter, sortBy, sortOrder]);
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -683,8 +685,30 @@ function InventarioSection() {
                   }}
                 />
               </div>
-              <div className="w-full md:w-auto flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-500">Proveedor:</span>
+              <div className="w-full md:w-auto flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-500">Cant. Medida:</span>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Ej: 500"
+                  value={measurementQuantityFilter}
+                  onChange={(e) => {
+                    setMeasurementQuantityFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-24 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                {measurementQuantityFilter && (
+                  <button
+                    onClick={() => { setMeasurementQuantityFilter(''); setPage(1); }}
+                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Limpiar filtro"
+                  >
+                    ✕
+                  </button>
+                )}
+
+                <span className="text-sm font-medium text-gray-500 ml-2">Proveedor:</span>
                 <select
                   value={providerFilter}
                   onChange={(e) => {
