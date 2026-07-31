@@ -50,6 +50,22 @@ interface TopProvider {
   purchaseCount: number;
 }
 
+interface InventoryStats {
+  high: number;
+  medium: number;
+  low: number;
+  outOfStock: number;
+}
+
+interface LowStockItem {
+  productId: string;
+  productCode: string;
+  productName: string;
+  unit: string | null;
+  currentStock: number;
+  providerName: string | null;
+}
+
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
@@ -417,10 +433,171 @@ function ComprasSection() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// INVENTARIO SECTION
+// ─────────────────────────────────────────────────────────────────────────────
+const STOCK_COLORS: Record<string, string> = {
+  'Stock Alto': '#10b981',
+  'Stock Medio': '#3b82f6',
+  'Stock Bajo': '#f59e0b',
+  'Agotado': '#ef4444',
+};
+
+function InventarioSection() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<InventoryStats | null>(null);
+  const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [statsData, lowStockData] = await Promise.all([
+          apiFetch('/inventory/stats'),
+          apiFetch('/inventory/low-stock?threshold=10'),
+        ]);
+        if (!active) return;
+        setStats(statsData);
+        setLowStock(Array.isArray(lowStockData?.data) ? lowStockData.data : []);
+      } catch (err) {
+        console.error('Error cargando inventario:', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, []);
+
+  const pieData = stats
+    ? [
+        { name: 'Stock Alto', value: stats.high },
+        { name: 'Stock Medio', value: stats.medium },
+        { name: 'Stock Bajo', value: stats.low },
+        { name: 'Agotado', value: stats.outOfStock },
+      ].filter((d) => d.value > 0)
+    : [];
+
+  const totalProducts = stats ? stats.high + stats.medium + stats.low + stats.outOfStock : 0;
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-800">Estado del Inventario</h2>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-32">
+          <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 hover:shadow-md transition-all">
+              <p className="text-sm font-medium text-emerald-700 mb-1">Stock Alto</p>
+              <p className="text-4xl font-bold text-emerald-600">{stats?.high ?? 0}</p>
+              <p className="text-xs text-emerald-500 mt-1">≥ 50 unidades</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 hover:shadow-md transition-all">
+              <p className="text-sm font-medium text-blue-700 mb-1">Stock Medio</p>
+              <p className="text-4xl font-bold text-blue-600">{stats?.medium ?? 0}</p>
+              <p className="text-xs text-blue-500 mt-1">10 – 49 unidades</p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 hover:shadow-md transition-all">
+              <p className="text-sm font-medium text-amber-700 mb-1">Stock Bajo</p>
+              <p className="text-4xl font-bold text-amber-600">{stats?.low ?? 0}</p>
+              <p className="text-xs text-amber-500 mt-1">1 – 9 unidades</p>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 hover:shadow-md transition-all">
+              <p className="text-sm font-medium text-red-700 mb-1">Agotado</p>
+              <p className="text-4xl font-bold text-red-600">{stats?.outOfStock ?? 0}</p>
+              <p className="text-xs text-red-500 mt-1">0 unidades</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Distribución de Stock */}
+            <ChartCard title="Distribución de Stock" subtitle={`${totalProducts} productos en total`}>
+              {pieData.length === 0 ? <EmptyState /> : (
+                <ResponsiveContainer width="100%" height={320}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={120}
+                      innerRadius={60}
+                      paddingAngle={3}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {pieData.map((entry, i) => (
+                        <Cell key={i} fill={STOCK_COLORS[entry.name] ?? PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: any) => [`${v} productos`, '']} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+
+            {/* Productos con Stock Bajo */}
+            <ChartCard title="Productos con Stock Bajo" subtitle="Umbral: menos de 10 unidades">
+              {lowStock.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[280px] text-emerald-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <p className="mt-3 text-sm font-medium text-gray-500">¡Todo el inventario en buen nivel!</p>
+                </div>
+              ) : (
+                <div className="overflow-auto max-h-[320px]">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left py-2 px-3 text-gray-500 font-medium">Producto</th>
+                        <th className="text-left py-2 px-3 text-gray-500 font-medium">Código</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lowStock.map((item) => (
+                        <tr key={item.productId} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                          <td className="py-2.5 px-3 font-medium text-gray-800 max-w-[180px] truncate">{item.productName}</td>
+                          <td className="py-2.5 px-3 text-gray-500 font-mono text-xs">{item.productCode}</td>
+                          <td className="py-2.5 px-3 text-right">
+                            <span className={`inline-flex items-center justify-center min-w-[40px] px-2 py-0.5 rounded-full text-xs font-bold ${
+                              item.currentStock <= 0
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {item.currentStock}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </ChartCard>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'ventas' | 'compras'>('ventas');
+  const [activeTab, setActiveTab] = useState<'ventas' | 'compras' | 'inventario'>('ventas');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-100 p-4 md:p-8">
@@ -441,8 +618,8 @@ export default function AdminPage() {
         <button
           onClick={() => setActiveTab('ventas')}
           className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${
-            activeTab === 'ventas' 
-              ? 'bg-blue-600 text-white shadow-md' 
+            activeTab === 'ventas'
+              ? 'bg-blue-600 text-white shadow-md'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/80'
           }`}
         >
@@ -451,12 +628,22 @@ export default function AdminPage() {
         <button
           onClick={() => setActiveTab('compras')}
           className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${
-            activeTab === 'compras' 
-              ? 'bg-amber-500 text-white shadow-md' 
+            activeTab === 'compras'
+              ? 'bg-amber-500 text-white shadow-md'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/80'
           }`}
         >
           Compras
+        </button>
+        <button
+          onClick={() => setActiveTab('inventario')}
+          className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all ${
+            activeTab === 'inventario'
+              ? 'bg-violet-600 text-white shadow-md'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/80'
+          }`}
+        >
+          Inventario
         </button>
       </div>
 
@@ -464,6 +651,7 @@ export default function AdminPage() {
       <div className="bg-white/40 p-6 rounded-3xl border border-white/60 shadow-sm">
         {activeTab === 'ventas' && <VentasSection />}
         {activeTab === 'compras' && <ComprasSection />}
+        {activeTab === 'inventario' && <InventarioSection />}
       </div>
     </div>
   );
