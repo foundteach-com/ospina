@@ -38,8 +38,18 @@ interface OpTask {
   name: string;
   status: string;
   priority: string;
+  frequency?: string | null;
   scheduledDate: string | null;
   dueDate: string | null;
+  daysOfWeek?: string | null;
+  recurrenceInterval?: number | null;
+  monthlyType?: string | null;
+  monthDay?: number | null;
+  weekOfMonth?: number | null;
+  recurrenceEndType?: string | null;
+  recurrenceEndDate?: string | null;
+  recurrenceCount?: number | null;
+  currentOccurrence?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
   processId?: string;
@@ -89,6 +99,85 @@ function getBogotaDateStr(): string {
 function isOverdue(d: string | null | undefined, status: string): boolean {
   if (!d || status === 'COMPLETED' || status === 'CANCELLED') return false;
   return new Date(d.split('T')[0]) < new Date(getBogotaDateStr());
+}
+
+// ─── Determina si una tarea aplica para el día de HOY según su patrón de recurrencia ───
+function isTaskForToday(t: OpTask, todayStr: string): boolean {
+  if (t.status === 'COMPLETED' || t.status === 'CANCELLED') return false;
+
+  // Convierte un ISO UTC a fecha local Colombia (YYYY-MM-DD)
+  const toCol = (iso: string) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date(iso));
+
+  // Verificar si la recurrencia ya terminó
+  if (t.recurrenceEndType === 'ON_DATE' && t.recurrenceEndDate) {
+    if (toCol(t.recurrenceEndDate) < todayStr) return false;
+  }
+  if (
+    t.recurrenceEndType === 'AFTER_COUNT' &&
+    t.recurrenceCount != null &&
+    t.currentOccurrence != null &&
+    t.currentOccurrence > t.recurrenceCount
+  ) return false;
+
+  const startDateStr = t.scheduledDate ? toCol(t.scheduledDate) : null;
+  // Si la tarea aún no ha comenzado, no mostrar
+  if (startDateStr && startDateStr > todayStr) return false;
+
+  const freq = t.frequency;
+
+  // Parsear fecha Colombia como fecha local (no UTC) para getDay() correcto
+  const [y, m, d] = todayStr.split('-').map(Number);
+  const todayLocal = new Date(y, m - 1, d);
+  const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const todayDayName = DAY_NAMES[todayLocal.getDay()];
+
+  // Sin frecuencia o frecuencia puntual (una sola vez)
+  if (!freq || freq === 'CUSTOM') {
+    if (t.scheduledDate) return startDateStr === todayStr;
+    if (t.dueDate) return toCol(t.dueDate) <= todayStr;
+    return false; // Sin fecha = no es tarea de hoy
+  }
+
+  // Diaria: siempre aplica
+  if (freq === 'DAILY') return true;
+
+  // Semanal o quincenal: verificar si HOY es uno de los días configurados
+  if (freq === 'WEEKLY' || freq === 'BIWEEKLY') {
+    if (!t.daysOfWeek) return false;
+    const activeDays = t.daysOfWeek.split(',').map(s => s.trim());
+    return activeDays.includes(todayDayName);
+  }
+
+  // Mensual, trimestral, semestral
+  if (freq === 'MONTHLY' || freq === 'QUARTERLY' || freq === 'BIANNUAL') {
+    if (t.monthlyType === 'DAY_OF_WEEK' && t.daysOfWeek && t.weekOfMonth != null) {
+      const activeDays = t.daysOfWeek.split(',').map(s => s.trim());
+      if (!activeDays.includes(todayDayName)) return false;
+      // Contar cuántas veces ha caído este día de semana en el mes hasta hoy
+      let count = 0;
+      for (let day = 1; day <= d; day++) {
+        if (new Date(y, m - 1, day).getDay() === todayLocal.getDay()) count++;
+      }
+      if (t.weekOfMonth === -1) {
+        // Último: verificar si la próxima ocurrencia es el mes siguiente
+        return new Date(y, m - 1, d + 7).getMonth() !== todayLocal.getMonth();
+      }
+      return count === t.weekOfMonth;
+    }
+    // DAY_OF_MONTH: verificar el día del mes
+    const targetDay = t.monthDay ?? (startDateStr ? Number(startDateStr.split('-')[2]) : null);
+    return targetDay != null && d === targetDay;
+  }
+
+  // Anual
+  if (freq === 'ANNUAL') {
+    if (!startDateStr) return false;
+    const [, sm, sd] = startDateStr.split('-').map(Number);
+    return m === sm && d === sd;
+  }
+
+  return false;
 }
 
 function compareDates(a: string | null | undefined, b: string | null | undefined): number {
@@ -276,17 +365,8 @@ export default function OperationsDashboard() {
       const matchStatus = filterStatus === 'ALL' || t.status === filterStatus;
       const matchPriority = filterPriority === 'ALL' || t.priority === filterPriority;
       const matchProcess = filterProcess === 'ALL' || t.processId === filterProcess;
-      // "Hoy": tareas activas que aplican para hoy
-      // Convierte la fecha UTC de la API a fecha local Colombia para comparar correctamente
-      const toLocalDate = (iso: string) =>
-        new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date(iso));
-      const isActiveStatus = t.status !== 'COMPLETED' && t.status !== 'CANCELLED';
-      const matchDate = filterDate === 'ALL' || (() => {
-        if (!isActiveStatus) return false;
-        if (t.scheduledDate) return toLocalDate(t.scheduledDate) <= todayStr;
-        if (t.dueDate) return toLocalDate(t.dueDate) <= todayStr;
-        return true; // sin fecha = tarea abierta pendiente, mostrar en Hoy
-      })();
+      // "Hoy": evaluar el patrón de recurrencia de cada tarea
+      const matchDate = filterDate === 'ALL' || isTaskForToday(t, todayStr);
       return matchSearch && matchStatus && matchPriority && matchProcess && matchDate;
     })
     .sort((a, b) => {
