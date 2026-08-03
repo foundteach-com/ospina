@@ -77,9 +77,18 @@ function formatDateSafe(d: string | null | undefined): string {
   return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
 }
 
+function getBogotaDateStr(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+}
+
 function isOverdue(d: string | null | undefined, status: string): boolean {
   if (!d || status === 'COMPLETED' || status === 'CANCELLED') return false;
-  return new Date(d.split('T')[0]) < new Date(new Date().toISOString().split('T')[0]);
+  return new Date(d.split('T')[0]) < new Date(getBogotaDateStr());
 }
 
 function compareDates(a: string | null | undefined, b: string | null | undefined): number {
@@ -258,7 +267,7 @@ export default function OperationsDashboard() {
 
   // ── Filter + Sort ──────────────────────────────────────────────────────────
   // Get today's date in YYYY-MM-DD format (Colombia Time)
-  const todayStr = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' })).toISOString().split('T')[0];
+  const todayStr = getBogotaDateStr();
 
   const displayed = tasks
     .filter(t => {
