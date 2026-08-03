@@ -195,6 +195,7 @@ export default function OperationsDashboard() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterPriority, setFilterPriority] = useState('ALL');
   const [filterProcess, setFilterProcess] = useState('ALL');
+  const [filterDate, setFilterDate] = useState<'TODAY' | 'ALL'>('TODAY');
 
   // Sort — default: updatedAt desc (más reciente primero)
   const [sortKey, setSortKey] = useState<SortKey>('updatedAt');
@@ -256,6 +257,9 @@ export default function OperationsDashboard() {
   }, [sortKey]);
 
   // ── Filter + Sort ──────────────────────────────────────────────────────────
+  // Get today's date in YYYY-MM-DD format (Colombia Time)
+  const todayStr = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' })).toISOString().split('T')[0];
+
   const displayed = tasks
     .filter(t => {
       const q = search.toLowerCase();
@@ -263,7 +267,8 @@ export default function OperationsDashboard() {
       const matchStatus = filterStatus === 'ALL' || t.status === filterStatus;
       const matchPriority = filterPriority === 'ALL' || t.priority === filterPriority;
       const matchProcess = filterProcess === 'ALL' || t.processId === filterProcess;
-      return matchSearch && matchStatus && matchPriority && matchProcess;
+      const matchDate = filterDate === 'ALL' || (t.scheduledDate && t.scheduledDate.startsWith(todayStr));
+      return matchSearch && matchStatus && matchPriority && matchProcess && matchDate;
     })
     .sort((a, b) => {
       let cmp = 0;
@@ -290,7 +295,7 @@ export default function OperationsDashboard() {
     { name: 'Calendario', href: '/operaciones/tareas/calendario', icon: CalendarCheck, bg: 'bg-orange-50', ring: 'ring-orange-200' },
   ];
 
-  const activeFiltersCount = [filterStatus !== 'ALL', filterPriority !== 'ALL', filterProcess !== 'ALL', search !== ''].filter(Boolean).length;
+  const activeFiltersCount = [filterStatus !== 'ALL', filterPriority !== 'ALL', filterProcess !== 'ALL', search !== '', filterDate !== 'ALL'].filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
@@ -384,14 +389,20 @@ export default function OperationsDashboard() {
                 {activeFiltersCount > 0 && (
                   <span className="px-2 py-0.5 bg-blue-100 rounded-full text-xs font-bold text-blue-700 flex items-center gap-1">
                     {activeFiltersCount} filtro{activeFiltersCount > 1 ? 's' : ''}
-                    <button onClick={() => { setSearch(''); setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterProcess('ALL'); }}
+                    <button onClick={() => { setSearch(''); setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterProcess('ALL'); setFilterDate('ALL'); }}
                       className="ml-0.5 hover:text-blue-900 transition-colors"><X size={11} /></button>
                   </span>
                 )}
               </div>
-              <Link href="/operaciones/tareas" className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors">
-                Ver todas <ArrowUpRight size={13} />
-              </Link>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                  <button onClick={() => setFilterDate('TODAY')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-colors ${filterDate === 'TODAY' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Hoy</button>
+                  <button onClick={() => setFilterDate('ALL')} className={`px-3 py-1.5 text-[11px] font-bold rounded-md transition-colors ${filterDate === 'ALL' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Todas</button>
+                </div>
+                <Link href="/operaciones/tareas" className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors">
+                  Ver lista <ArrowUpRight size={13} />
+                </Link>
+              </div>
             </div>
 
             {/* Filter row */}
@@ -488,7 +499,7 @@ export default function OperationsDashboard() {
                           <p className="font-semibold text-slate-600">{search || activeFiltersCount > 0 ? 'Sin resultados' : 'Sin tareas aún'}</p>
                           <p className="text-slate-400 text-xs">{search ? 'Prueba con otro término' : activeFiltersCount > 0 ? 'Intenta quitar algún filtro' : 'Crea tu primera tarea operativa'}</p>
                           {activeFiltersCount > 0 && (
-                            <button onClick={() => { setSearch(''); setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterProcess('ALL'); }}
+                            <button onClick={() => { setSearch(''); setFilterStatus('ALL'); setFilterPriority('ALL'); setFilterProcess('ALL'); setFilterDate('ALL'); }}
                               className="text-xs font-semibold text-blue-600 hover:underline">Limpiar filtros</button>
                           )}
                         </div>
