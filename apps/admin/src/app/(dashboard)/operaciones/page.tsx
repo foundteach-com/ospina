@@ -29,6 +29,7 @@ import {
   ChevronsUpDown,
   ArrowUp,
   ArrowDown,
+  Eye,
 } from 'lucide-react';
 import TaskModal from '@/components/operations/TaskModal';
 
@@ -516,9 +517,16 @@ export default function OperationsDashboard() {
 
                         {/* Tarea */}
                         <td className="py-3.5 px-4 max-w-xs">
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-2.5 group/task">
                             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
                             <InlineNameEdit taskId={task.id} value={task.name} onSave={(id, name) => updateTaskField(id, { name })} />
+                            <button
+                              onClick={() => { setEditingTask(task); setIsModalOpen(true); }}
+                              className="text-slate-400 hover:text-blue-600 opacity-0 group-hover/task:opacity-100 transition-opacity p-1 hover:bg-blue-50 rounded-lg flex-shrink-0"
+                              title="Ver detalles"
+                            >
+                              <Eye size={14} />
+                            </button>
                           </div>
                         </td>
 
