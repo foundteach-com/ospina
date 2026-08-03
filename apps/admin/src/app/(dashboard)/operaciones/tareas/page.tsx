@@ -15,6 +15,7 @@ interface OpTask {
   scheduledDate: string | null;
   frequency?: string | null;
   observations?: string | null;
+  responsibleId?: string | null;
   processId?: string;
   process?: { id: string; name: string; color: string; code: string };
 }
@@ -23,6 +24,13 @@ interface OpProcess {
   id: string;
   name: string;
   code: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
 }
 
 const statusColors: Record<string, string> = {
@@ -172,9 +180,11 @@ function InlineNameEdit({
 export default function TasksListPage() {
   const [tasks, setTasks] = useState<OpTask[]>([]);
   const [processes, setProcesses] = useState<OpProcess[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterUser, setFilterUser] = useState('ALL');
 
   // Create / Edit Task Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -193,12 +203,16 @@ export default function TasksListPage() {
   useEffect(() => {
     fetchTasks();
     fetchProcesses();
-  }, []);
+    fetchUsers();
+  }, [filterUser]);
 
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks`, {
+      const url = filterUser !== 'ALL' 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks?responsibleId=${filterUser}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks`;
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -268,6 +282,20 @@ export default function TasksListPage() {
       }
     } catch (err) {
       console.error('Error fetching processes:', err);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setUsers(await res.json());
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
     }
   };
 
@@ -365,6 +393,19 @@ export default function TasksListPage() {
                 <option value="CANCELLED">Canceladas</option>
               </select>
             </div>
+            
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1 shadow-sm">
+              <select
+                value={filterUser}
+                onChange={(e) => setFilterUser(e.target.value)}
+                className="py-1.5 bg-transparent text-sm focus:outline-none font-medium text-gray-700 max-w-[150px] truncate"
+              >
+                <option value="ALL">Todos los responsables</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -378,6 +419,7 @@ export default function TasksListPage() {
                 <th className="py-4 px-6 font-semibold">Programada</th>
                 <th className="py-4 px-6 font-semibold">Límite</th>
                 <th className="py-4 px-6 font-semibold">Prioridad ✎</th>
+                <th className="py-4 px-6 font-semibold">Responsable ✎</th>
                 <th className="py-4 px-6 font-semibold">Estado ✎</th>
                 <th className="py-4 px-6 font-semibold text-right">Acciones</th>
               </tr>
@@ -449,6 +491,38 @@ export default function TasksListPage() {
                             {priorityLabels[val]}
                           </span>
                         )}
+                      />
+                    </td>
+
+                    {/* Responsable — inline dropdown */}
+                    <td className="py-3.5 px-6">
+                      <InlineSelect
+                        value={t.responsibleId || 'UNASSIGNED'}
+                        options={[
+                          { value: 'UNASSIGNED', label: 'Sin asignar' },
+                          ...users.map(u => ({ value: u.id, label: u.name || u.email }))
+                        ]}
+                        onChange={val => updateTaskField(t.id, { responsibleId: val === 'UNASSIGNED' ? null : val })}
+                        renderValue={val => {
+                          if (val === 'UNASSIGNED' || !val) {
+                            return <span className="text-gray-400 text-xs font-medium">Sin asignar</span>;
+                          }
+                          const user = users.find(u => u.id === val);
+                          return (
+                            <div className="flex items-center gap-1.5">
+                              {user?.avatarUrl ? (
+                                <img src={user.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-[10px] font-bold">
+                                  {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || '?'}
+                                </div>
+                              )}
+                              <span className="text-xs font-medium text-gray-700 truncate max-w-[100px]">
+                                {user?.name || user?.email || 'Desconocido'}
+                              </span>
+                            </div>
+                          );
+                        }}
                       />
                     </td>
 

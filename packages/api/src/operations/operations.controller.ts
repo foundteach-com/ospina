@@ -127,9 +127,10 @@ export class OperationsController {
   async findAllTasks(
     @Query('processId') processId?: string,
     @Query('status') status?: string,
+    @Query('responsibleId') responsibleId?: string,
   ) {
     try {
-      return await this.operationsService.findAllTasks({ processId, status });
+      return await this.operationsService.findAllTasks({ processId, status, responsibleId });
     } catch (error) {
       console.error('Error fetching tasks from DB:', error);
       return [];

@@ -134,8 +134,8 @@ export default function ProjectDetailPage() {
     try {
       const token = localStorage.getItem('access_token');
       const url = editingTask
-        ? `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${editingTask.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/operations/tasks`;
+        ? `${process.env.NEXT_PUBLIC_API_URL}/operations/project-tasks/${editingTask.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/operations/project-tasks`;
       const method = editingTask ? 'PATCH' : 'POST';
 
       const body: Record<string, unknown> = {
@@ -167,7 +167,7 @@ export default function ProjectDetailPage() {
   const handleMoveTask = async (taskId: string, newStatus: string) => {
     try {
       const token = localStorage.getItem('access_token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${taskId}/status`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/project-tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus }),
@@ -182,7 +182,7 @@ export default function ProjectDetailPage() {
     if (!confirm('¿Eliminar esta tarea?')) return;
     try {
       const token = localStorage.getItem('access_token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/tasks/${taskId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/project-tasks/${taskId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

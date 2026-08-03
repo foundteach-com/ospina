@@ -105,10 +105,12 @@ export class OperationsService {
   async findAllTasks(params?: {
     processId?: string;
     status?: string;
+    responsibleId?: string;
   }): Promise<OpTask[]> {
     const where: Prisma.OpTaskWhereInput = { deletedAt: null };
     if (params?.processId) where.processId = params.processId;
     if (params?.status) where.status = params.status as any;
+    if (params?.responsibleId) where.responsibleId = params.responsibleId;
 
     return this.prisma.opTask.findMany({
       where,

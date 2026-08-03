@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, format, subMonths, addMonths, isSameMonth, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import TaskModal from '@/components/operations/TaskModal';
 
 interface OpTask {
   id: string;
@@ -12,16 +13,33 @@ interface OpTask {
   status: string;
   priority: string;
   scheduledDate: string | null;
-  process?: { color: string; code: string };
+  dueDate: string | null;
+  process?: { id: string; name: string; color: string; code: string };
+  description?: string | null;
+  processId?: string;
+  frequency?: string | null;
+  observations?: string | null;
+}
+
+interface OpProcess {
+  id: string;
+  name: string;
+  code: string;
 }
 
 export default function CalendarioPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tasks, setTasks] = useState<OpTask[]>([]);
+  const [processes, setProcesses] = useState<OpProcess[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<OpTask | null>(null);
 
   useEffect(() => {
     fetchTasks();
+    fetchProcesses();
   }, [currentDate]);
 
   const fetchTasks = async () => {
@@ -41,6 +59,31 @@ export default function CalendarioPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchProcesses = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/operations/processes?status=ACTIVE`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProcesses(data.processes || []);
+      }
+    } catch (err) {
+      console.error('Error fetching processes:', err);
+    }
+  };
+
+  const openCreateModal = () => {
+    setEditingTask(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (task: OpTask) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
   };
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -91,6 +134,7 @@ export default function CalendarioPage() {
             {dayTasks.map(t => (
               <div 
                 key={t.id} 
+                onClick={() => openEditModal(t)}
                 className="text-[10px] px-1.5 py-1 rounded border shadow-sm leading-tight truncate cursor-pointer hover:opacity-80 transition-opacity"
                 style={{ 
                   backgroundColor: t.process?.color ? `${t.process.color}15` : '#f3f4f6',
@@ -124,6 +168,12 @@ export default function CalendarioPage() {
           <p className="text-gray-500 mt-2">Visualización mensual de actividades programadas.</p>
         </div>
         <div className="flex gap-3">
+          <button
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm"
+            onClick={openCreateModal}
+          >
+            Nueva Tarea
+          </button>
           <Link href="/operaciones/tareas" className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-sm">
             Ver Lista
           </Link>
@@ -182,6 +232,17 @@ export default function CalendarioPage() {
           )}
         </div>
       </div>
+
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTask(null);
+        }}
+        onSaved={fetchTasks}
+        editingTask={editingTask}
+        processes={processes}
+      />
     </div>
   );
 }
