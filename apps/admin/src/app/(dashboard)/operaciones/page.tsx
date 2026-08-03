@@ -276,7 +276,17 @@ export default function OperationsDashboard() {
       const matchStatus = filterStatus === 'ALL' || t.status === filterStatus;
       const matchPriority = filterPriority === 'ALL' || t.priority === filterPriority;
       const matchProcess = filterProcess === 'ALL' || t.processId === filterProcess;
-      const matchDate = filterDate === 'ALL' || (t.scheduledDate && t.scheduledDate.startsWith(todayStr));
+      // "Hoy": tareas activas que aplican para hoy
+      // Convierte la fecha UTC de la API a fecha local Colombia para comparar correctamente
+      const toLocalDate = (iso: string) =>
+        new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date(iso));
+      const isActiveStatus = t.status !== 'COMPLETED' && t.status !== 'CANCELLED';
+      const matchDate = filterDate === 'ALL' || (() => {
+        if (!isActiveStatus) return false;
+        if (t.scheduledDate) return toLocalDate(t.scheduledDate) <= todayStr;
+        if (t.dueDate) return toLocalDate(t.dueDate) <= todayStr;
+        return true; // sin fecha = tarea abierta pendiente, mostrar en Hoy
+      })();
       return matchSearch && matchStatus && matchPriority && matchProcess && matchDate;
     })
     .sort((a, b) => {
