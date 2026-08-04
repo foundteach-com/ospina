@@ -205,11 +205,16 @@ function VentasSection() {
     return items;
   }, [allSales]);
 
+  const uniqueClients = useMemo(() => {
+    const clients = new Set<string>();
+    flattenedSalesItems.forEach(item => clients.add(item.clientName));
+    return Array.from(clients).sort();
+  }, [flattenedSalesItems]);
+
   const filteredSalesItems = useMemo(() => {
     let result = flattenedSalesItems;
     if (clientFilter) {
-      const lowerFilter = clientFilter.toLowerCase();
-      result = result.filter(item => item.clientName.toLowerCase().includes(lowerFilter));
+      result = result.filter(item => item.clientName === clientFilter);
     }
     return result;
   }, [flattenedSalesItems, clientFilter]);
@@ -442,17 +447,20 @@ function VentasSection() {
                 <p className="text-sm text-gray-500">Filtrado y ordenamiento dinámico de transacciones</p>
               </div>
               <div className="relative w-full md:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar por cliente..." 
+                <select
                   value={clientFilter}
                   onChange={e => {
                     setClientFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                />
+                  className="w-full pl-4 pr-9 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer appearance-none"
+                >
+                  <option value="">Todos los clientes</option>
+                  {uniqueClients.map((client, idx) => (
+                    <option key={idx} value={client}>{client}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               </div>
             </div>
 
@@ -460,9 +468,6 @@ function VentasSection() {
               <table className="w-full text-left whitespace-nowrap">
                 <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('clientName')}>
-                      <div className="flex items-center gap-1">Cliente <SortIcon columnKey="clientName" /></div>
-                    </th>
                     <th className="px-6 py-3 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('productCode')}>
                       <div className="flex items-center gap-1">Cód <SortIcon columnKey="productCode" /></div>
                     </th>
@@ -487,7 +492,6 @@ function VentasSection() {
                     const totalConIva = totalSinIva * (1 + item.salesIvaPercent / 100);
                     return (
                       <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
-                        <td className="px-6 py-3 text-gray-900 font-medium">{item.clientName}</td>
                         <td className="px-6 py-3 text-gray-500">{item.productCode}</td>
                         <td className="px-6 py-3 text-gray-900">{item.productName}</td>
                         <td className="px-6 py-3 text-gray-500">{item.measurementQuantity} {item.measurementUnit}</td>
@@ -498,7 +502,7 @@ function VentasSection() {
                     );
                   }) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                         No se encontraron registros de ventas para los filtros actuales.
                       </td>
                     </tr>
@@ -506,7 +510,7 @@ function VentasSection() {
                 </tbody>
                 <tfoot className="bg-gray-50 border-t-2 border-gray-200 font-bold text-sm">
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-right text-gray-700">TOTALES GENERALES (Filtro Actual):</td>
+                    <td colSpan={3} className="px-6 py-4 text-right text-gray-700">TOTALES GENERALES (Filtro Actual):</td>
                     <td className="px-6 py-4 text-right text-gray-900">{totalsFiltrados.cantidad}</td>
                     <td className="px-6 py-4 text-right text-gray-900">{formatCurrency(totalsFiltrados.sinIva)}</td>
                     <td className="px-6 py-4 text-right text-emerald-700">{formatCurrency(totalsFiltrados.conIva)}</td>
