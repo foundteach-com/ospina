@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCurrentUser } from '@/lib/useCurrentUser';
 import { useDialog } from '@/context/DialogContext';
 
 interface Product {
@@ -35,13 +36,13 @@ const getTodayLocal = () => {
 };
 
 export default function InternalMovementsPage() {
+  const { can } = useCurrentUser();
   const [movements, setMovements] = useState<InternalMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [userRole, setUserRole] = useState<string>('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
   const { confirm, showAlert } = useDialog();
   
@@ -59,11 +60,6 @@ export default function InternalMovementsPage() {
   const [itemQuantity, setItemQuantity] = useState(1);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUserRole(user.role);
-    }
     fetchMovements();
   }, []);
 
@@ -332,7 +328,7 @@ export default function InternalMovementsPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    {userRole !== 'VIEWER' && (
+                                    {can('movimientos-internos:create') && (
                                       <div className="flex justify-end gap-1">
                                         <button 
                                           onClick={() => handleEdit(m)} 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useCurrentUser } from '@/lib/useCurrentUser';
 import Link from 'next/link';
 
 interface Sale {
@@ -24,19 +25,12 @@ interface Client {
 }
 
 export default function ClientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { can } = useCurrentUser();
   const { id } = use(params);
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [userRole, setUserRole] = useState<string>('');
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUserRole(user.role);
-    }
-  }, []);
+  
 
   useEffect(() => {
     const fetchClientDetails = async () => {
@@ -77,7 +71,7 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
           <p className="text-gray-500">NIT/CC: {client.taxId}</p>
         </div>
         <div className="ml-auto flex gap-3">
-          {userRole !== 'VIEWER' && (
+          {can('clientes:update') || can('clientes:delete') || can('clientes:create') && (
             <Link
               href={`/clientes/editar/${client.id}`}
               className="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg transition-all flex items-center gap-2"

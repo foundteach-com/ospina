@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCurrentUser } from '@/lib/useCurrentUser';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { roundToTwo } from '@/lib/formatters';
@@ -23,19 +24,12 @@ interface Product {
 }
 
 export default function ProductDetailPage() {
+  const { can } = useCurrentUser();
   const params = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [userRole, setUserRole] = useState<string>('');
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUserRole(user.role);
-    }
-  }, []);
+  
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -136,7 +130,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          {userRole !== 'VIEWER' && (
+          {can('productos:update') || can('productos:delete') || can('productos:create') && (
             <Link
               href={`/productos/editar/${product.id}`}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all flex items-center gap-2 shadow-sm"
@@ -404,7 +398,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Quick Actions */}
-          {userRole !== 'VIEWER' && (
+          {can('productos:update') || can('productos:delete') || can('productos:create') && (
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
                 Acciones Rápidas

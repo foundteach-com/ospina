@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCurrentUser } from '@/lib/useCurrentUser';
 import Link from 'next/link';
 import { useDialog } from '@/context/DialogContext';
 import * as XLSX from 'xlsx';
@@ -22,21 +23,14 @@ interface Product {
 }
 
 export default function ProductsPage() {
+  const { can } = useCurrentUser();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
 
-  const [userRole, setUserRole] = useState<string>('');
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUserRole(user.role);
-    }
-  }, []);
+  
 
   useEffect(() => {
     fetchProducts();
@@ -311,7 +305,7 @@ export default function ProductsPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Excel
           </button>
-          {userRole !== 'VIEWER' && (
+          {can('productos:create') && (
             <Link
               href="/productos/crear"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 whitespace-nowrap"
@@ -445,7 +439,7 @@ export default function ProductsPage() {
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
                       </Link>
-                      {userRole !== 'VIEWER' && (
+                      {can('productos:update') || can('productos:delete') && (
                         <>
                           <Link 
                             href={`/productos/crear?from=${product.id}`} 

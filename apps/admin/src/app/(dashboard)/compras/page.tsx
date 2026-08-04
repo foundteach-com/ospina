@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCurrentUser } from '@/lib/useCurrentUser';
 import Link from 'next/link';
 
 interface Purchase {
@@ -31,21 +32,14 @@ interface Purchase {
 }
 
 export default function PurchasesPage() {
+  const { can } = useCurrentUser();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [filteredPurchases, setFilteredPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
 
-  const [userRole, setUserRole] = useState<string>('');
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUserRole(user.role);
-    }
-  }, []);
+  
 
   useEffect(() => {
     fetchPurchases();
@@ -265,7 +259,7 @@ export default function PurchasesPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
             Exportar CSV
           </button>
-          {userRole !== 'VIEWER' && (
+          {can('compras:create') && (
             <Link
               href="/compras/crear"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center gap-2 shadow-sm font-medium"
@@ -407,7 +401,7 @@ export default function PurchasesPage() {
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
                       </Link>
-                      {userRole !== 'VIEWER' && (
+                      {can('compras:update') || can('compras:delete') && (
                         <>
                           <Link 
                             href={`/compras/editar/${purchase.id}`} 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCurrentUser } from '@/lib/useCurrentUser';
 import Link from 'next/link';
 
 interface Client {
@@ -13,21 +14,14 @@ interface Client {
 }
 
 export default function ClientsPage() {
+  const { can } = useCurrentUser();
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
 
-  const [userRole, setUserRole] = useState<string>('');
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUserRole(user.role);
-    }
-  }, []);
+  
 
   useEffect(() => {
     fetchClients();
@@ -164,7 +158,7 @@ export default function ClientsPage() {
               className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
             />
           </div>
-          {userRole !== 'VIEWER' && (
+          {can('clientes:create') && (
             <Link
               href="/clientes/crear"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 whitespace-nowrap"
@@ -241,7 +235,7 @@ export default function ClientsPage() {
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
                       </Link>
-                      {userRole !== 'VIEWER' && (
+                      {can('clientes:update') || can('clientes:delete') && (
                         <>
                           <Link 
                             href={`/clientes/editar/${client.id}`} 
