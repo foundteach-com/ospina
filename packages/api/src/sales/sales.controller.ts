@@ -50,9 +50,17 @@ export class SalesController {
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Query() query: any) {
-    return this.salesService.findAll({
-      where: query.clientId ? { clientId: query.clientId } : undefined,
-    });
+    const where: any = {};
+    if (query.clientId) where.clientId = query.clientId;
+    if (query.year) {
+      const targetYear = parseInt(query.year, 10);
+      where.date = {
+        gte: new Date(targetYear, 0, 1),
+        lte: new Date(targetYear, 11, 31, 23, 59, 59, 999),
+      };
+    }
+    
+    return this.salesService.findAll({ where });
   }
 
   @UseGuards(JwtAuthGuard)

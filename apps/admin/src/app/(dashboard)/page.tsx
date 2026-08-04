@@ -15,6 +15,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ComposedChart,
 } from 'recharts';
 import { ChevronUp, ChevronDown, Search } from 'lucide-react';
 import KPICard from '@/components/dashboard/KPICard';
@@ -139,6 +140,13 @@ function VentasSection() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [topClients, setTopClients] = useState<TopClient[]>([]);
 
+  // NUEVO ESTADO PARA DETALLE
+  const [allSales, setAllSales] = useState<any[]>([]);
+  const [clientFilter, setClientFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+  const ITEMS_PER_PAGE = 8;
+
   const yearOptions = useMemo(() => {
     const years: number[] = [];
     for (let y = currentYear; y >= currentYear - 5; y--) years.push(y);
@@ -150,15 +158,18 @@ function VentasSection() {
     const load = async () => {
       setLoading(true);
       try {
-        const [sales, products, clients] = await Promise.all([
+        const [sales, products, clients, detailedSales] = await Promise.all([
           apiFetch(`/dashboard/sales-by-month?year=${salesYear}`),
           apiFetch(`/dashboard/top-products?limit=6`),
           apiFetch(`/dashboard/top-clients?limit=6`),
+          apiFetch(`/sales?year=${salesYear}`)
         ]);
         if (!active) return;
         setSalesByMonth(Array.isArray(sales) ? sales : []);
         setTopProducts(Array.isArray(products) ? products : []);
         setTopClients(Array.isArray(clients) ? clients : []);
+        setAllSales(Array.isArray(detailedSales) ? detailedSales : []);
+        setCurrentPage(1); // Reset page on year change
       } catch (err) {
         console.error('Error cargando ventas:', err);
       } finally {
@@ -170,6 +181,108 @@ function VentasSection() {
       active = false;
     };
   }, [salesYear]);
+
+  // ======= LÓGICA DE DETALLE Y GRÁFICO SINCRONIZADO =======
+  const flattenedSalesItems = useMemo(() => {
+    const items: any[] = [];
+    allSales.forEach(sale => {
+      sale.items?.forEach((item: any) => {
+        items.push({
+          id: item.id,
+          saleId: sale.id,
+          date: new Date(sale.date),
+          clientName: sale.client?.name || 'Consumidor Final',
+          productCode: item.product?.code || '',
+          productName: item.product?.name || '',
+          measurementQuantity: item.product?.measurementQuantity || 1,
+          measurementUnit: item.product?.measurementUnit || 'UN',
+          quantity: Number(item.quantity),
+          salePrice: Number(item.salePrice),
+          salesIvaPercent: Number(item.product?.salesIvaPercent || 19),
+        });
+      });
+    });
+    return items;
+  }, [allSales]);
+
+  const filteredSalesItems = useMemo(() => {
+    let result = flattenedSalesItems;
+    if (clientFilter) {
+      const lowerFilter = clientFilter.toLowerCase();
+      result = result.filter(item => item.clientName.toLowerCase().includes(lowerFilter));
+    }
+    return result;
+  }, [flattenedSalesItems, clientFilter]);
+
+  const dynamicChartData = useMemo(() => {
+    const months = MONTH_LABELS.map(label => ({
+      month: label,
+      cantidad: 0,
+      valorTotal: 0
+    }));
+
+    filteredSalesItems.forEach(item => {
+      const monthIndex = item.date.getMonth();
+      const valSinIva = item.quantity * item.salePrice;
+      const valConIva = valSinIva * (1 + item.salesIvaPercent / 100);
+      
+      months[monthIndex].cantidad += item.quantity;
+      months[monthIndex].valorTotal += valConIva;
+    });
+    return months;
+  }, [filteredSalesItems]);
+
+  const totalsFiltrados = useMemo(() => {
+    return filteredSalesItems.reduce((acc, item) => {
+      const valSinIva = item.quantity * item.salePrice;
+      const valConIva = valSinIva * (1 + item.salesIvaPercent / 100);
+      acc.cantidad += item.quantity;
+      acc.sinIva += valSinIva;
+      acc.conIva += valConIva;
+      return acc;
+    }, { cantidad: 0, sinIva: 0, conIva: 0 });
+  }, [filteredSalesItems]);
+  
+  const sortedSalesItems = useMemo(() => {
+    if (!sortConfig) return filteredSalesItems;
+    return [...filteredSalesItems].sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+      
+      if (sortConfig.key === 'totalSinIva') {
+        aVal = a.quantity * a.salePrice;
+        bVal = b.quantity * b.salePrice;
+      } else if (sortConfig.key === 'totalConIva') {
+        aVal = (a.quantity * a.salePrice) * (1 + a.salesIvaPercent / 100);
+        bVal = (b.quantity * b.salePrice) * (1 + b.salesIvaPercent / 100);
+      }
+      
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredSalesItems, sortConfig]);
+
+  const paginatedSalesItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedSalesItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedSalesItems, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedSalesItems.length / ITEMS_PER_PAGE));
+  
+  const handleSort = (key: string) => {
+    setSortConfig(current => {
+      if (!current || current.key !== key) return { key, direction: 'asc' };
+      if (current.direction === 'asc') return { key, direction: 'desc' };
+      return null;
+    });
+  };
+
+  const SortIcon = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig?.key !== columnKey) return <ChevronUp className="w-3 h-3 text-gray-300 opacity-0 group-hover:opacity-100" />;
+    return sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-600" /> : <ChevronDown className="w-3 h-3 text-blue-600" />;
+  };
+  // ========================================================
 
   const monthlyData = useMemo(() => {
     return MONTH_LABELS.map((label, i) => ({
@@ -245,18 +358,188 @@ function VentasSection() {
             />
           </div>
 
-          <ChartCard title="Ventas por Mes" subtitle={`Evolución durante ${salesYear}`}>
-            <ResponsiveContainer width="100%" height={340}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(v) => compactCurrency(v)} tick={{ fontSize: 11 }} width={70} />
-                <Tooltip content={<CurrencyTooltip />} />
-                <Legend />
-                <Line type="monotone" dataKey="ventas" name="Ventas" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
+          {/* Gráficos Generales Originales */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <ChartCard title="Ventas Generales por Mes" subtitle={`Evolución durante ${salesYear}`}>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tickFormatter={(v) => compactCurrency(v)} tick={{ fontSize: 11 }} width={70} />
+                  <Tooltip content={<CurrencyTooltip />} />
+                  <Legend />
+                  <Line type="monotone" dataKey="ventas" name="Ventas" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Productos más Vendidos" subtitle="Por cantidad de unidades">
+              {productsChartData.length === 0 ? <EmptyState /> : (
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={productsChartData} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Bar dataKey="cantidad" name="Unidades" fill="#8b5cf6" radius={[0, 6, 6, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <ChartCard title="Principales Clientes" subtitle="Por volumen de facturación">
+              {clientsChartData.length === 0 ? <EmptyState /> : (
+                <ResponsiveContainer width="100%" height={320}>
+                  <PieChart>
+                    <Pie
+                      data={clientsChartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={110}
+                      innerRadius={55}
+                      paddingAngle={2}
+                    >
+                      {clientsChartData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: any) => formatCurrency(Number(v))} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCard>
+
+            {/* Nuevo Gráfico Interactivo de Ventas Sincronizado */}
+            <ChartCard title="Comportamiento de Ventas (Detalle)" subtitle="Actualizado por el filtro de la tabla">
+              <ResponsiveContainer width="100%" height={320}>
+                <ComposedChart data={dynamicChartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis yAxisId="left" tickFormatter={(v) => compactCurrency(v)} tick={{ fontSize: 11 }} width={70} orientation="left" />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} width={40} />
+                  <Tooltip 
+                    formatter={(value: any, name: any) => {
+                      if (name === "Valor Total") return formatCurrency(Number(value));
+                      return [value, "Cantidad"];
+                    }} 
+                  />
+                  <Legend />
+                  <Bar yAxisId="right" dataKey="cantidad" name="Cantidad" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+                  <Line yAxisId="left" type="monotone" dataKey="valorTotal" name="Valor Total" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+
+          {/* Nueva Tabla de Detalle de Ventas */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-6">
+            <div className="p-5 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">Detalle de Productos Vendidos</h3>
+                <p className="text-sm text-gray-500">Filtrado y ordenamiento dinámico de transacciones</p>
+              </div>
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input 
+                  type="text" 
+                  placeholder="Buscar por cliente..." 
+                  value={clientFilter}
+                  onChange={e => {
+                    setClientFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left whitespace-nowrap">
+                <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-3 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('clientName')}>
+                      <div className="flex items-center gap-1">Cliente <SortIcon columnKey="clientName" /></div>
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('productCode')}>
+                      <div className="flex items-center gap-1">Cód <SortIcon columnKey="productCode" /></div>
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('productName')}>
+                      <div className="flex items-center gap-1">Descripción <SortIcon columnKey="productName" /></div>
+                    </th>
+                    <th className="px-6 py-3">Presentación</th>
+                    <th className="px-6 py-3 text-right cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('quantity')}>
+                      <div className="flex items-center justify-end gap-1">Cant Vendida <SortIcon columnKey="quantity" /></div>
+                    </th>
+                    <th className="px-6 py-3 text-right cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('totalSinIva')}>
+                      <div className="flex items-center justify-end gap-1">Total sin IVA <SortIcon columnKey="totalSinIva" /></div>
+                    </th>
+                    <th className="px-6 py-3 text-right cursor-pointer group hover:bg-gray-100 transition-colors" onClick={() => handleSort('totalConIva')}>
+                      <div className="flex items-center justify-end gap-1">Total con IVA <SortIcon columnKey="totalConIva" /></div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm">
+                  {paginatedSalesItems.length > 0 ? paginatedSalesItems.map((item, idx) => {
+                    const totalSinIva = item.quantity * item.salePrice;
+                    const totalConIva = totalSinIva * (1 + item.salesIvaPercent / 100);
+                    return (
+                      <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
+                        <td className="px-6 py-3 text-gray-900 font-medium">{item.clientName}</td>
+                        <td className="px-6 py-3 text-gray-500">{item.productCode}</td>
+                        <td className="px-6 py-3 text-gray-900">{item.productName}</td>
+                        <td className="px-6 py-3 text-gray-500">{item.measurementQuantity} {item.measurementUnit}</td>
+                        <td className="px-6 py-3 text-right text-gray-900 font-medium">{item.quantity}</td>
+                        <td className="px-6 py-3 text-right text-gray-900">{formatCurrency(totalSinIva)}</td>
+                        <td className="px-6 py-3 text-right font-semibold text-emerald-700">{formatCurrency(totalConIva)}</td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                        No se encontraron registros de ventas para los filtros actuales.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot className="bg-gray-50 border-t-2 border-gray-200 font-bold text-sm">
+                  <tr>
+                    <td colSpan={4} className="px-6 py-4 text-right text-gray-700">TOTALES GENERALES (Filtro Actual):</td>
+                    <td className="px-6 py-4 text-right text-gray-900">{totalsFiltrados.cantidad}</td>
+                    <td className="px-6 py-4 text-right text-gray-900">{formatCurrency(totalsFiltrados.sinIva)}</td>
+                    <td className="px-6 py-4 text-right text-emerald-700">{formatCurrency(totalsFiltrados.conIva)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            
+            {/* Paginación */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
+                <span className="text-sm text-gray-500">
+                  Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, sortedSalesItems.length)} de {sortedSalesItems.length} registros
+                </span>
+                <div className="flex gap-1">
+                  <button 
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className="px-3 py-1 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white"
+                  >
+                    Anterior
+                  </button>
+                  <button 
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className="px-3 py-1 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <ChartCard title="Productos más Vendidos" subtitle="Por cantidad de unidades">
