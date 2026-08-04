@@ -143,6 +143,7 @@ function VentasSection() {
   // NUEVO ESTADO PARA DETALLE
   const [allSales, setAllSales] = useState<any[]>([]);
   const [clientFilter, setClientFilter] = useState('');
+  const [measureFilter, setMeasureFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
   const ITEMS_PER_PAGE = 8;
@@ -211,13 +212,30 @@ function VentasSection() {
     return Array.from(clients).sort();
   }, [flattenedSalesItems]);
 
+  const uniqueMeasures = useMemo(() => {
+    const measures = new Set<string>();
+    flattenedSalesItems.forEach(item => {
+      if (item.measurementQuantity && item.measurementUnit) {
+        measures.add(`${item.measurementQuantity} ${item.measurementUnit}`);
+      }
+    });
+    return Array.from(measures).sort((a, b) => {
+      const numA = parseFloat(a) || 0;
+      const numB = parseFloat(b) || 0;
+      return numA - numB;
+    });
+  }, [flattenedSalesItems]);
+
   const filteredSalesItems = useMemo(() => {
     let result = flattenedSalesItems;
     if (clientFilter) {
       result = result.filter(item => item.clientName === clientFilter);
     }
+    if (measureFilter) {
+      result = result.filter(item => `${item.measurementQuantity} ${item.measurementUnit}` === measureFilter);
+    }
     return result;
-  }, [flattenedSalesItems, clientFilter]);
+  }, [flattenedSalesItems, clientFilter, measureFilter]);
 
   const dynamicChartData = useMemo(() => {
     const months = MONTH_LABELS.map(label => ({
@@ -446,21 +464,39 @@ function VentasSection() {
                 <h3 className="text-lg font-bold text-gray-800">Detalle de Productos Vendidos</h3>
                 <p className="text-sm text-gray-500">Filtrado y ordenamiento dinámico de transacciones</p>
               </div>
-              <div className="relative w-full md:w-72">
-                <select
-                  value={clientFilter}
-                  onChange={e => {
-                    setClientFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full pl-4 pr-9 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer appearance-none"
-                >
-                  <option value="">Todos los clientes</option>
-                  {uniqueClients.map((client, idx) => (
-                    <option key={idx} value={client}>{client}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                <div className="relative w-full sm:w-60">
+                  <select
+                    value={clientFilter}
+                    onChange={e => {
+                      setClientFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full pl-4 pr-9 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">Todos los clientes</option>
+                    {uniqueClients.map((client, idx) => (
+                      <option key={idx} value={client}>{client}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                </div>
+                <div className="relative w-full sm:w-48">
+                  <select
+                    value={measureFilter}
+                    onChange={e => {
+                      setMeasureFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full pl-4 pr-9 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">Todas las medidas</option>
+                    {uniqueMeasures.map((measure, idx) => (
+                      <option key={idx} value={measure}>{measure}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                </div>
               </div>
             </div>
 
