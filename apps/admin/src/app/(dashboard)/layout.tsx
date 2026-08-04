@@ -211,90 +211,107 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           )}
           {/* ====== ADMINISTRADOR (colapsable) ====== */}
-          <div>
-            <button
-              onClick={() => setAdminOpen(prev => !prev)}
-              className={`flex items-center justify-between w-full gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
-                (pathname.startsWith('/usuarios') || pathname.startsWith('/roles') || pathname === '/perfil')
+          {(user?.role === 'ADMIN' || hasAccessToModule(user, 'usuarios') || hasAccessToModule(user, 'roles')) ? (
+            <div>
+              <button
+                onClick={() => setAdminOpen(prev => !prev)}
+                className={`flex items-center justify-between w-full gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                  (pathname.startsWith('/usuarios') || pathname.startsWith('/roles') || pathname === '/perfil')
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="4"/>
+                    <path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                    <path d="M17 14l2 2 4-4"/>
+                  </svg>
+                  Administrador
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  className={`transition-transform duration-200 ${adminOpen ? 'rotate-180' : ''}`}
+                >
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+
+              {adminOpen && (
+                <div className="mt-1 ml-4 pl-3 border-l-2 border-gray-100 space-y-0.5">
+                  {/* Mi cuenta */}
+                  <Link
+                    href="/perfil"
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                      pathname === '/perfil'
+                        ? 'bg-blue-50 text-blue-700'
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Mi cuenta
+                  </Link>
+
+                  {/* Usuarios */}
+                  {(user?.role === 'ADMIN' || hasAccessToModule(user, 'usuarios')) && (
+                    <Link
+                      href="/usuarios"
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                        pathname.startsWith('/usuarios')
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      Usuarios
+                    </Link>
+                  )}
+
+                  {/* Roles y permisos */}
+                  {(user?.role === 'ADMIN' || hasAccessToModule(user, 'roles')) && (
+                    <Link
+                      href="/roles"
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                        pathname.startsWith('/roles')
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                      Roles y Permisos
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/perfil"
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                pathname === '/perfil'
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="4"/>
-                  <path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
-                  <path d="M17 14l2 2 4-4"/>
-                </svg>
-                Administrador
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                className={`transition-transform duration-200 ${adminOpen ? 'rotate-180' : ''}`}
-              >
-                <path d="m6 9 6 6 6-6"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
               </svg>
-            </button>
-
-            {adminOpen && (
-              <div className="mt-1 ml-4 pl-3 border-l-2 border-gray-100 space-y-0.5">
-                {/* Mi cuenta */}
-                <Link
-                  href="/perfil"
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                    pathname === '/perfil'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  Mi cuenta
-                </Link>
-
-                {/* Usuarios */}
-                {(user?.role === 'ADMIN' || hasAccessToModule(user, 'usuarios')) && (
-                  <Link
-                    href="/usuarios"
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      pathname.startsWith('/usuarios')
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                    Usuarios
-                  </Link>
-                )}
-
-                {/* Roles y permisos */}
-                {(user?.role === 'ADMIN' || hasAccessToModule(user, 'roles')) && (
-                  <Link
-                    href="/roles"
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                      pathname.startsWith('/roles')
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                    Roles y Permisos
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
+              Mi cuenta
+            </Link>
+          )}
         </div>
 
         <div className="border-t border-gray-200 p-4">

@@ -45,7 +45,8 @@ export default function UsersPage() {
     password: '',
     isActive: true,
     accessRoleId: '',
-    moduleAccess: [] as string[]
+    moduleAccess: [] as string[],
+    permissions: [] as string[]
   });
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export default function UsersPage() {
 
   const openCreate = () => {
     setEditingUser(null);
-    setForm({ name: '', email: '', password: '', isActive: true, accessRoleId: '', moduleAccess: [] });
+    setForm({ name: '', email: '', password: '', isActive: true, accessRoleId: '', moduleAccess: [], permissions: [] });
     setActiveTab('datos');
     setIsModalOpen(true);
   };
@@ -88,7 +89,8 @@ export default function UsersPage() {
       password: '',
       isActive: user.isActive,
       accessRoleId: user.accessRoleId || '',
-      moduleAccess: user.moduleAccess || []
+      moduleAccess: user.moduleAccess || [],
+      permissions: user.permissions || []
     });
     setActiveTab('datos');
     setIsModalOpen(true);
@@ -180,8 +182,29 @@ export default function UsersPage() {
   const toggleModule = (mod: string) => {
     setForm(prev => {
       const isSelected = prev.moduleAccess.includes(mod);
-      if (isSelected) return { ...prev, moduleAccess: prev.moduleAccess.filter(m => m !== mod) };
-      return { ...prev, moduleAccess: [...prev.moduleAccess, mod] };
+      if (isSelected) {
+        return { 
+          ...prev, 
+          moduleAccess: prev.moduleAccess.filter(m => m !== mod),
+          permissions: prev.permissions.filter(p => !p.startsWith(`${mod}:`))
+        };
+      } else {
+        return { 
+          ...prev, 
+          moduleAccess: [...prev.moduleAccess, mod],
+          permissions: [...prev.permissions, `${mod}:read`]
+        };
+      }
+    });
+  };
+
+  const togglePermission = (mod: string, action: string) => {
+    const perm = `${mod}:${action}`;
+    setForm(prev => {
+      if (prev.permissions.includes(perm)) {
+        return { ...prev, permissions: prev.permissions.filter(p => p !== perm) };
+      }
+      return { ...prev, permissions: [...prev.permissions, perm] };
     });
   };
 
@@ -323,19 +346,50 @@ export default function UsersPage() {
 
                 {activeTab === 'modulos' && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-500 mb-4">Activa los módulos a los que este usuario tendrá acceso directamente (sobreescribe los del rol).</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {AVAILABLE_MODULES.map(mod => {
-                        const isSelected = form.moduleAccess.includes(mod);
-                        return (
-                          <div key={mod} onClick={() => toggleModule(mod)} className={`p-3 rounded-lg border text-sm cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-600'}`}>
-                            <div className="flex items-center justify-between">
-                              <span className="capitalize">{mod.replace('-', ' ')}</span>
-                              {isSelected && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <p className="text-sm text-gray-500 mb-4">Activa los módulos a los que este usuario tendrá acceso directamente y sus permisos (sobreescribe los del rol).</p>
+                    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-4 py-3 font-medium text-gray-700">Módulo</th>
+                            <th className="px-4 py-3 font-medium text-gray-700 text-center">Acceso (Menú)</th>
+                            <th className="px-4 py-3 font-medium text-gray-700 text-center">Leer</th>
+                            <th className="px-4 py-3 font-medium text-gray-700 text-center">Crear</th>
+                            <th className="px-4 py-3 font-medium text-gray-700 text-center">Actualizar</th>
+                            <th className="px-4 py-3 font-medium text-gray-700 text-center">Eliminar</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {AVAILABLE_MODULES.map(mod => {
+                            const hasModule = form.moduleAccess.includes(mod);
+                            const hasRead = form.permissions.includes(`${mod}:read`);
+                            const hasCreate = form.permissions.includes(`${mod}:create`);
+                            const hasUpdate = form.permissions.includes(`${mod}:update`);
+                            const hasDelete = form.permissions.includes(`${mod}:delete`);
+                            
+                            return (
+                              <tr key={mod} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 capitalize font-medium text-gray-800">{mod.replace('-', ' ')}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <input type="checkbox" checked={hasModule} onChange={() => toggleModule(mod)} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"/>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <input type="checkbox" disabled={!hasModule} checked={hasRead} onChange={() => togglePermission(mod, 'read')} className="w-4 h-4 text-blue-600 rounded border-gray-300 disabled:opacity-40 cursor-pointer"/>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <input type="checkbox" disabled={!hasModule} checked={hasCreate} onChange={() => togglePermission(mod, 'create')} className="w-4 h-4 text-blue-600 rounded border-gray-300 disabled:opacity-40 cursor-pointer"/>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <input type="checkbox" disabled={!hasModule} checked={hasUpdate} onChange={() => togglePermission(mod, 'update')} className="w-4 h-4 text-blue-600 rounded border-gray-300 disabled:opacity-40 cursor-pointer"/>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <input type="checkbox" disabled={!hasModule} checked={hasDelete} onChange={() => togglePermission(mod, 'delete')} className="w-4 h-4 text-blue-600 rounded border-gray-300 disabled:opacity-40 cursor-pointer"/>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
