@@ -145,6 +145,7 @@ function VentasSection() {
   const [clientFilter, setClientFilter] = useState('');
   const [measureFilter, setMeasureFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showAllRecords, setShowAllRecords] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
   const ITEMS_PER_PAGE = 8;
 
@@ -195,6 +196,7 @@ function VentasSection() {
           clientName: sale.client?.name || 'Consumidor Final',
           productCode: item.product?.code || '',
           productName: item.product?.name || '',
+          productId: item.product?.id || '',
           measurementQuantity: item.product?.measurementQuantity || 1,
           measurementUnit: item.product?.measurementUnit || 'UN',
           quantity: Number(item.quantity),
@@ -237,6 +239,32 @@ function VentasSection() {
     return result;
   }, [flattenedSalesItems, clientFilter, measureFilter]);
 
+  const consolidatedSalesItems = useMemo(() => {
+    const grouped = new Map<string, any>();
+    
+    filteredSalesItems.forEach(item => {
+      const key = item.productId || item.productCode || item.productName;
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          ...item,
+          quantity: 0,
+          totalSinIva: 0,
+          totalConIva: 0
+        });
+      }
+      
+      const valSinIva = item.quantity * item.salePrice;
+      const valConIva = valSinIva * (1 + item.salesIvaPercent / 100);
+      
+      const current = grouped.get(key);
+      current.quantity += item.quantity;
+      current.totalSinIva += valSinIva;
+      current.totalConIva += valConIva;
+    });
+    
+    return Array.from(grouped.values());
+  }, [filteredSalesItems]);
+
   const dynamicChartData = useMemo(() => {
     const months = MONTH_LABELS.map(label => ({
       month: label,
@@ -256,40 +284,31 @@ function VentasSection() {
   }, [filteredSalesItems]);
 
   const totalsFiltrados = useMemo(() => {
-    return filteredSalesItems.reduce((acc, item) => {
-      const valSinIva = item.quantity * item.salePrice;
-      const valConIva = valSinIva * (1 + item.salesIvaPercent / 100);
+    return consolidatedSalesItems.reduce((acc, item) => {
       acc.cantidad += item.quantity;
-      acc.sinIva += valSinIva;
-      acc.conIva += valConIva;
+      acc.sinIva += item.totalSinIva;
+      acc.conIva += item.totalConIva;
       return acc;
     }, { cantidad: 0, sinIva: 0, conIva: 0 });
-  }, [filteredSalesItems]);
+  }, [consolidatedSalesItems]);
   
   const sortedSalesItems = useMemo(() => {
-    if (!sortConfig) return filteredSalesItems;
-    return [...filteredSalesItems].sort((a, b) => {
+    if (!sortConfig) return consolidatedSalesItems;
+    return [...consolidatedSalesItems].sort((a, b) => {
       let aVal = a[sortConfig.key];
       let bVal = b[sortConfig.key];
-      
-      if (sortConfig.key === 'totalSinIva') {
-        aVal = a.quantity * a.salePrice;
-        bVal = b.quantity * b.salePrice;
-      } else if (sortConfig.key === 'totalConIva') {
-        aVal = (a.quantity * a.salePrice) * (1 + a.salesIvaPercent / 100);
-        bVal = (b.quantity * b.salePrice) * (1 + b.salesIvaPercent / 100);
-      }
       
       if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [filteredSalesItems, sortConfig]);
+  }, [consolidatedSalesItems, sortConfig]);
 
   const paginatedSalesItems = useMemo(() => {
+    if (showAllRecords) return sortedSalesItems;
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return sortedSalesItems.slice(start, start + ITEMS_PER_PAGE);
-  }, [sortedSalesItems, currentPage]);
+  }, [sortedSalesItems, currentPage, showAllRecords]);
 
   const totalPages = Math.max(1, Math.ceil(sortedSalesItems.length / ITEMS_PER_PAGE));
   
@@ -524,16 +543,14 @@ function VentasSection() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
                   {paginatedSalesItems.length > 0 ? paginatedSalesItems.map((item, idx) => {
-                    const totalSinIva = item.quantity * item.salePrice;
-                    const totalConIva = totalSinIva * (1 + item.salesIvaPercent / 100);
                     return (
                       <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
                         <td className="px-6 py-3 text-gray-500">{item.productCode}</td>
                         <td className="px-6 py-3 text-gray-900">{item.productName}</td>
                         <td className="px-6 py-3 text-gray-500">{item.measurementQuantity} {item.measurementUnit}</td>
                         <td className="px-6 py-3 text-right text-gray-900 font-medium">{item.quantity}</td>
-                        <td className="px-6 py-3 text-right text-gray-900">{formatCurrency(totalSinIva)}</td>
-                        <td className="px-6 py-3 text-right font-semibold text-emerald-700">{formatCurrency(totalConIva)}</td>
+                        <td className="px-6 py-3 text-right text-gray-900">{formatCurrency(item.totalSinIva)}</td>
+                        <td className="px-6 py-3 text-right font-semibold text-emerald-700">{formatCurrency(item.totalConIva)}</td>
                       </tr>
                     );
                   }) : (
@@ -556,29 +573,44 @@ function VentasSection() {
             </div>
             
             {/* Paginación */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
-                <span className="text-sm text-gray-500">
-                  Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} a {Math.min(currentPage * ITEMS_PER_PAGE, sortedSalesItems.length)} de {sortedSalesItems.length} registros
-                </span>
-                <div className="flex gap-1">
-                  <button 
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className="px-3 py-1 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white"
-                  >
-                    Anterior
-                  </button>
-                  <button 
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className="px-3 py-1 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white"
-                  >
-                    Siguiente
-                  </button>
-                </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-white gap-4">
+              <span className="text-sm text-gray-500">
+                {showAllRecords 
+                  ? `Mostrando todos los ${sortedSalesItems.length} registros`
+                  : `Mostrando ${(currentPage - 1) * ITEMS_PER_PAGE + 1} a ${Math.min(currentPage * ITEMS_PER_PAGE, sortedSalesItems.length)} de ${sortedSalesItems.length} registros`
+                }
+              </span>
+              <div className="flex gap-2 items-center flex-wrap justify-center">
+                <button
+                  onClick={() => {
+                    setShowAllRecords(!showAllRecords);
+                    if (!showAllRecords) setCurrentPage(1);
+                  }}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${showAllRecords ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                >
+                  {showAllRecords ? 'Ver paginado' : 'Ver todos'}
+                </button>
+                
+                {!showAllRecords && totalPages > 1 && (
+                  <div className="flex gap-1">
+                    <button 
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      className="px-3 py-1 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white"
+                    >
+                      Anterior
+                    </button>
+                    <button 
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      className="px-3 py-1 border border-gray-200 rounded-md text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
