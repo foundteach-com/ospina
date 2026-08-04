@@ -9,15 +9,34 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String?
-  avatarUrl String?
-  role      UserRole  @default(USER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  employee  Employee?
+  id           String      @id @default(cuid())
+  email        String      @unique
+  password     String
+  name         String?
+  avatarUrl    String?
+  role         UserRole    @default(USER) // Legacy role
+  
+  // Access control
+  isActive     Boolean     @default(true)
+  accessRoleId String?
+  accessRole   AccessRole? @relation(fields: [accessRoleId], references: [id])
+  moduleAccess Json?       @default("[]") // Ej: ["ventas", "compras", "inventario"]
+  permissions  Json?       @default("[]") // Ej: ["ventas:read", "ventas:write"]
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  employee     Employee?
+}
+
+model AccessRole {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  description  String?
+  moduleAccess Json?    @default("[]")
+  permissions  Json?    @default("[]")
+  users        User[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Product {

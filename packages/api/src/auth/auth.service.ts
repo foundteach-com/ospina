@@ -19,6 +19,9 @@ export class AuthService {
       console.error('[AuthService] User not found:', email);
       return null;
     }
+    if (!user.isActive) {
+      throw new UnauthorizedException('User account is disabled');
+    }
     
     console.log('[AuthService] User found, checking password');
     const passwordMatch = await bcrypt.compare(pass, user.password);
@@ -36,6 +39,10 @@ export class AuthService {
   async login(user: any) {
     const payload = { username: user.email, sub: user.id, role: user.role };
 
+    // Resolve moduleAccess and permissions
+    const finalModuleAccess = user.moduleAccess || (user.accessRole ? user.accessRole.moduleAccess : []);
+    const finalPermissions = user.permissions || (user.accessRole ? user.accessRole.permissions : []);
+
     // La sesión expira 10 horas después del login
     const expiresIn = 10 * 60 * 60; // 36 000 segundos
 
@@ -46,6 +53,8 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        moduleAccess: finalModuleAccess,
+        permissions: finalPermissions
       },
     };
   }

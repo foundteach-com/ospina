@@ -13,21 +13,24 @@ export class UsersService {
     });
   }
 
-  async findOne(email: string): Promise<User | null> {
+  async findOne(email: string): Promise<any | null> {
     return this.prisma.user.findUnique({
       where: { email },
+      include: { accessRole: true }
     });
   }
 
   async findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { id },
+      include: { accessRole: true }
     });
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<any[]> {
     return this.prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
+      include: { accessRole: true }
     });
   }
 
@@ -48,5 +51,30 @@ export class UsersService {
     return this.prisma.user.delete({
       where: { id },
     });
+  }
+
+  async toggleStatus(id: string): Promise<User> {
+    const user = await this.findById(id);
+    if (!user) throw new Error('User not found');
+    return this.prisma.user.update({
+      where: { id },
+      data: { isActive: !user.isActive }
+    });
+  }
+
+  async resetPassword(id: string, newPassword?: string): Promise<{ user: User, tempPassword?: string }> {
+    const user = await this.findById(id);
+    if (!user) throw new Error('User not found');
+    
+    // Generate a random temp password if not provided
+    const tempPassword = newPassword || Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword }
+    });
+    
+    return { user: updatedUser, tempPassword };
   }
 }

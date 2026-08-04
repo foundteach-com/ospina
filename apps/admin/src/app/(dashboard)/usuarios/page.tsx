@@ -3,296 +3,353 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDialog } from '@/context/DialogContext';
+import { Plus, Search, Edit3, Trash2, Key, ShieldOff, ShieldCheck, X, Save } from 'lucide-react';
 
 interface User {
   id: string;
   name: string | null;
   email: string;
   role: string;
+  isActive: boolean;
+  accessRoleId: string | null;
+  moduleAccess: string[];
+  permissions: string[];
   createdAt: string;
+  accessRole?: { name: string };
 }
+
+interface AccessRole {
+  id: string;
+  name: string;
+}
+
+const AVAILABLE_MODULES = [
+  'operaciones', 'inventario', 'compras', 'ventas', 'proveedores', 'clientes', 'flujo-caja', 'usuarios', 'roles'
+];
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<AccessRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'name', direction: 'asc' });
-  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
+  
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<'datos' | 'rol' | 'modulos'>('datos');
+  
   const { confirm, showAlert } = useDialog();
 
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    isActive: true,
+    accessRoleId: '',
+    moduleAccess: [] as string[]
+  });
+
   useEffect(() => {
-    fetchUsers();
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setCurrentUser(JSON.parse(userData));
-    }
+    fetchData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
-        setFilteredUsers(data);
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const [usersRes, rolesRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, { headers }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/roles`, { headers })
+      ]);
+      
+      if (usersRes.ok && rolesRes.ok) {
+        setUsers(await usersRes.json());
+        setRoles(await rolesRes.json());
       }
-    } catch (error) {
-      console.error('Error fetching users:', error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    let filtered = users.filter(u => 
-      (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (sortConfig !== null) {
-      filtered.sort((a, b) => {
-        let aValue: any = a[sortConfig.key as keyof User];
-        let bValue: any = b[sortConfig.key as keyof User];
-
-        if (sortConfig.key === 'name') {
-          aValue = (a.name || '').toLowerCase();
-          bValue = (b.name || '').toLowerCase();
-        }
-
-        if (sortConfig.key === 'createdAt') {
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
-        }
-
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    setFilteredUsers(filtered);
-  }, [searchTerm, users, sortConfig]);
-
-  const requestSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
+  const openCreate = () => {
+    setEditingUser(null);
+    setForm({ name: '', email: '', password: '', isActive: true, accessRoleId: '', moduleAccess: [] });
+    setActiveTab('datos');
+    setIsModalOpen(true);
   };
 
-  const getSortIcon = (key: string) => {
-    if (!sortConfig || sortConfig.key !== key) {
-      return (
-        <svg className="w-3 h-3 ml-1 text-gray-400 group-hover:text-gray-600 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-        </svg>
-      );
+  const openEdit = (user: User) => {
+    setEditingUser(user);
+    setForm({
+      name: user.name || '',
+      email: user.email,
+      password: '',
+      isActive: user.isActive,
+      accessRoleId: user.accessRoleId || '',
+      moduleAccess: user.moduleAccess || []
+    });
+    setActiveTab('datos');
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('access_token');
+      const isEdit = !!editingUser;
+      const url = isEdit ? `${process.env.NEXT_PUBLIC_API_URL}/users/${editingUser.id}` : `${process.env.NEXT_PUBLIC_API_URL}/auth/register`;
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      const payload = { ...form };
+      if (isEdit && !payload.password) {
+        delete (payload as any).password;
+      }
+      if (!payload.accessRoleId) delete (payload as any).accessRoleId;
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        showAlert('success', `Usuario ${isEdit ? 'actualizado' : 'creado'} con éxito`);
+        setIsModalOpen(false);
+        fetchData();
+      } else {
+        showAlert('error', 'Error al guardar el usuario');
+      }
+    } catch (err) {
+      console.error(err);
     }
-    return sortConfig.direction === 'asc' ? (
-      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-      </svg>
-    ) : (
-      <svg className="w-3 h-3 ml-1 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    );
+  };
+
+  const toggleStatus = async (user: User) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/toggle-status`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const resetPassword = async (user: User) => {
+    const confirmed = await confirm('¿Restablecer contraseña?', `Se generará una contraseña temporal para ${user.email}`);
+    if (!confirmed) return;
+    
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/reset-password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({})
+      });
+      if (res.ok) {
+        const data = await res.json();
+        showAlert('success', `Contraseña temporal: ${data.tempPassword} (Cópiala, no se volverá a mostrar)`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    const isConfirmed = await confirm({
-      title: '¿Eliminar Usuario?',
-      message: 'Este usuario perderá acceso al sistema. Esta acción no se puede deshacer.',
-      confirmText: 'Sí, eliminar',
-      type: 'danger'
-    });
-
-    if (!isConfirmed) return;
-
+    const confirmed = await confirm('¿Eliminar usuario?', 'Esta acción no se puede deshacer.', 'danger');
+    if (!confirmed) return;
+    
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` }
       });
-      if (response.ok) {
-        fetchUsers();
-      } else {
-        const error = await response.json();
-        showAlert({
-          title: 'Error al eliminar',
-          message: error.message || 'No se pudo completar la acción.',
-          type: 'danger'
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      showAlert({
-        title: 'Error de conexión',
-        message: 'No pudimos comunicarnos con el servidor.',
-        type: 'danger'
-      });
+      fetchData();
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  if (loading) return <div className="p-8 text-gray-500 text-center">Cargando usuarios...</div>;
+  const toggleModule = (mod: string) => {
+    setForm(prev => {
+      const isSelected = prev.moduleAccess.includes(mod);
+      if (isSelected) return { ...prev, moduleAccess: prev.moduleAccess.filter(m => m !== mod) };
+      return { ...prev, moduleAccess: [...prev.moduleAccess, mod] };
+    });
+  };
+
+  const filteredUsers = users.filter(u => 
+    (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return <div className="p-8 text-center text-gray-500">Cargando usuarios...</div>;
 
   return (
     <div className="p-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Usuarios del Sistema
-          </h1>
-          <p className="text-gray-500 mt-1">Gestiona el acceso de administradores y empleados</p>
+          <h1 className="text-2xl font-bold text-gray-900">Usuarios del Sistema</h1>
+          <p className="text-gray-500 text-sm mt-1">Gestiona los accesos y roles</p>
         </div>
-        <div className="flex gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-80">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar por nombre o correo..."
+        <div className="flex gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Buscar..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm"
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm"
             />
           </div>
-          <Link
-            href="/usuarios/crear"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 whitespace-nowrap"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            Nuevo Usuario
-          </Link>
+          <button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+            <Plus size={16} /> Nuevo Usuario
+          </button>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th 
-                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
-                  onClick={() => requestSort('name')}
-                >
-                  <div className="flex items-center">
-                    Usuario {getSortIcon('name')}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
-                  onClick={() => requestSort('email')}
-                >
-                  <div className="flex items-center">
-                    Email {getSortIcon('email')}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
-                  onClick={() => requestSort('role')}
-                >
-                  <div className="flex items-center">
-                    Rol {getSortIcon('role')}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
-                  onClick={() => requestSort('createdAt')}
-                >
-                  <div className="flex items-center">
-                    Fecha Registro {getSortIcon('createdAt')}
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Usuario</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Perfil / Rol</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Estado</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {filteredUsers.map(user => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div className="font-medium text-gray-900">{user.name || 'Sin nombre'}</div>
+                  <div className="text-sm text-gray-500">{user.email}</div>
+                </td>
+                <td className="px-6 py-4">
+                  {user.accessRole ? (
+                    <span className="px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-md font-medium">{user.accessRole.name}</span>
+                  ) : (
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium">{user.role} (Legacy)</span>
+                  )}
+                </td>
+                <td className="px-6 py-4">
+                  <button 
+                    onClick={() => toggleStatus(user)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${user.isActive ? 'bg-green-50 text-green-700 hover:bg-red-50 hover:text-red-700' : 'bg-red-50 text-red-700 hover:bg-green-50 hover:text-green-700'}`}
+                  >
+                    {user.isActive ? <ShieldCheck size={14} /> : <ShieldOff size={14} />}
+                    {user.isActive ? 'Activo' : 'Inactivo'}
+                  </button>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button onClick={() => resetPassword(user)} className="text-gray-400 hover:text-orange-500 p-2" title="Restablecer Contraseña">
+                    <Key size={18} />
+                  </button>
+                  <button onClick={() => openEdit(user)} className="text-gray-400 hover:text-blue-600 p-2" title="Editar">
+                    <Edit3 size={18} />
+                  </button>
+                  <button onClick={() => handleDelete(user.id)} className="text-gray-400 hover:text-red-600 p-2 ml-1" title="Eliminar">
+                    <Trash2 size={18} />
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs border border-blue-100 uppercase">
-                        {(user.name || user.email).charAt(0)}
-                      </div>
-                      <span className="text-sm font-medium text-gray-900">{user.name || 'Sin nombre'}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-[10px] font-bold rounded-full border uppercase ${
-                      user.role === 'ADMIN' 
-                        ? 'bg-purple-50 text-purple-600 border-purple-100' 
-                        : user.role === 'EMPLOYEE'
-                        ? 'bg-blue-50 text-blue-600 border-blue-100'
-                        : 'bg-gray-50 text-gray-600 border-gray-100'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(user.createdAt).toLocaleDateString('es-CO')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end gap-2">
-                      <Link
-                        href={`/usuarios/editar/${user.id}`}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Editar"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                      </Link>
-                      {currentUser?.id !== user.id && (
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Eliminar"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    {searchTerm ? `No se encontraron resultados para "${searchTerm}"` : 'No hay usuarios registrados'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+            {filteredUsers.length === 0 && (
+              <tr><td colSpan={4} className="p-8 text-center text-gray-500">No hay usuarios</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-500"><X size={20} /></button>
+            </div>
+            
+            <div className="flex border-b border-gray-200 px-5 pt-3">
+              <button onClick={() => setActiveTab('datos')} className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === 'datos' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}>Datos Básicos</button>
+              <button onClick={() => setActiveTab('rol')} className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === 'rol' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}>Rol de Acceso</button>
+              <button onClick={() => setActiveTab('modulos')} className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === 'modulos' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}>Módulos Excepcionales</button>
+            </div>
+            
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 overflow-y-auto flex-1">
+                
+                {activeTab === 'datos' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                      <input type="text" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                      <input type="email" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                    </div>
+                    {!editingUser && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <input type="password" required value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'rol' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500">Asigna un perfil predefinido para aplicar automáticamente los permisos de ese perfil.</p>
+                    <select 
+                      value={form.accessRoleId} 
+                      onChange={e => setForm({...form, accessRoleId: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    >
+                      <option value="">-- Sin Rol (Personalizado) --</option>
+                      {roles.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {activeTab === 'modulos' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500 mb-4">Activa los módulos a los que este usuario tendrá acceso directamente (sobreescribe los del rol).</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {AVAILABLE_MODULES.map(mod => {
+                        const isSelected = form.moduleAccess.includes(mod);
+                        return (
+                          <div key={mod} onClick={() => toggleModule(mod)} className={`p-3 rounded-lg border text-sm cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-600'}`}>
+                            <div className="flex items-center justify-between">
+                              <span className="capitalize">{mod.replace('-', ' ')}</span>
+                              {isSelected && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+              <div className="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
+                <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-2"><Save size={16} /> Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

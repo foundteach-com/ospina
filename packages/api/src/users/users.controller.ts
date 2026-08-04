@@ -36,9 +36,19 @@ export class UsersController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() data: { name?: string; email?: string; role?: UserRole; password?: string; avatarUrl?: string }
+    @Body() data: { name?: string; email?: string; role?: UserRole; password?: string; avatarUrl?: string; isActive?: boolean; accessRoleId?: string; moduleAccess?: any; permissions?: any; }
   ) {
     return this.usersService.update(id, data);
+  }
+
+  @Patch(':id/toggle-status')
+  toggleStatus(@Param('id') id: string) {
+    return this.usersService.toggleStatus(id);
+  }
+
+  @Patch(':id/reset-password')
+  resetPassword(@Param('id') id: string, @Body() data: { password?: string }) {
+    return this.usersService.resetPassword(id, data.password);
   }
 
   @Delete(':id')

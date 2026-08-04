@@ -25,6 +25,7 @@ import { SstModule } from './sst/sst.module';
 import { LegalModule } from './legal/legal.module';
 import { ItModule } from './it/it.module';
 import { ComercialModule } from './comercial/comercial.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ComercialModule } from './comercial/comercial.module';
     PrismaModule, 
     UsersModule, 
     AuthModule, 
+    RolesModule,
     ProductsModule,
     PurchasesModule,
     SalesModule,
