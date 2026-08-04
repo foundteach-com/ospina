@@ -96,20 +96,20 @@ export default function RolesPage() {
       });
 
       if (res.ok) {
-        showAlert('success', `Rol ${isEdit ? 'actualizado' : 'creado'} correctamente`);
+        showAlert({ title: 'Éxito', message: `Rol ${isEdit ? 'actualizado' : 'creado'} correctamente`, type: 'success' });
         setIsModalOpen(false);
         fetchRoles();
       } else {
-        showAlert('error', 'Error al guardar el rol');
+        showAlert({ title: 'Error', message: 'Error al guardar el rol', type: 'danger' });
       }
     } catch (err) {
       console.error(err);
-      showAlert('error', 'Error de conexión');
+      showAlert({ title: 'Error', message: 'Error de conexión', type: 'danger' });
     }
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await confirm('¿Eliminar rol?', '¿Estás seguro de que deseas eliminar este rol? Se desasignará de los usuarios que lo tengan.');
+    const confirmed = await confirm({ title: '¿Eliminar rol?', message: '¿Estás seguro de que deseas eliminar este rol? Se desasignará de los usuarios que lo tengan.' });
     if (!confirmed) return;
 
     try {
@@ -119,10 +119,10 @@ export default function RolesPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
-        showAlert('success', 'Rol eliminado');
+        showAlert({ title: 'Éxito', message: 'Rol eliminado', type: 'success' });
         fetchRoles();
       } else {
-        showAlert('error', 'Error al eliminar el rol');
+        showAlert({ title: 'Error', message: 'Error al eliminar el rol', type: 'danger' });
       }
     } catch (err) {
       console.error(err);

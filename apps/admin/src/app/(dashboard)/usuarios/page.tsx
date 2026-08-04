@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useDialog } from '@/context/DialogContext';
 import { Plus, Search, Edit3, Trash2, Key, ShieldOff, ShieldCheck, X, Save } from 'lucide-react';
 
@@ -116,11 +115,11 @@ export default function UsersPage() {
       });
 
       if (res.ok) {
-        showAlert('success', `Usuario ${isEdit ? 'actualizado' : 'creado'} con éxito`);
+        showAlert({ title: 'Éxito', message: `Usuario ${isEdit ? 'actualizado' : 'creado'} con éxito`, type: 'success' });
         setIsModalOpen(false);
         fetchData();
       } else {
-        showAlert('error', 'Error al guardar el usuario');
+        showAlert({ title: 'Error', message: 'Error al guardar el usuario', type: 'danger' });
       }
     } catch (err) {
       console.error(err);
@@ -143,7 +142,7 @@ export default function UsersPage() {
   };
 
   const resetPassword = async (user: User) => {
-    const confirmed = await confirm('¿Restablecer contraseña?', `Se generará una contraseña temporal para ${user.email}`);
+    const confirmed = await confirm({ title: '¿Restablecer contraseña?', message: `Se generará una contraseña temporal para ${user.email}` });
     if (!confirmed) return;
     
     try {
@@ -155,7 +154,7 @@ export default function UsersPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        showAlert('success', `Contraseña temporal: ${data.tempPassword} (Cópiala, no se volverá a mostrar)`);
+        showAlert({ title: 'Contraseña Temporal', message: `Contraseña temporal: ${data.tempPassword} (Cópiala, no se volverá a mostrar)`, type: 'success' });
       }
     } catch (err) {
       console.error(err);
@@ -163,7 +162,7 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await confirm('¿Eliminar usuario?', 'Esta acción no se puede deshacer.', 'danger');
+    const confirmed = await confirm({ title: '¿Eliminar usuario?', message: 'Esta acción no se puede deshacer.', type: 'danger' });
     if (!confirmed) return;
     
     try {
