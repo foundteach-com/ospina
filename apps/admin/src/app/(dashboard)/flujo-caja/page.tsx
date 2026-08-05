@@ -317,7 +317,7 @@ export default function CashFlowPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Flujo de Caja</h1>
           <p className="text-gray-500">Control de ingresos y egresos de la empresa.</p>
         </div>
-        {can('flujo-caja:update') || can('flujo-caja:delete') || can('flujo-caja:create') && (
+        {(can('flujo-caja:update') || can('flujo-caja:delete') || can('flujo-caja:create')) && (
           <button
             onClick={handleNewRecord}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
