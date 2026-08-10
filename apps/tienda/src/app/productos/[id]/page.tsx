@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import AddToCart from './AddToCart';
 
-export const revalidate = 60; // Revalidate every 60 seconds (ISR)
+export const dynamic = 'force-dynamic';
 
 interface Product {
   id: string;
@@ -20,8 +20,10 @@ interface Product {
 // Generate metadata for SEO dynamically based on the product
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return { title: 'Ospina Comercializadora' };
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${resolvedParams.id}`);
+    const res = await fetch(`${apiUrl}/products/${resolvedParams.id}`);
     if (res.ok) {
       const product: Product = await res.json();
       return {
@@ -38,10 +40,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 async function getProduct(id: string): Promise<Product | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return null;
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
-      next: { revalidate: 60 }
-    });
+    const res = await fetch(`${apiUrl}/products/${id}`);
 
     if (!res.ok) {
       if (res.status === 404) return null;
