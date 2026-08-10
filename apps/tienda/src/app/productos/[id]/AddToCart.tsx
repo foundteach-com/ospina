@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuotation } from '../../../context/QuotationContext';
+import { useQuotation } from '../../context/QuotationContext';
 
 interface Product {
   id: string;
