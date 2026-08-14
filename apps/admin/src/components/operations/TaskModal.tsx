@@ -14,6 +14,9 @@ interface OpTask {
   priority: string;
   scheduledDate: string | null;
   dueDate: string | null;
+  isAllDay?: boolean;
+  startTime?: string | null;
+  endTime?: string | null;
   processId?: string;
   process?: OpProcess;
   [key: string]: any;
@@ -42,7 +45,9 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
     frequency: 'CUSTOM',
     scheduledDate: '',
     dueDate: '',
-    time: '',
+    isAllDay: true,
+    startTime: '',
+    endTime: '',
     observations: '',
     recurrenceInterval: 1,
     daysOfWeek: '',
@@ -65,7 +70,9 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
           frequency: editingTask.frequency || 'CUSTOM',
           scheduledDate: formatDateInput(editingTask.scheduledDate),
           dueDate: formatDateInput(editingTask.dueDate),
-          time: editingTask.time || '',
+          isAllDay: editingTask.isAllDay !== false,
+          startTime: editingTask.startTime || '',
+          endTime: editingTask.endTime || '',
           observations: editingTask.observations || '',
           recurrenceInterval: editingTask.recurrenceInterval || 1,
           daysOfWeek: editingTask.daysOfWeek || '',
@@ -85,7 +92,9 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
           frequency: 'CUSTOM',
           scheduledDate: '',
           dueDate: '',
-          time: '',
+          isAllDay: true,
+          startTime: '',
+          endTime: '',
           observations: '',
           recurrenceInterval: 1,
           daysOfWeek: '',
@@ -111,10 +120,11 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
       
       const payload: Record<string, any> = {
         ...form,
-        // Only include dates if they were entered
         scheduledDate: form.scheduledDate ? `${form.scheduledDate}T12:00:00.000Z` : null,
         dueDate: form.dueDate ? `${form.dueDate}T12:00:00.000Z` : null,
         recurrenceEndDate: form.recurrenceEndDate ? `${form.recurrenceEndDate}T12:00:00.000Z` : null,
+        startTime: form.isAllDay ? null : (form.startTime || null),
+        endTime: form.isAllDay ? null : (form.endTime || null),
       };
 
       if (payload.frequency === 'MONTHLY' && payload.monthlyType === 'DAY_OF_WEEK' && !payload.daysOfWeek) {
@@ -271,6 +281,41 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
                   value={form.dueDate}
                   onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
                 />
+              </div>
+              
+              <div className="sm:col-span-2 space-y-3 bg-gray-50/50 p-4 border border-gray-100 rounded-xl">
+                <label className="flex items-center gap-2 cursor-pointer w-max">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    checked={form.isAllDay}
+                    onChange={(e) => setForm({ ...form, isAllDay: e.target.checked })}
+                  />
+                  <span className="text-sm font-semibold text-gray-700">Todo el día</span>
+                </label>
+                
+                {!form.isAllDay && (
+                  <div className="flex items-center gap-4 animate-in fade-in slide-in-from-top-1">
+                    <div className="flex-1 space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-600">Hora de inicio</label>
+                      <input
+                        type="time"
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                        value={form.startTime || ''}
+                        onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-600">Hora de finalización</label>
+                      <input
+                        type="time"
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                        value={form.endTime || ''}
+                        onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

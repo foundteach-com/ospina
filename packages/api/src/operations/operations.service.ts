@@ -32,7 +32,7 @@ export class OperationsService {
         skip,
         take,
         where: { ...where, deletedAt: null },
-        orderBy: orderBy || { createdAt: 'desc' },
+        orderBy: orderBy || { name: 'asc' },
         include: {
           tasks: {
             where: { deletedAt: null },
@@ -205,6 +205,9 @@ export class OperationsService {
         currentOccurrence: currentCount + 1,
         scheduledDate: nextDate,
         dueDate: nextDate,
+        isAllDay: currentTask.isAllDay,
+        startTime: currentTask.startTime,
+        endTime: currentTask.endTime,
         responsibleId: currentTask.responsibleId,
         observations: currentTask.observations,
       },
@@ -250,12 +253,52 @@ export class OperationsService {
     }
 
     if (freq === 'MONTHLY') {
+      next.setMonth(next.getMonth() + interval);
+      
       if (task.monthlyType === 'DAY_OF_MONTH' && task.monthDay) {
-        next.setMonth(next.getMonth() + interval);
-        next.setDate(Math.min(task.monthDay, 28)); // Safe day
+        if (task.monthDay === -1) {
+          // Último día del mes
+          next.setMonth(next.getMonth() + 1, 0);
+        } else {
+          const targetMonth = next.getMonth();
+          next.setDate(task.monthDay);
+          if (next.getMonth() !== targetMonth) {
+            next.setDate(0); // Volver al último día del mes objetivo si se pasó
+          }
+        }
         return next;
       }
-      next.setMonth(next.getMonth() + interval);
+      
+      if (task.monthlyType === 'DAY_OF_WEEK' && task.weekOfMonth && task.daysOfWeek) {
+        const daysMap: Record<string, number> = { SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 };
+        // Tomar el primer día (asumiendo que en este modo solo se selecciona uno)
+        const targetDay = daysMap[task.daysOfWeek.split(',')[0].trim()];
+        
+        if (targetDay !== undefined) {
+          next.setDate(1); // Ir al inicio del mes
+          const targetMonth = next.getMonth();
+          
+          if (task.weekOfMonth === -1) {
+            // Última ocurrencia del día en el mes
+            next.setMonth(targetMonth + 1, 0);
+            while (next.getDay() !== targetDay) {
+              next.setDate(next.getDate() - 1);
+            }
+          } else {
+            // 1ra, 2da, 3ra, 4ta ocurrencia
+            while (next.getDay() !== targetDay) {
+              next.setDate(next.getDate() + 1);
+            }
+            next.setDate(next.getDate() + (7 * (task.weekOfMonth - 1)));
+            // Si nos pasamos de mes, volver una semana
+            if (next.getMonth() !== targetMonth) {
+              next.setDate(next.getDate() - 7);
+            }
+          }
+        }
+        return next;
+      }
+
       return next;
     }
 

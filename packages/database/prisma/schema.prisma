@@ -576,7 +576,10 @@ model OpTask {
   dayOfWeek       Int?
   scheduledDate   DateTime?
   dueDate         DateTime?
-  time            String?
+  isAllDay        Boolean         @default(true)
+  startTime       String?
+  endTime         String?
+  time            String?         // Retained for backward compatibility if needed temporarily
   responsibleId   String?
   observations    String?
   relatedModule   String?
