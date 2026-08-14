@@ -4,7 +4,6 @@ import { X, Save } from 'lucide-react';
 interface OpProcess {
   id: string;
   name: string;
-  code: string;
   color?: string;
 }
 
@@ -196,7 +195,7 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
               >
                 <option value="" disabled>Seleccione un proceso...</option>
                 {processes.map(p => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>
