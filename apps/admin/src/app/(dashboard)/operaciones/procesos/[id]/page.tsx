@@ -16,7 +16,6 @@ interface OpTask {
 interface OpProcessDetail {
   id: string;
   name: string;
-  code: string;
   description: string | null;
   objective: string | null;
   status: string;
@@ -71,7 +70,6 @@ export default function ProcessDetailPage(props: { params: Promise<{ id: string 
         </Link>
         <div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-100 px-2.5 py-1 rounded-md">{processInfo.code}</span>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
               processInfo.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
             }`}>

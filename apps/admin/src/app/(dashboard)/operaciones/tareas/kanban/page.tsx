@@ -11,7 +11,7 @@ interface OpTask {
   status: string;
   dueDate: string | null;
   scheduledDate: string | null;
-  process?: { name: string; color: string; code: string };
+  process?: { name: string; color: string };
 }
 
 const statusColumns = [
@@ -166,7 +166,7 @@ export default function KanbanPage() {
                             className="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-white mb-1.5 shadow-sm uppercase tracking-wider"
                             style={{ backgroundColor: task.process.color }}
                           >
-                            {task.process.code}
+                            {task.process.name}
                           </span>
                         )}
                         <h4 className="font-bold text-gray-800 leading-snug group-hover:text-blue-600 transition-colors">

@@ -53,13 +53,12 @@ interface OpTask {
   createdAt?: string | null;
   updatedAt?: string | null;
   processId?: string;
-  process?: { id: string; name: string; code: string; color: string };
+  process?: { id: string; name: string; color: string };
 }
 
 interface OpProcess {
   id: string;
   name: string;
-  code: string;
   color?: string;
 }
 
@@ -361,7 +360,7 @@ export default function OperationsDashboard() {
   const displayed = tasks
     .filter(t => {
       const q = search.toLowerCase();
-      const matchSearch = !q || t.name.toLowerCase().includes(q) || t.process?.code?.toLowerCase().includes(q) || t.process?.name?.toLowerCase().includes(q);
+      const matchSearch = !q || t.name.toLowerCase().includes(q) || t.process?.name?.toLowerCase().includes(q);
       const matchStatus = filterStatus === 'ALL' || t.status === filterStatus;
       const matchPriority = filterPriority === 'ALL' || t.priority === filterPriority;
       const matchProcess = filterProcess === 'ALL' || t.processId === filterProcess;
@@ -377,7 +376,7 @@ export default function OperationsDashboard() {
         case 'status':        cmp = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99); break;
         case 'scheduledDate': cmp = compareDates(a.scheduledDate, b.scheduledDate); break;
         case 'dueDate':       cmp = compareDates(a.dueDate, b.dueDate); break;
-        case 'process':       cmp = (a.process?.code || '').localeCompare(b.process?.code || '', 'es'); break;
+        case 'process':       cmp = (a.process?.name || '').localeCompare(b.process?.name || '', 'es'); break;
         case 'updatedAt':     cmp = compareDates(a.updatedAt, b.updatedAt); break;
         case 'createdAt':     cmp = compareDates(a.createdAt, b.createdAt); break;
       }
@@ -518,7 +517,7 @@ export default function OperationsDashboard() {
                 <select value={filterProcess} onChange={e => setFilterProcess(e.target.value)}
                   className={`appearance-none pl-3 pr-7 py-2 text-xs border rounded-xl outline-none transition-all font-medium cursor-pointer ${filterProcess !== 'ALL' ? 'bg-violet-50 border-violet-300 text-violet-700 ring-2 ring-violet-100' : 'bg-white border-slate-200 text-slate-600'}`}>
                   <option value="ALL">Todos los procesos</option>
-                  {processes.map(p => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
+                  {processes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -619,7 +618,7 @@ export default function OperationsDashboard() {
                             <div className="flex items-center gap-1.5">
                               <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: task.process.color }} />
                               <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-lg tracking-wide whitespace-nowrap">
-                                {task.process.code}
+                                {task.process.name}
                               </span>
                             </div>
                           ) : <span className="text-slate-300 text-xs">—</span>}
@@ -738,7 +737,7 @@ export default function OperationsDashboard() {
               <p className="text-sm text-slate-500 mb-4">Esta acción no se puede deshacer.</p>
               <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-5">
                 <p className="text-sm font-semibold text-slate-800 truncate">{taskToDelete.name}</p>
-                {taskToDelete.process && <p className="text-xs text-slate-400 mt-0.5">{taskToDelete.process.code} · {taskToDelete.process.name}</p>}
+                {taskToDelete.process && <p className="text-xs text-slate-400 mt-0.5">{taskToDelete.process.name}</p>}
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setTaskToDelete(null)} disabled={deleting}

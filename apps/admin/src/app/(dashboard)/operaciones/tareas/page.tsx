@@ -17,13 +17,12 @@ interface OpTask {
   observations?: string | null;
   responsibleId?: string | null;
   processId?: string;
-  process?: { id: string; name: string; color: string; code: string };
+  process?: { id: string; name: string; color: string };
 }
 
 interface OpProcess {
   id: string;
   name: string;
-  code: string;
 }
 
 interface User {
@@ -456,7 +455,7 @@ export default function TasksListPage() {
                       {t.process ? (
                         <div className="flex items-center gap-2">
                           <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: t.process.color }} />
-                          <span className="text-gray-700 font-medium text-xs bg-gray-100 px-2 py-1 rounded">{t.process.code}</span>
+                          <span className="text-gray-700 font-medium text-xs bg-gray-100 px-2 py-1 rounded">{t.process.name}</span>
                         </div>
                       ) : (
                         <span className="text-gray-400">—</span>
@@ -596,7 +595,7 @@ export default function TasksListPage() {
               <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-6">
                 <p className="text-sm font-semibold text-gray-800">{taskToDelete.name}</p>
                 {taskToDelete.process && (
-                  <p className="text-xs text-gray-500 mt-1">Proceso: {taskToDelete.process.code} — {taskToDelete.process.name}</p>
+                  <p className="text-xs text-gray-500 mt-1">Proceso: {taskToDelete.process.name}</p>
                 )}
               </div>
               <div className="flex justify-end gap-3">
@@ -631,7 +630,7 @@ export default function TasksListPage() {
                 </span>
                 {selectedTask.process && (
                   <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    {selectedTask.process.code}
+                    {selectedTask.process.name}
                   </span>
                 )}
               </div>

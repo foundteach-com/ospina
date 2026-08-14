@@ -33,7 +33,6 @@ export class OperationsController {
   createProcess(@Body() data: any) {
     return this.operationsService.createProcess({
       name: data.name,
-      code: data.code,
       description: data.description,
       objective: data.objective,
       status: data.status,
@@ -68,7 +67,6 @@ export class OperationsController {
   ) {
     return this.operationsService.updateProcess(id, {
       name: data.name,
-      code: data.code,
       description: data.description,
       objective: data.objective,
       status: data.status,

@@ -12,7 +12,7 @@ interface OpTask {
   status: string;
   priority: string;
   scheduledDate: string | null;
-  process?: { color: string; code: string };
+  process?: { color: string; name: string };
 }
 
 export default function CronogramaPage() {
@@ -129,7 +129,7 @@ export default function CronogramaPage() {
                             <div className="pl-3">
                               <div className="flex justify-between items-start mb-1 gap-2">
                                 <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-1.5 py-0.5 rounded tracking-wide">
-                                  {task.process?.code || 'GEN'}
+                                  {task.process?.name || ''}
                                 </span>
                                 {task.status === 'COMPLETED' ? (
                                   <CheckCircle2 size={14} className="text-emerald-500" />

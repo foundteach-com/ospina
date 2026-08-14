@@ -7,7 +7,6 @@ import { Plus, Search, Activity, MoreVertical, X, Save, Edit3, Trash2 } from 'lu
 interface OpProcess {
   id: string;
   name: string;
-  code: string;
   description: string | null;
   objective: string | null;
   status: string;
@@ -28,7 +27,6 @@ export default function ProcessesCatalogPage() {
 
   const [form, setForm] = useState({
     name: '',
-    code: '',
     description: '',
     objective: '',
     color: '#3b82f6',
@@ -58,7 +56,7 @@ export default function ProcessesCatalogPage() {
 
   const openCreateModal = () => {
     setEditingProcess(null);
-    setForm({ name: '', code: '', description: '', objective: '', color: '#3b82f6', status: 'ACTIVE' });
+    setForm({ name: '', description: '', objective: '', color: '#3b82f6', status: 'ACTIVE' });
     setIsModalOpen(true);
   };
 
@@ -66,7 +64,6 @@ export default function ProcessesCatalogPage() {
     setEditingProcess(processItem);
     setForm({
       name: processItem.name || '',
-      code: processItem.code || '',
       description: processItem.description || '',
       objective: processItem.objective || '',
       color: processItem.color || '#3b82f6',
@@ -78,7 +75,7 @@ export default function ProcessesCatalogPage() {
 
   const handleSaveProcess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.code) return;
+    if (!form.name) return;
     setSaving(true);
     try {
       const token = localStorage.getItem('access_token');
@@ -97,7 +94,7 @@ export default function ProcessesCatalogPage() {
       if (res.ok) {
         setIsModalOpen(false);
         setEditingProcess(null);
-        setForm({ name: '', code: '', description: '', objective: '', color: '#3b82f6', status: 'ACTIVE' });
+        setForm({ name: '', description: '', objective: '', color: '#3b82f6', status: 'ACTIVE' });
         fetchProcesses();
       }
     } catch (error) {
@@ -108,8 +105,7 @@ export default function ProcessesCatalogPage() {
   };
 
   const filtered = processes.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.code.toLowerCase().includes(searchTerm.toLowerCase())
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -133,7 +129,7 @@ export default function ProcessesCatalogPage() {
           <Search className="absolute left-4 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Buscar por código o nombre..."
+            placeholder="Buscar por nombre..."
             className="pl-12 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl w-full max-w-md focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -156,8 +152,7 @@ export default function ProcessesCatalogPage() {
                       <Activity size={26} />
                     </div>
                     <div>
-                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 px-2 py-0.5 rounded-md">{p.code}</span>
-                      <h3 className="font-bold text-gray-900 leading-tight mt-1 text-lg">{p.name}</h3>
+                      <h3 className="font-bold text-gray-900 leading-tight text-lg">{p.name}</h3>
                     </div>
                   </div>
 
@@ -239,29 +234,16 @@ export default function ProcessesCatalogPage() {
             </div>
             
             <form onSubmit={handleSaveProcess} className="p-6 space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Código</label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="Ej. HSEQ-01"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Nombre del Proceso</label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="Ej. Gestión de Compras"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-gray-700">Nombre del Proceso</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Ej. Gestión de Compras"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
               </div>
 
               <div className="space-y-1.5">

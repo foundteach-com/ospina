@@ -14,7 +14,7 @@ interface OpTask {
   priority: string;
   scheduledDate: string | null;
   dueDate: string | null;
-  process?: { id: string; name: string; color: string; code: string };
+  process?: { id: string; name: string; color: string };
   description?: string | null;
   processId?: string;
   frequency?: string | null;
@@ -24,7 +24,6 @@ interface OpTask {
 interface OpProcess {
   id: string;
   name: string;
-  code: string;
 }
 
 export default function CalendarioPage() {
@@ -143,7 +142,7 @@ export default function CalendarioPage() {
                 }}
                 title={t.name}
               >
-                <span className="font-bold opacity-80 mr-1">{t.process?.code}</span>
+                <span className="font-bold opacity-80 mr-1">{t.process?.name}</span>
                 {t.name}
               </div>
             ))}
