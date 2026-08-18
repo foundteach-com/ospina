@@ -250,7 +250,7 @@ export default function TaskModal({ isOpen, onClose, onSaved, editingTask, proce
                   onChange={(e) => setForm({ ...form, frequency: e.target.value })}
                 >
                   <option value="CUSTOM">Única vez (No se repite)</option>
-                  <option value="DAILY">Diaria (Todos los días / Intervalo)</option>
+                  <option value="DAILY">Diaria (Lunes a Viernes / Intervalo)</option>
                   <option value="WEEKLY">Semanal (Días específicos)</option>
                   <option value="MONTHLY">Mensual (Día del mes)</option>
                   <option value="ANNUAL">Anual (Cada año)</option>

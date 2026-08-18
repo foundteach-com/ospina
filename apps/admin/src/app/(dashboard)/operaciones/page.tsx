@@ -138,8 +138,11 @@ function isTaskForToday(t: OpTask, todayStr: string): boolean {
     return false; // Sin fecha = no es tarea de hoy
   }
 
-  // Diaria: siempre aplica
-  if (freq === 'DAILY') return true;
+  // Diaria: aplica de lunes a viernes (excluye fines de semana)
+  if (freq === 'DAILY') {
+    const dayOfWeek = todayLocal.getDay();
+    return dayOfWeek !== 0 && dayOfWeek !== 6; // 0 = Domingo, 6 = Sábado
+  }
 
   // Semanal o quincenal: verificar si HOY es uno de los días configurados
   if (freq === 'WEEKLY' || freq === 'BIWEEKLY') {

@@ -222,7 +222,12 @@ export class OperationsService {
     const next = new Date(baseDate);
 
     if (freq === 'DAILY') {
-      next.setDate(next.getDate() + interval);
+      for (let i = 0; i < interval; i++) {
+        next.setDate(next.getDate() + 1);
+        while (next.getDay() === 0 || next.getDay() === 6) {
+          next.setDate(next.getDate() + 1);
+        }
+      }
       return next;
     }
 
