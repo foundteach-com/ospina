@@ -243,6 +243,16 @@ function ComprasVsVentasPorMesChart() {
 
   const hasFilters = clientFilter || paymentTypeFilter || paymentMethodFilter;
 
+  // Helper for integer format currency
+  const formatCurrencyInt = (val: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(val || 0);
+  };
+
   return (
     <div className="space-y-5">
       {/* Header + Controles */}
@@ -252,7 +262,7 @@ function ComprasVsVentasPorMesChart() {
             <div className="w-1 h-6 bg-emerald-500 rounded-full" />
             <h3 className="text-base font-bold text-gray-800">Compras vs Ventas por Mes</h3>
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 ml-3">Comparativa de facturación vs gastos</p>
+          <p className="text-xs text-gray-500 mt-0.5 ml-3">Comparativa de facturación vs compras</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -332,14 +342,14 @@ function ComprasVsVentasPorMesChart() {
             {/* Total Ventas Año */}
             <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/25">
               <p className="text-xs font-semibold uppercase tracking-wider opacity-75 mb-2">Ventas Totales {year}</p>
-              <p className="text-3xl font-extrabold leading-tight">{compactCurrency(totalSalesYear)}</p>
+              <p className="text-3xl font-extrabold leading-tight">{formatCurrencyInt(totalSalesYear)}</p>
               <p className="text-xs mt-2 opacity-70">{filteredSales.length} registros de venta</p>
             </div>
 
             {/* Total Compras Año */}
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-lg shadow-amber-500/25">
               <p className="text-xs font-semibold uppercase tracking-wider opacity-75 mb-2">Compras Totales {year}</p>
-              <p className="text-3xl font-extrabold leading-tight">{compactCurrency(totalPurchasesYear)}</p>
+              <p className="text-3xl font-extrabold leading-tight">{formatCurrencyInt(totalPurchasesYear)}</p>
               <p className="text-xs mt-2 opacity-70">{filteredPurchases.length} registros de compra</p>
             </div>
 
@@ -348,7 +358,7 @@ function ComprasVsVentasPorMesChart() {
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
                 Ventas {MONTH_LABELS[currentMonthIdx]} {year}
               </p>
-              <p className="text-3xl font-extrabold text-emerald-600 leading-tight">{compactCurrency(currentMonthSales)}</p>
+              <p className="text-3xl font-extrabold text-emerald-600 leading-tight">{formatCurrencyInt(currentMonthSales)}</p>
               <p className="text-xs mt-2 text-gray-400">Mes actual (Ventas)</p>
             </div>
 
@@ -357,7 +367,7 @@ function ComprasVsVentasPorMesChart() {
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
                 Compras {MONTH_LABELS[currentMonthIdx]} {year}
               </p>
-              <p className="text-3xl font-extrabold text-amber-600 leading-tight">{compactCurrency(currentMonthPurchases)}</p>
+              <p className="text-3xl font-extrabold text-amber-600 leading-tight">{formatCurrencyInt(currentMonthPurchases)}</p>
               <p className="text-xs mt-2 text-gray-400">Mes actual (Compras)</p>
             </div>
           </div>
