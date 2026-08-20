@@ -130,15 +130,16 @@ function EmptyState() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUB-SECCIÓN INDEPENDIENTE: VENTAS POR MES (Power BI Style)
+// SUB-SECCIÓN INDEPENDIENTE: COMPRAS VS VENTAS POR MES (Power BI Style)
 // ─────────────────────────────────────────────────────────────────────────────
-function VentasPorMesChart() {
+function ComprasVsVentasPorMesChart() {
   const currentYear = new Date().getFullYear();
   const currentMonthIdx = new Date().getMonth();
 
   const [year, setYear] = useState(currentYear);
   const [loading, setLoading] = useState(true);
   const [rawSales, setRawSales] = useState<any[]>([]);
+  const [rawPurchases, setRawPurchases] = useState<any[]>([]);
   const [clientFilter, setClientFilter] = useState('');
   const [paymentTypeFilter, setPaymentTypeFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
@@ -152,12 +153,16 @@ function VentasPorMesChart() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    apiFetch(`/sales?year=${year}`)
-      .then((data: any) => {
+    Promise.all([
+      apiFetch(`/sales?year=${year}`),
+      apiFetch(`/purchases?year=${year}`)
+    ])
+      .then(([salesData, purchasesData]) => {
         if (!active) return;
-        setRawSales(Array.isArray(data) ? data : []);
+        setRawSales(Array.isArray(salesData) ? salesData : []);
+        setRawPurchases(Array.isArray(purchasesData) ? purchasesData : []);
       })
-      .catch(err => console.error('VentasPorMes error:', err))
+      .catch(err => console.error('ComprasVsVentas error:', err))
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [year]);
@@ -175,13 +180,23 @@ function VentasPorMesChart() {
       .filter(s => !paymentMethodFilter || s.paymentMethod === paymentMethodFilter),
   [rawSales, clientFilter, paymentTypeFilter, paymentMethodFilter]);
 
+  const filteredPurchases = useMemo(() =>
+    rawPurchases
+      .filter(p => !paymentTypeFilter || p.paymentType === paymentTypeFilter)
+      .filter(p => !paymentMethodFilter || p.paymentMethod === paymentMethodFilter),
+  [rawPurchases, paymentTypeFilter, paymentMethodFilter]);
+
   const monthlyData = useMemo(() => {
     const months = MONTH_LABELS.map((label, i) => ({
       month: label,
-      total: 0,
-      count: 0,
+      totalSales: 0,
+      totalPurchases: 0,
+      salesCount: 0,
+      purchasesCount: 0,
       isCurrentMonth: year === currentYear && i === currentMonthIdx,
     }));
+    
+    // Process Sales
     filteredSales.forEach(sale => {
       const idx = new Date(sale.date).getMonth();
       if (idx < 0 || idx > 11) return;
@@ -191,28 +206,40 @@ function VentasPorMesChart() {
         const ivaRate = (Number(item.product?.salesIvaPercent) || 19) / 100;
         saleTotal += net * (1 + ivaRate);
       });
-      months[idx].total += saleTotal;
-      months[idx].count += 1;
+      months[idx].totalSales += saleTotal;
+      months[idx].salesCount += 1;
     });
-    return months.map(m => ({ ...m, total: Math.round(m.total) }));
-  }, [filteredSales, year, currentYear, currentMonthIdx]);
 
-  const totalAnual = useMemo(() => monthlyData.reduce((s, m) => s + m.total, 0), [monthlyData]);
-  const currentMonthTotal = monthlyData[currentMonthIdx]?.total ?? 0;
-  const prevMonthTotal = currentMonthIdx > 0 ? (monthlyData[currentMonthIdx - 1]?.total ?? 0) : 0;
-  const pctChange = prevMonthTotal > 0
-    ? Math.round(((currentMonthTotal - prevMonthTotal) / prevMonthTotal) * 100)
-    : (currentMonthTotal > 0 ? 100 : 0);
+    // Process Purchases
+    filteredPurchases.forEach(purchase => {
+      const idx = new Date(purchase.date).getMonth();
+      if (idx < 0 || idx > 11) return;
+      let purchaseTotal = 0;
+      purchase.items?.forEach((item: any) => {
+        const totalLine = Number(item.quantity) * Number(item.purchasePrice);
+        const ivaRate = (Number(item.product?.purchaseIvaPercent) || 19) / 100;
+        const baseLine = totalLine / (1 + ivaRate);
+        const ivaLine = totalLine - baseLine;
+        const rfValue = baseLine * ((Number(item.reteFuentePercent) || 0) / 100);
+        const riValue = ivaLine * ((Number(item.reteIvaPercent) || 0) / 100);
+        purchaseTotal += (totalLine - rfValue - riValue);
+      });
+      months[idx].totalPurchases += purchaseTotal;
+      months[idx].purchasesCount += 1;
+    });
 
-  const bestMonthIdx = useMemo(() => {
-    if (monthlyData.every(m => m.total === 0)) return -1;
-    return monthlyData.reduce((bi, m, i) => (m.total > monthlyData[bi].total ? i : bi), 0);
-  }, [monthlyData]);
+    return months.map(m => ({
+      ...m,
+      totalSales: Math.round(m.totalSales),
+      totalPurchases: Math.round(m.totalPurchases)
+    }));
+  }, [filteredSales, filteredPurchases, year, currentYear, currentMonthIdx]);
 
-  const avgMonthly = useMemo(() => {
-    const active = monthlyData.filter(m => m.total > 0);
-    return active.length > 0 ? totalAnual / active.length : 0;
-  }, [monthlyData, totalAnual]);
+  const totalSalesYear = useMemo(() => monthlyData.reduce((s, m) => s + m.totalSales, 0), [monthlyData]);
+  const totalPurchasesYear = useMemo(() => monthlyData.reduce((s, m) => s + m.totalPurchases, 0), [monthlyData]);
+  
+  const currentMonthSales = monthlyData[currentMonthIdx]?.totalSales ?? 0;
+  const currentMonthPurchases = monthlyData[currentMonthIdx]?.totalPurchases ?? 0;
 
   const hasFilters = clientFilter || paymentTypeFilter || paymentMethodFilter;
 
@@ -223,9 +250,9 @@ function VentasPorMesChart() {
         <div>
           <div className="flex items-center gap-2">
             <div className="w-1 h-6 bg-emerald-500 rounded-full" />
-            <h3 className="text-base font-bold text-gray-800">Ventas por Mes</h3>
+            <h3 className="text-base font-bold text-gray-800">Compras vs Ventas por Mes</h3>
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 ml-3">Facturación mensual con IVA incluido</p>
+          <p className="text-xs text-gray-500 mt-0.5 ml-3">Comparativa de facturación vs gastos</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -246,11 +273,12 @@ function VentasPorMesChart() {
             </select>
           </div>
 
-          {/* Filtro Cliente */}
+          {/* Filtro Cliente (solo ventas) */}
           <select
             value={clientFilter}
             onChange={e => setClientFilter(e.target.value)}
             className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm"
+            title="Solo aplica a ventas"
           >
             <option value="">Todos los clientes</option>
             {uniqueClients.map(c => <option key={c} value={c}>{c}</option>)}
@@ -301,47 +329,36 @@ function VentasPorMesChart() {
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            {/* Total Año */}
+            {/* Total Ventas Año */}
             <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/25">
-              <p className="text-xs font-semibold uppercase tracking-wider opacity-75 mb-2">Total {year}</p>
-              <p className="text-3xl font-extrabold leading-tight">{compactCurrency(totalAnual)}</p>
-              <p className="text-xs mt-2 opacity-70">{filteredSales.length} ventas registradas</p>
+              <p className="text-xs font-semibold uppercase tracking-wider opacity-75 mb-2">Ventas Totales {year}</p>
+              <p className="text-3xl font-extrabold leading-tight">{compactCurrency(totalSalesYear)}</p>
+              <p className="text-xs mt-2 opacity-70">{filteredSales.length} registros de venta</p>
             </div>
 
-            {/* Mes Actual */}
+            {/* Total Compras Año */}
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-lg shadow-amber-500/25">
+              <p className="text-xs font-semibold uppercase tracking-wider opacity-75 mb-2">Compras Totales {year}</p>
+              <p className="text-3xl font-extrabold leading-tight">{compactCurrency(totalPurchasesYear)}</p>
+              <p className="text-xs mt-2 opacity-70">{filteredPurchases.length} registros de compra</p>
+            </div>
+
+            {/* Ventas Mes Actual */}
             <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                {MONTH_LABELS[currentMonthIdx]} {year}
+                Ventas {MONTH_LABELS[currentMonthIdx]} {year}
               </p>
-              <p className="text-3xl font-extrabold text-gray-800 leading-tight">{compactCurrency(currentMonthTotal)}</p>
-              <div className={`flex items-center gap-1 mt-2 text-xs font-semibold ${
-                pctChange >= 0 ? 'text-emerald-500' : 'text-red-500'
-              }`}>
-                {pctChange >= 0 ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4 L22 20 L2 20 Z"/></svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20 L2 4 L22 4 Z"/></svg>
-                )}
-                {Math.abs(pctChange)}% vs mes anterior
-              </div>
+              <p className="text-3xl font-extrabold text-emerald-600 leading-tight">{compactCurrency(currentMonthSales)}</p>
+              <p className="text-xs mt-2 text-gray-400">Mes actual (Ventas)</p>
             </div>
 
-            {/* Mejor Mes */}
+            {/* Compras Mes Actual */}
             <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Mejor Mes</p>
-              <p className="text-3xl font-extrabold text-blue-600 leading-tight">
-                {bestMonthIdx >= 0 ? compactCurrency(monthlyData[bestMonthIdx].total) : compactCurrency(0)}
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                Compras {MONTH_LABELS[currentMonthIdx]} {year}
               </p>
-              <p className="text-xs mt-2 text-gray-400">
-                {bestMonthIdx >= 0 ? `${MONTH_LABELS[bestMonthIdx]} ${year}` : 'Sin datos'}
-              </p>
-            </div>
-
-            {/* Promedio Mensual */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Promedio Mensual</p>
-              <p className="text-3xl font-extrabold text-violet-600 leading-tight">{compactCurrency(avgMonthly)}</p>
-              <p className="text-xs mt-2 text-gray-400">Meses con actividad</p>
+              <p className="text-3xl font-extrabold text-amber-600 leading-tight">{compactCurrency(currentMonthPurchases)}</p>
+              <p className="text-xs mt-2 text-gray-400">Mes actual (Compras)</p>
             </div>
           </div>
 
@@ -349,25 +366,17 @@ function VentasPorMesChart() {
           <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
               <div>
-                <p className="text-sm font-bold text-gray-800">Facturación Mensual · {year}</p>
-                <p className="text-xs text-gray-400 mt-0.5">Valor total con IVA incluido — Ene a Dic</p>
+                <p className="text-sm font-bold text-gray-800">Comparativa Mensual · {year}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Ventas vs Compras — Ene a Dic</p>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-emerald-400 inline-block" />
-                  Mes actual
+                  <span className="w-3 h-3 rounded-sm bg-emerald-500 inline-block" />
+                  Ventas
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-blue-500 inline-block" />
-                  Mejor mes
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-emerald-200 inline-block" />
-                  Otros meses
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-5 border-t-2 border-dashed border-violet-400 inline-block" />
-                  Promedio
+                  <span className="w-3 h-3 rounded-sm bg-amber-500 inline-block" />
+                  Compras
                 </span>
               </div>
             </div>
@@ -391,40 +400,34 @@ function VentasPorMesChart() {
                 <Tooltip
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
-                    const val = Number(payload[0].value);
-                    const cnt = (payload[0].payload as any).count;
+                    const salesVal = Number(payload.find(p => p.dataKey === 'totalSales')?.value || 0);
+                    const purchVal = Number(payload.find(p => p.dataKey === 'totalPurchases')?.value || 0);
+                    const salesCnt = (payload[0].payload as any).salesCount;
+                    const purchCnt = (payload[0].payload as any).purchasesCount;
                     return (
-                      <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-sm min-w-[160px]">
-                        <p className="font-bold text-gray-700 mb-1">{label} {year}</p>
-                        <p className="text-emerald-600 font-bold text-base">{formatCurrency(val)}</p>
-                        {cnt > 0 && <p className="text-gray-400 text-xs mt-1">{cnt} transacciones</p>}
+                      <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-sm min-w-[180px]">
+                        <p className="font-bold text-gray-700 mb-2">{label} {year}</p>
+                        
+                        <div className="mb-2">
+                          <p className="text-emerald-600 font-bold text-base flex justify-between">
+                            <span>Ventas:</span> <span>{formatCurrency(salesVal)}</span>
+                          </p>
+                          {salesCnt > 0 && <p className="text-gray-400 text-xs text-right">{salesCnt} transacciones</p>}
+                        </div>
+                        
+                        <div className="border-t border-gray-100 pt-2">
+                          <p className="text-amber-600 font-bold text-base flex justify-between">
+                            <span>Compras:</span> <span>{formatCurrency(purchVal)}</span>
+                          </p>
+                          {purchCnt > 0 && <p className="text-gray-400 text-xs text-right">{purchCnt} transacciones</p>}
+                        </div>
                       </div>
                     );
                   }}
                 />
-                {avgMonthly > 0 && (
-                  <ReferenceLine
-                    y={avgMonthly}
-                    stroke="#8b5cf6"
-                    strokeDasharray="5 4"
-                    strokeWidth={1.5}
-                    label={{ value: 'Prom.', position: 'insideTopRight', fontSize: 10, fill: '#8b5cf6', fontWeight: 600 }}
-                  />
-                )}
-                <Bar dataKey="total" name="Total con IVA" radius={[6, 6, 0, 0]} maxBarSize={52}>
-                  {monthlyData.map((entry, index) => (
-                    <Cell
-                      key={`vpm-cell-${index}`}
-                      fill={
-                        entry.isCurrentMonth
-                          ? '#10b981'
-                          : index === bestMonthIdx && bestMonthIdx >= 0
-                          ? '#3b82f6'
-                          : '#a7f3d0'
-                      }
-                    />
-                  ))}
-                </Bar>
+                <Legend />
+                <Bar dataKey="totalSales" name="Ventas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="totalPurchases" name="Compras" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -673,7 +676,7 @@ function VentasSection() {
     <div className="space-y-8 animate-in fade-in duration-300">
 
       {/* ── Subsección 1: Ventas por Mes (independiente) ── */}
-      <VentasPorMesChart />
+      <ComprasVsVentasPorMesChart />
 
       {/* Separador de secciones */}
       <div className="flex items-center gap-3">

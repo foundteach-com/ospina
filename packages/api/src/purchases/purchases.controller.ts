@@ -52,9 +52,17 @@ export class PurchasesController {
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Query() query: any) {
-    return this.purchasesService.findAll({
-      where: query.providerId ? { providerId: query.providerId } : undefined,
-    });
+    const where: any = {};
+    if (query.providerId) where.providerId = query.providerId;
+    if (query.year) {
+      const targetYear = parseInt(query.year, 10);
+      where.date = {
+        gte: new Date(targetYear, 0, 1),
+        lte: new Date(targetYear, 11, 31, 23, 59, 59, 999),
+      };
+    }
+    
+    return this.purchasesService.findAll({ where });
   }
 
   @UseGuards(JwtAuthGuard)
