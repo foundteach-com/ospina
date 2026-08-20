@@ -16,6 +16,7 @@ import {
   Tooltip,
   Legend,
   ComposedChart,
+  ReferenceLine,
 } from 'recharts';
 import { ChevronUp, ChevronDown, Search } from 'lucide-react';
 import KPICard from '@/components/dashboard/KPICard';
@@ -124,6 +125,311 @@ function EmptyState() {
         <path d="M8 17v-3" />
       </svg>
       <p className="mt-3 text-sm font-medium">No hay datos disponibles</p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUB-SECCIÓN INDEPENDIENTE: VENTAS POR MES (Power BI Style)
+// ─────────────────────────────────────────────────────────────────────────────
+function VentasPorMesChart() {
+  const currentYear = new Date().getFullYear();
+  const currentMonthIdx = new Date().getMonth();
+
+  const [year, setYear] = useState(currentYear);
+  const [loading, setLoading] = useState(true);
+  const [rawSales, setRawSales] = useState<any[]>([]);
+  const [clientFilter, setClientFilter] = useState('');
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+
+  const yearOptions = useMemo(() => {
+    const years: number[] = [];
+    for (let y = currentYear; y >= currentYear - 5; y--) years.push(y);
+    return years;
+  }, [currentYear]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    apiFetch(`/sales?year=${year}`)
+      .then((data: any) => {
+        if (!active) return;
+        setRawSales(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error('VentasPorMes error:', err))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [year]);
+
+  const uniqueClients = useMemo(() => {
+    const s = new Set<string>();
+    rawSales.forEach(sale => { if (sale.client?.name) s.add(sale.client.name); });
+    return Array.from(s).sort();
+  }, [rawSales]);
+
+  const filteredSales = useMemo(() =>
+    rawSales
+      .filter(s => !clientFilter || s.client?.name === clientFilter)
+      .filter(s => !paymentTypeFilter || s.paymentType === paymentTypeFilter)
+      .filter(s => !paymentMethodFilter || s.paymentMethod === paymentMethodFilter),
+  [rawSales, clientFilter, paymentTypeFilter, paymentMethodFilter]);
+
+  const monthlyData = useMemo(() => {
+    const months = MONTH_LABELS.map((label, i) => ({
+      month: label,
+      total: 0,
+      count: 0,
+      isCurrentMonth: year === currentYear && i === currentMonthIdx,
+    }));
+    filteredSales.forEach(sale => {
+      const idx = new Date(sale.date).getMonth();
+      if (idx < 0 || idx > 11) return;
+      let saleTotal = 0;
+      sale.items?.forEach((item: any) => {
+        const net = Number(item.quantity) * Number(item.salePrice);
+        const ivaRate = (Number(item.product?.salesIvaPercent) || 19) / 100;
+        saleTotal += net * (1 + ivaRate);
+      });
+      months[idx].total += saleTotal;
+      months[idx].count += 1;
+    });
+    return months.map(m => ({ ...m, total: Math.round(m.total) }));
+  }, [filteredSales, year, currentYear, currentMonthIdx]);
+
+  const totalAnual = useMemo(() => monthlyData.reduce((s, m) => s + m.total, 0), [monthlyData]);
+  const currentMonthTotal = monthlyData[currentMonthIdx]?.total ?? 0;
+  const prevMonthTotal = currentMonthIdx > 0 ? (monthlyData[currentMonthIdx - 1]?.total ?? 0) : 0;
+  const pctChange = prevMonthTotal > 0
+    ? Math.round(((currentMonthTotal - prevMonthTotal) / prevMonthTotal) * 100)
+    : (currentMonthTotal > 0 ? 100 : 0);
+
+  const bestMonthIdx = useMemo(() => {
+    if (monthlyData.every(m => m.total === 0)) return -1;
+    return monthlyData.reduce((bi, m, i) => (m.total > monthlyData[bi].total ? i : bi), 0);
+  }, [monthlyData]);
+
+  const avgMonthly = useMemo(() => {
+    const active = monthlyData.filter(m => m.total > 0);
+    return active.length > 0 ? totalAnual / active.length : 0;
+  }, [monthlyData, totalAnual]);
+
+  const hasFilters = clientFilter || paymentTypeFilter || paymentMethodFilter;
+
+  return (
+    <div className="space-y-5">
+      {/* Header + Controles */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-6 bg-emerald-500 rounded-full" />
+            <h3 className="text-base font-bold text-gray-800">Ventas por Mes</h3>
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5 ml-3">Facturación mensual con IVA incluido</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Selector de Año — INDEPENDIENTE */}
+          <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <select
+              value={year}
+              onChange={e => setYear(Number(e.target.value))}
+              className="bg-transparent text-sm font-bold text-gray-800 focus:outline-none cursor-pointer"
+            >
+              {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+
+          {/* Filtro Cliente */}
+          <select
+            value={clientFilter}
+            onChange={e => setClientFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm"
+          >
+            <option value="">Todos los clientes</option>
+            {uniqueClients.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          {/* Filtro Forma de Pago */}
+          <select
+            value={paymentTypeFilter}
+            onChange={e => setPaymentTypeFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm"
+          >
+            <option value="">Forma de pago</option>
+            <option value="CONTADO">Contado</option>
+            <option value="CREDITO">Crédito</option>
+          </select>
+
+          {/* Filtro Medio de Pago */}
+          <select
+            value={paymentMethodFilter}
+            onChange={e => setPaymentMethodFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-sm"
+          >
+            <option value="">Medio de pago</option>
+            <option value="EFECTIVO">Efectivo</option>
+            <option value="TRANSFERENCIA">Transferencia</option>
+            <option value="CONSIGNACION">Consignación</option>
+            <option value="DATAFONO">Datáfono</option>
+            <option value="OTRO">Otro</option>
+          </select>
+
+          {hasFilters && (
+            <button
+              onClick={() => { setClientFilter(''); setPaymentTypeFilter(''); setPaymentMethodFilter(''); }}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Limpiar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            {/* Total Año */}
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/25">
+              <p className="text-xs font-semibold uppercase tracking-wider opacity-75 mb-2">Total {year}</p>
+              <p className="text-3xl font-extrabold leading-tight">{compactCurrency(totalAnual)}</p>
+              <p className="text-xs mt-2 opacity-70">{filteredSales.length} ventas registradas</p>
+            </div>
+
+            {/* Mes Actual */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                {MONTH_LABELS[currentMonthIdx]} {year}
+              </p>
+              <p className="text-3xl font-extrabold text-gray-800 leading-tight">{compactCurrency(currentMonthTotal)}</p>
+              <div className={`flex items-center gap-1 mt-2 text-xs font-semibold ${
+                pctChange >= 0 ? 'text-emerald-500' : 'text-red-500'
+              }`}>
+                {pctChange >= 0 ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4 L22 20 L2 20 Z"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20 L2 4 L22 4 Z"/></svg>
+                )}
+                {Math.abs(pctChange)}% vs mes anterior
+              </div>
+            </div>
+
+            {/* Mejor Mes */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Mejor Mes</p>
+              <p className="text-3xl font-extrabold text-blue-600 leading-tight">
+                {bestMonthIdx >= 0 ? compactCurrency(monthlyData[bestMonthIdx].total) : compactCurrency(0)}
+              </p>
+              <p className="text-xs mt-2 text-gray-400">
+                {bestMonthIdx >= 0 ? `${MONTH_LABELS[bestMonthIdx]} ${year}` : 'Sin datos'}
+              </p>
+            </div>
+
+            {/* Promedio Mensual */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Promedio Mensual</p>
+              <p className="text-3xl font-extrabold text-violet-600 leading-tight">{compactCurrency(avgMonthly)}</p>
+              <p className="text-xs mt-2 text-gray-400">Meses con actividad</p>
+            </div>
+          </div>
+
+          {/* Gráfico de Barras */}
+          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div>
+                <p className="text-sm font-bold text-gray-800">Facturación Mensual · {year}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Valor total con IVA incluido — Ene a Dic</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-emerald-400 inline-block" />
+                  Mes actual
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-blue-500 inline-block" />
+                  Mejor mes
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm bg-emerald-200 inline-block" />
+                  Otros meses
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-5 border-t-2 border-dashed border-violet-400 inline-block" />
+                  Promedio
+                </span>
+              </div>
+            </div>
+
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: '#9ca3af' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={v => compactCurrency(v)}
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={74}
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const val = Number(payload[0].value);
+                    const cnt = (payload[0].payload as any).count;
+                    return (
+                      <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-sm min-w-[160px]">
+                        <p className="font-bold text-gray-700 mb-1">{label} {year}</p>
+                        <p className="text-emerald-600 font-bold text-base">{formatCurrency(val)}</p>
+                        {cnt > 0 && <p className="text-gray-400 text-xs mt-1">{cnt} transacciones</p>}
+                      </div>
+                    );
+                  }}
+                />
+                {avgMonthly > 0 && (
+                  <ReferenceLine
+                    y={avgMonthly}
+                    stroke="#8b5cf6"
+                    strokeDasharray="5 4"
+                    strokeWidth={1.5}
+                    label={{ value: 'Prom.', position: 'insideTopRight', fontSize: 10, fill: '#8b5cf6', fontWeight: 600 }}
+                  />
+                )}
+                <Bar dataKey="total" name="Total con IVA" radius={[6, 6, 0, 0]} maxBarSize={52}>
+                  {monthlyData.map((entry, index) => (
+                    <Cell
+                      key={`vpm-cell-${index}`}
+                      fill={
+                        entry.isCurrentMonth
+                          ? '#10b981'
+                          : index === bestMonthIdx && bestMonthIdx >= 0
+                          ? '#3b82f6'
+                          : '#a7f3d0'
+                      }
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -364,7 +670,19 @@ function VentasSection() {
   })), [topClients]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-8 animate-in fade-in duration-300">
+
+      {/* ── Subsección 1: Ventas por Mes (independiente) ── */}
+      <VentasPorMesChart />
+
+      {/* Separador de secciones */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 border-t-2 border-dashed border-gray-200" />
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-2">Análisis General</span>
+        <div className="flex-1 border-t-2 border-dashed border-gray-200" />
+      </div>
+
+      {/* ── Resto del análisis general (sin cambios) ── */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-800">Métricas de Ventas</h2>
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
