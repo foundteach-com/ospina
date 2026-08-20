@@ -448,6 +448,179 @@ function ComprasVsVentasPorMesChart() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SUB-SECCIÓN INDEPENDIENTE: COMPARATIVA ANUAL (Power BI Style)
+// ─────────────────────────────────────────────────────────────────────────────
+function ComparativaAnualVentasChart() {
+  const currentYear = new Date().getFullYear();
+  const [rightYear, setRightYear] = useState(currentYear - 1);
+  const [loadingLeft, setLoadingLeft] = useState(true);
+  const [loadingRight, setLoadingRight] = useState(true);
+  const [rawSalesLeft, setRawSalesLeft] = useState<any[]>([]);
+  const [rawSalesRight, setRawSalesRight] = useState<any[]>([]);
+
+  // Opciones de años para el gráfico derecho (5 años hacia atrás)
+  const yearOptions = useMemo(() => {
+    const years: number[] = [];
+    for (let y = currentYear - 1; y >= currentYear - 6; y--) years.push(y);
+    return years;
+  }, [currentYear]);
+
+  useEffect(() => {
+    let active = true;
+    setLoadingLeft(true);
+    apiFetch(`/sales?year=${currentYear}`)
+      .then((data: any) => {
+        if (!active) return;
+        setRawSalesLeft(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error(err))
+      .finally(() => { if (active) setLoadingLeft(false); });
+    return () => { active = false; };
+  }, [currentYear]);
+
+  useEffect(() => {
+    let active = true;
+    setLoadingRight(true);
+    apiFetch(`/sales?year=${rightYear}`)
+      .then((data: any) => {
+        if (!active) return;
+        setRawSalesRight(Array.isArray(data) ? data : []);
+      })
+      .catch(err => console.error(err))
+      .finally(() => { if (active) setLoadingRight(false); });
+    return () => { active = false; };
+  }, [rightYear]);
+
+  const processSales = (sales: any[]) => {
+    const months = MONTH_LABELS.map((label) => ({
+      month: label,
+      total: 0,
+    }));
+    sales.forEach(sale => {
+      const idx = new Date(sale.date).getMonth();
+      if (idx < 0 || idx > 11) return;
+      let saleTotal = 0;
+      sale.items?.forEach((item: any) => {
+        const net = Number(item.quantity) * Number(item.salePrice);
+        const ivaRate = (Number(item.product?.salesIvaPercent) || 19) / 100;
+        saleTotal += net * (1 + ivaRate);
+      });
+      months[idx].total += Math.round(saleTotal);
+    });
+    return months;
+  };
+
+  const leftData = useMemo(() => processSales(rawSalesLeft), [rawSalesLeft]);
+  const rightData = useMemo(() => processSales(rawSalesRight), [rawSalesRight]);
+
+  const formatCurrencyInt = (val: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(val || 0);
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+      {/* Gráfico Izquierdo (Año Actual) */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Ventas Año Actual ({currentYear})
+            </h3>
+            <p className="text-xs text-gray-500 mt-1 ml-4">Facturación mensual con IVA</p>
+          </div>
+        </div>
+        {loadingLeft ? (
+          <div className="flex items-center justify-center h-[300px]">
+            <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={leftData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={v => compactCurrency(v)} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={60} />
+              <Tooltip
+                cursor={{ fill: '#f3f4f6' }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-sm min-w-[140px]">
+                      <p className="font-bold text-gray-700 mb-1">{label} {currentYear}</p>
+                      <p className="text-emerald-600 font-bold text-base">{formatCurrencyInt(Number(payload[0].value))}</p>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="total" name="Ventas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Gráfico Derecho (Años Anteriores) */}
+      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              Comparativa Histórica
+            </h3>
+            <p className="text-xs text-gray-500 mt-1 ml-4">Facturación mensual con IVA</p>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <select
+              value={rightYear}
+              onChange={e => setRightYear(Number(e.target.value))}
+              className="bg-transparent text-sm font-bold text-gray-700 focus:outline-none cursor-pointer"
+            >
+              {yearOptions.map(y => <option key={y} value={y}>Año {y}</option>)}
+            </select>
+          </div>
+        </div>
+        {loadingRight ? (
+          <div className="flex items-center justify-center h-[300px]">
+            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={rightData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={v => compactCurrency(v)} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={60} />
+              <Tooltip
+                cursor={{ fill: '#f3f4f6' }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-sm min-w-[140px]">
+                      <p className="font-bold text-gray-700 mb-1">{label} {rightYear}</p>
+                      <p className="text-blue-600 font-bold text-base">{formatCurrencyInt(Number(payload[0].value))}</p>
+                    </div>
+                  );
+                }}
+              />
+              <Bar dataKey="total" name="Ventas" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // VENTAS SECTION
 // ─────────────────────────────────────────────────────────────────────────────
 function VentasSection() {
@@ -687,6 +860,9 @@ function VentasSection() {
 
       {/* ── Subsección 1: Ventas por Mes (independiente) ── */}
       <ComprasVsVentasPorMesChart />
+
+      {/* ── Subsección 2: Comparativa Anual (independiente) ── */}
+      <ComparativaAnualVentasChart />
 
       {/* Separador de secciones */}
       <div className="flex items-center gap-3">
