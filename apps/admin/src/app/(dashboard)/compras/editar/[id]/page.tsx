@@ -202,14 +202,18 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       if (field === 'basePrice' || field === 'ivaPercent' || field === 'discountPercent') {
         const base = field === 'basePrice' ? Number(value) : Number(currentItem.basePrice);
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
+        const discount = field === 'discountPercent' ? Number(value) : Number(currentItem.discountPercent);
         
-        const calculatedTotal = base * (1 + (iva / 100));
+        const discountedBase = base * (1 - (discount / 100));
+        const calculatedTotal = discountedBase * (1 + (iva / 100));
         currentItem.purchasePrice = roundToTwo(calculatedTotal);
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
+         const discount = Number(currentItem.discountPercent);
          
-         const calculatedBase = total / (1 + (iva / 100));
+         const calculatedDiscountedBase = total / (1 + (iva / 100));
+         const calculatedBase = calculatedDiscountedBase / (1 - (discount / 100));
          currentItem.basePrice = roundToTwo(calculatedBase);
       }
 
@@ -289,13 +293,12 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       const reteFuenteValue = roundToTwo(baseTotalLineAfterDiscount * (item.reteFuentePercent / 100));
       const reteIvaValue = roundToTwo(ivaTotalLine * (item.reteIvaPercent / 100));
 
-      acc.subtotal = roundToTwo(acc.subtotal + totalLine); // This is actually Total + IVA
+      acc.subtotal = roundToTwo(acc.subtotal + totalLine); // totalLine already has discount applied
       acc.discount = roundToTwo(acc.discount + discountValue);
       acc.reteFuente = roundToTwo(acc.reteFuente + reteFuenteValue);
       acc.reteIva = roundToTwo(acc.reteIva + reteIvaValue);
       
-      const totalLineAfterDiscount = baseTotalLineAfterDiscount + ivaTotalLine;
-      acc.totalPayable = roundToTwo(acc.totalPayable + (totalLineAfterDiscount - reteFuenteValue - reteIvaValue));
+      acc.totalPayable = roundToTwo(acc.totalPayable + (totalLine - reteFuenteValue - reteIvaValue));
       
       return acc;
     }, { subtotal: 0, discount: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
