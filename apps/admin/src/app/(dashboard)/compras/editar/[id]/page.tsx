@@ -202,18 +202,14 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       if (field === 'basePrice' || field === 'ivaPercent' || field === 'discountPercent') {
         const base = field === 'basePrice' ? Number(value) : Number(currentItem.basePrice);
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
-        const discount = field === 'discountPercent' ? Number(value) : Number(currentItem.discountPercent);
         
-        const discountedBase = base * (1 - (discount / 100));
-        const calculatedTotal = discountedBase * (1 + (iva / 100));
+        const calculatedTotal = base * (1 + (iva / 100));
         currentItem.purchasePrice = roundToTwo(calculatedTotal);
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
-         const discount = Number(currentItem.discountPercent);
          
-         const calculatedDiscountedBase = total / (1 + (iva / 100));
-         const calculatedBase = calculatedDiscountedBase / (1 - (discount / 100));
+         const calculatedBase = total / (1 + (iva / 100));
          currentItem.basePrice = roundToTwo(calculatedBase);
       }
 
@@ -297,7 +293,9 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       acc.discount = roundToTwo(acc.discount + discountValue);
       acc.reteFuente = roundToTwo(acc.reteFuente + reteFuenteValue);
       acc.reteIva = roundToTwo(acc.reteIva + reteIvaValue);
-      acc.totalPayable = roundToTwo(acc.totalPayable + (totalLine - reteFuenteValue - reteIvaValue));
+      
+      const totalLineAfterDiscount = baseTotalLineAfterDiscount + ivaTotalLine;
+      acc.totalPayable = roundToTwo(acc.totalPayable + (totalLineAfterDiscount - reteFuenteValue - reteIvaValue));
       
       return acc;
     }, { subtotal: 0, discount: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });

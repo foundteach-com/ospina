@@ -41,15 +41,12 @@ export class PurchasesService {
 
       const totalLine = item.quantity * item.purchasePrice;
       const baseLine = totalLine / (1 + ivaPerc / 100);
-      const discountValue = baseLine * ((item.discountPercent || 0) / 100);
-      const baseLineAfterDiscount = baseLine - discountValue;
-      const ivaLine = baseLineAfterDiscount * (ivaPerc / 100);
-      const totalLineAfterDiscount = baseLineAfterDiscount + ivaLine;
+      const ivaLine = totalLine - baseLine;
 
-      const rfValue = baseLineAfterDiscount * ((item.reteFuentePercent || 0) / 100);
+      const rfValue = baseLine * ((item.reteFuentePercent || 0) / 100);
       const riValue = ivaLine * ((item.reteIvaPercent || 0) / 100);
 
-      return sum + (totalLineAfterDiscount - rfValue - riValue);
+      return sum + (totalLine - rfValue - riValue);
     }, 0);
 
     // Create purchase with items in a transaction
@@ -165,15 +162,12 @@ export class PurchasesService {
 
         const totalLine = item.quantity * item.purchasePrice;
         const baseLine = totalLine / (1 + ivaPerc / 100);
-        const discountValue = baseLine * ((item.discountPercent || 0) / 100);
-        const baseLineAfterDiscount = baseLine - discountValue;
-        const ivaLine = baseLineAfterDiscount * (ivaPerc / 100);
-        const totalLineAfterDiscount = baseLineAfterDiscount + ivaLine;
+        const ivaLine = totalLine - baseLine;
 
-        const rfValue = baseLineAfterDiscount * ((item.reteFuentePercent || 0) / 100);
+        const rfValue = baseLine * ((item.reteFuentePercent || 0) / 100);
         const riValue = ivaLine * ((item.reteIvaPercent || 0) / 100);
 
-        return sum + (totalLineAfterDiscount - rfValue - riValue);
+        return sum + (totalLine - rfValue - riValue);
       }, 0);
     }
 
