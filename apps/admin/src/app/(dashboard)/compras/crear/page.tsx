@@ -25,7 +25,8 @@ interface PurchaseItem {
   quantity: number;
   basePrice: number;
   ivaPercent: number;
-  purchasePrice: number; // This will be the Total Cost (Base + IVA)
+  discountPercent: number;
+  purchasePrice: number; // This will be the Total Cost (Base - Discount + IVA)
   reteFuentePercent: number;
   reteIvaPercent: number;
 }
@@ -51,7 +52,7 @@ export default function CreatePurchasePage() {
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([
-    { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 },
+    { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, discountPercent: 0, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 },
   ]);
 
   useEffect(() => {
@@ -123,7 +124,7 @@ export default function CreatePurchasePage() {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 }]);
+    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, discountPercent: 0, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -136,17 +137,21 @@ export default function CreatePurchasePage() {
       const currentItem = { ...newItems[index], [field]: value };
       
       // Auto-calculation logic with rounding to 2 decimals
-      if (field === 'basePrice' || field === 'ivaPercent') {
+      if (field === 'basePrice' || field === 'ivaPercent' || field === 'discountPercent') {
         const base = field === 'basePrice' ? Number(value) : Number(currentItem.basePrice);
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
+        const discount = field === 'discountPercent' ? Number(value) : Number(currentItem.discountPercent);
         
-        const calculatedTotal = base * (1 + (iva / 100));
+        const discountedBase = base * (1 - (discount / 100));
+        const calculatedTotal = discountedBase * (1 + (iva / 100));
         currentItem.purchasePrice = roundToTwo(calculatedTotal);
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
+         const discount = Number(currentItem.discountPercent);
          
-         const calculatedBase = total / (1 + (iva / 100));
+         const calculatedDiscountedBase = total / (1 + (iva / 100));
+         const calculatedBase = calculatedDiscountedBase / (1 - (discount / 100));
          currentItem.basePrice = roundToTwo(calculatedBase);
       }
 
@@ -174,6 +179,7 @@ export default function CreatePurchasePage() {
           code: product.code, 
           basePrice: roundToTwo(basePrice),
           ivaPercent: ivaPercent,
+          discountPercent: 0,
           purchasePrice: roundToTwo(purchasePriceFull), // This is the total with IVA
           reteFuentePercent: 0, 
           reteIvaPercent: 0 
@@ -205,6 +211,7 @@ export default function CreatePurchasePage() {
         code: product ? product.code : '',
         basePrice: roundToTwo(basePrice),
         ivaPercent: ivaPercent,
+        discountPercent: 0,
         purchasePrice: roundToTwo(purchasePriceFull),
         reteFuentePercent: 0,
         reteIvaPercent: 0
@@ -218,12 +225,15 @@ export default function CreatePurchasePage() {
       const totalLine = roundToTwo(item.quantity * item.purchasePrice);
       const baseTotalLine = roundToTwo(item.quantity * item.basePrice);
       
-      const ivaTotalLine = roundToTwo(totalLine - baseTotalLine);
+      const discountValue = roundToTwo(baseTotalLine * (item.discountPercent / 100));
+      const baseTotalLineAfterDiscount = roundToTwo(baseTotalLine - discountValue);
+      const ivaTotalLine = roundToTwo(baseTotalLineAfterDiscount * (item.ivaPercent / 100));
 
-      const reteFuenteValue = roundToTwo(baseTotalLine * (item.reteFuentePercent / 100));
+      const reteFuenteValue = roundToTwo(baseTotalLineAfterDiscount * (item.reteFuentePercent / 100));
       const reteIvaValue = roundToTwo(ivaTotalLine * (item.reteIvaPercent / 100));
 
       acc.base = roundToTwo(acc.base + baseTotalLine);
+      acc.discount = roundToTwo(acc.discount + discountValue);
       acc.iva = roundToTwo(acc.iva + ivaTotalLine);
       acc.subtotal = roundToTwo(acc.subtotal + totalLine); 
       acc.reteFuente = roundToTwo(acc.reteFuente + reteFuenteValue);
@@ -231,7 +241,7 @@ export default function CreatePurchasePage() {
       acc.totalPayable = roundToTwo(acc.totalPayable + (totalLine - reteFuenteValue - reteIvaValue));
       
       return acc;
-    }, { base: 0, iva: 0, subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
+    }, { base: 0, discount: 0, iva: 0, subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
   };
 
   const totals = calculateTotals();
@@ -300,6 +310,7 @@ export default function CreatePurchasePage() {
             ...item,
             quantity: item.quantity,
             basePrice: item.basePrice,
+            discountPercent: item.discountPercent,
             purchasePrice: item.purchasePrice
           })),
         }),
@@ -482,11 +493,12 @@ export default function CreatePurchasePage() {
             </button>
           </div>
 
-          <div className="space-y-4">
-            {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+          <div className="space-y-4 overflow-x-auto pb-4">
+            <div className="min-w-[900px]">
+              {items.map((item, index) => (
+                <div key={index} className="grid grid-cols-[1fr_2fr_0.8fr_1.5fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     Código
                   </label>
                   <input
@@ -498,8 +510,8 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                <div className="col-span-3">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     Producto
                   </label>
                   <select
@@ -517,8 +529,8 @@ export default function CreatePurchasePage() {
                   </select>
                 </div>
 
-                <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     Cant.
                   </label>
                   <input
@@ -532,8 +544,8 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     Costo Base
                   </label>
                   <input
@@ -547,8 +559,23 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
+                    % Desc
+                  </label>
+                  <input
+                    type="number"
+                    value={item.discountPercent || 0}
+                    onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value))}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                  />
+                </div>
+
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     % IVA
                   </label>
                   <input
@@ -562,8 +589,8 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                 <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                 <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     % ReteFte
                   </label>
                   <input
@@ -576,8 +603,8 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                 <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                 <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     % ReteIVA
                   </label>
                   <input
@@ -590,8 +617,8 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     Total + IVA
                   </label>
                   <input
@@ -605,8 +632,8 @@ export default function CreatePurchasePage() {
                   />
                 </div>
 
-                <div className="col-span-1 flex justify-center items-end pb-2">
-                    {items.length > 1 && (
+                <div className="flex justify-center items-end pb-2">
+                    {items.length > 1 ? (
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
@@ -615,10 +642,13 @@ export default function CreatePurchasePage() {
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                       </button>
+                    ) : (
+                      <div className="w-[36px]"></div>
                     )}
                 </div>
               </div>
             ))}
+            </div>
           </div>
 
 
@@ -637,6 +667,12 @@ export default function CreatePurchasePage() {
                   <span>Subtotal (Base)</span>
                   <span>${totals.base.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
+                 {totals.discount > 0 && (
+                   <div className="flex justify-between gap-8 text-sm text-green-600">
+                    <span>Descuento</span>
+                    <span>- ${totals.discount.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                 )}
                  <div className="flex justify-between gap-8 text-sm text-gray-600">
                   <span>IVA</span>
                   <span>${totals.iva.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>

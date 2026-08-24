@@ -26,6 +26,7 @@ interface PurchaseItem {
   quantity: number;
   basePrice: number;
   ivaPercent: number;
+  discountPercent: number;
   purchasePrice: number;
   reteFuentePercent: number;
   reteIvaPercent: number;
@@ -170,6 +171,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
              quantity: parseFloat(item.quantity),
              purchasePrice: purchasePrice, // Total + IVA unit price
              ivaPercent: productIva, 
+             discountPercent: item.discountPercent ? parseFloat(item.discountPercent) : 0,
              basePrice: roundToTwo(basePrice),
              reteFuentePercent: item.reteFuentePercent ? parseFloat(item.reteFuentePercent) : 0,
              reteIvaPercent: item.reteIvaPercent ? parseFloat(item.reteIvaPercent) : 0,
@@ -184,7 +186,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 }]);
+    setItems([...items, { productId: '', code: '', quantity: 1, basePrice: 0, ivaPercent: 19, discountPercent: 0, purchasePrice: 0, reteFuentePercent: 0, reteIvaPercent: 0 }]);
   };
 
   const removeItem = (index: number) => {
@@ -197,17 +199,21 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
       const currentItem = { ...newItems[index], [field]: value };
       
       // Auto-calculation logic with rounding to 2 decimals
-      if (field === 'basePrice' || field === 'ivaPercent') {
+      if (field === 'basePrice' || field === 'ivaPercent' || field === 'discountPercent') {
         const base = field === 'basePrice' ? Number(value) : Number(currentItem.basePrice);
         const iva = field === 'ivaPercent' ? Number(value) : Number(currentItem.ivaPercent);
+        const discount = field === 'discountPercent' ? Number(value) : Number(currentItem.discountPercent);
         
-        const calculatedTotal = base * (1 + (iva / 100));
+        const discountedBase = base * (1 - (discount / 100));
+        const calculatedTotal = discountedBase * (1 + (iva / 100));
         currentItem.purchasePrice = roundToTwo(calculatedTotal);
       } else if (field === 'purchasePrice') {
          const total = Number(value);
          const iva = Number(currentItem.ivaPercent);
+         const discount = Number(currentItem.discountPercent);
          
-         const calculatedBase = total / (1 + (iva / 100));
+         const calculatedDiscountedBase = total / (1 + (iva / 100));
+         const calculatedBase = calculatedDiscountedBase / (1 - (discount / 100));
          currentItem.basePrice = roundToTwo(calculatedBase);
       }
 
@@ -235,6 +241,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
           code: product.code,
           basePrice: roundToTwo(basePrice),
           ivaPercent: ivaPercent,
+          discountPercent: 0,
           purchasePrice: roundToTwo(purchasePriceFull),
           reteFuentePercent: 0, // Reset default
           reteIvaPercent: 0 // Reset default
@@ -266,6 +273,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
         code: product ? product.code : '',
         basePrice: roundToTwo(basePrice),
         ivaPercent: ivaPercent,
+        discountPercent: 0,
         purchasePrice: roundToTwo(purchasePriceFull),
         reteFuentePercent: 0,
         reteIvaPercent: 0
@@ -278,18 +286,21 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
     return items.reduce((acc, item) => {
       const totalLine = roundToTwo(item.quantity * item.purchasePrice);
       const baseTotalLine = roundToTwo(item.quantity * item.basePrice);
-      const ivaTotalLine = roundToTwo(totalLine - baseTotalLine);
+      const discountValue = roundToTwo(baseTotalLine * (item.discountPercent / 100));
+      const baseTotalLineAfterDiscount = roundToTwo(baseTotalLine - discountValue);
+      const ivaTotalLine = roundToTwo(baseTotalLineAfterDiscount * (item.ivaPercent / 100));
 
-      const reteFuenteValue = roundToTwo(baseTotalLine * (item.reteFuentePercent / 100));
+      const reteFuenteValue = roundToTwo(baseTotalLineAfterDiscount * (item.reteFuentePercent / 100));
       const reteIvaValue = roundToTwo(ivaTotalLine * (item.reteIvaPercent / 100));
 
       acc.subtotal = roundToTwo(acc.subtotal + totalLine); // This is actually Total + IVA
+      acc.discount = roundToTwo(acc.discount + discountValue);
       acc.reteFuente = roundToTwo(acc.reteFuente + reteFuenteValue);
       acc.reteIva = roundToTwo(acc.reteIva + reteIvaValue);
       acc.totalPayable = roundToTwo(acc.totalPayable + (totalLine - reteFuenteValue - reteIvaValue));
       
       return acc;
-    }, { subtotal: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
+    }, { subtotal: 0, discount: 0, reteFuente: 0, reteIva: 0, totalPayable: 0 });
   };
   
   const totals = calculateTotals();
@@ -358,6 +369,7 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
             productId: item.productId,
             quantity: item.quantity,
             purchasePrice: item.purchasePrice,
+            discountPercent: item.discountPercent,
             reteFuentePercent: item.reteFuentePercent,
             reteIvaPercent: item.reteIvaPercent,
           })),
@@ -495,11 +507,12 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
               Agregar Producto
             </button>
           </div>
-          <div className="space-y-4">
-            {items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+          <div className="space-y-4 overflow-x-auto pb-4">
+            <div className="min-w-[900px]">
+              {items.map((item, index) => (
+                <div key={index} className="grid grid-cols-[1fr_2fr_0.8fr_1.5fr_1fr_1fr_1fr_1fr_1.5fr_auto] gap-2 items-end bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     Código
                   </label>
                   <input
@@ -510,8 +523,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     placeholder="Código"
                   />
                 </div>
-                <div className="col-span-3">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Producto</label>
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">Producto</label>
                   <select
                     value={item.productId}
                     onChange={(e) => handleProductChange(index, e.target.value)}
@@ -522,8 +535,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Cant.</label>
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">Cant.</label>
                   <input
                     type="number"
                     value={item.quantity}
@@ -534,8 +547,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     min="1"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Costo Base</label>
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">Costo Base</label>
                   <input
                     type="number"
                     value={item.basePrice || 0}
@@ -545,8 +558,22 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     step="0.01"
                   />
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">% IVA</label>
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
+                    % Desc
+                  </label>
+                  <input
+                    type="number"
+                    value={item.discountPercent || 0}
+                    onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value))}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm"
+                  />
+                </div>
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">% IVA</label>
                   <input
                     type="number"
                     value={item.ivaPercent || 0}
@@ -556,8 +583,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     step="0.01"
                   />
                 </div>
-                 <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                 <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     % ReteFte
                   </label>
                   <input
@@ -570,8 +597,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   />
                 </div>
 
-                 <div className="col-span-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                 <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">
                     % ReteIVA
                   </label>
                   <input
@@ -583,8 +610,8 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     className="w-full px-2 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-blue-500 transition-colors text-sm"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Total + IVA</label>
+                <div className="">
+                  <label className="block text-[10px] font-medium text-gray-700 mb-1">Total + IVA</label>
                   <input
                     type="number"
                     value={item.purchasePrice || 0}
@@ -594,15 +621,18 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                     step="0.01"
                   />
                 </div>
-                <div className="col-span-1 flex justify-center items-end pb-2">
-                  {items.length > 1 && (
+                <div className="flex justify-center items-end pb-2">
+                  {items.length > 1 ? (
                     <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-2" title="Eliminar">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
+                  ) : (
+                    <div className="w-[36px]"></div>
                   )}
                 </div>
               </div>
             ))}
+            </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">
@@ -620,6 +650,12 @@ export default function EditPurchasePage({ params }: { params: Promise<{ id: str
                   <span>Subtotal (Base + IVA)</span>
                   <span>${totals.subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
+                {totals.discount > 0 && (
+                   <div className="flex justify-between gap-8 text-sm text-green-600">
+                    <span>Descuento</span>
+                    <span>- ${totals.discount.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                 )}
                  <div className="flex justify-between gap-8 text-sm text-red-600">
                   <span>ReteFuente</span>
                   <span>- ${totals.reteFuente.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>

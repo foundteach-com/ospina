@@ -119,6 +119,7 @@ model PurchaseItem {
   productId         String
   quantity          Decimal
   purchasePrice     Decimal
+  discountPercent   Decimal  @default(0)
   reteFuentePercent Decimal  @default(0)
   reteIvaPercent    Decimal  @default(0)
   createdAt         DateTime @default(now())

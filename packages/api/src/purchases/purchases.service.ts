@@ -21,6 +21,7 @@ export class PurchasesService {
       productId: string;
       quantity: number;
       purchasePrice: number;
+      discountPercent?: number;
       reteFuentePercent?: number;
       reteIvaPercent?: number;
     }[];
@@ -40,12 +41,15 @@ export class PurchasesService {
 
       const totalLine = item.quantity * item.purchasePrice;
       const baseLine = totalLine / (1 + ivaPerc / 100);
-      const ivaLine = totalLine - baseLine;
+      const discountValue = baseLine * ((item.discountPercent || 0) / 100);
+      const baseLineAfterDiscount = baseLine - discountValue;
+      const ivaLine = baseLineAfterDiscount * (ivaPerc / 100);
+      const totalLineAfterDiscount = baseLineAfterDiscount + ivaLine;
 
-      const rfValue = baseLine * ((item.reteFuentePercent || 0) / 100);
+      const rfValue = baseLineAfterDiscount * ((item.reteFuentePercent || 0) / 100);
       const riValue = ivaLine * ((item.reteIvaPercent || 0) / 100);
 
-      return sum + (totalLine - rfValue - riValue);
+      return sum + (totalLineAfterDiscount - rfValue - riValue);
     }, 0);
 
     // Create purchase with items in a transaction
@@ -67,6 +71,7 @@ export class PurchasesService {
             productId: item.productId,
             quantity: item.quantity,
             purchasePrice: item.purchasePrice,
+            discountPercent: item.discountPercent || 0,
             reteFuentePercent: item.reteFuentePercent || 0,
             reteIvaPercent: item.reteIvaPercent || 0,
           })),
@@ -137,6 +142,7 @@ export class PurchasesService {
         productId: string;
         quantity: number;
         purchasePrice: number;
+        discountPercent?: number;
         reteFuentePercent?: number;
         reteIvaPercent?: number;
       }[];
@@ -159,12 +165,15 @@ export class PurchasesService {
 
         const totalLine = item.quantity * item.purchasePrice;
         const baseLine = totalLine / (1 + ivaPerc / 100);
-        const ivaLine = totalLine - baseLine;
+        const discountValue = baseLine * ((item.discountPercent || 0) / 100);
+        const baseLineAfterDiscount = baseLine - discountValue;
+        const ivaLine = baseLineAfterDiscount * (ivaPerc / 100);
+        const totalLineAfterDiscount = baseLineAfterDiscount + ivaLine;
 
-        const rfValue = baseLine * ((item.reteFuentePercent || 0) / 100);
+        const rfValue = baseLineAfterDiscount * ((item.reteFuentePercent || 0) / 100);
         const riValue = ivaLine * ((item.reteIvaPercent || 0) / 100);
 
-        return sum + (totalLine - rfValue - riValue);
+        return sum + (totalLineAfterDiscount - rfValue - riValue);
       }, 0);
     }
 
@@ -190,6 +199,7 @@ export class PurchasesService {
               productId: item.productId,
               quantity: item.quantity,
               purchasePrice: item.purchasePrice,
+              discountPercent: item.discountPercent || 0,
               reteFuentePercent: item.reteFuentePercent || 0,
               reteIvaPercent: item.reteIvaPercent || 0,
             })),

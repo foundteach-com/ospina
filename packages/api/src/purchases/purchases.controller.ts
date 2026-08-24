@@ -35,6 +35,7 @@ export class PurchasesController {
         productId: string;
         quantity: number;
         purchasePrice: number;
+        discountPercent?: number; // Added field
         reteFuentePercent?: number; // Added field
         reteIvaPercent?: number; // Added field
       }[];
@@ -91,6 +92,7 @@ export class PurchasesController {
         productId: string;
         quantity: number;
         purchasePrice: number;
+        discountPercent?: number; // Added field
         reteFuentePercent?: number; // Added field
         reteIvaPercent?: number; // Added field
       }[];
