@@ -8,7 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "postinstall": "prisma generate --schema=packages/database/prisma/schema.prisma && (if [ -n \"$DATABASE_URL\" ]; then prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss; fi || true)",
+    "postinstall": "prisma generate --schema=packages/database/prisma/schema.prisma",
+    "db:push": "prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss",
     "dev": "turbo run dev",
     "dev:web": "turbo run dev --filter=web",
     "dev:tienda": "turbo run dev --filter=tienda",
