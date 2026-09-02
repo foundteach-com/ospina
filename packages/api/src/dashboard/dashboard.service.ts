@@ -7,9 +7,13 @@ export class DashboardService {
 
   async getStats(startDate?: Date, endDate?: Date) {
     const now = new Date();
-    const todayStart = new Date(now.setHours(0, 0, 0, 0));
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const yearStart = new Date(now.getFullYear(), 0, 1);
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth();
+    const date = now.getUTCDate();
+
+    const todayStart = new Date(Date.UTC(year, month, date, 0, 0, 0, 0));
+    const monthStart = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+    const yearStart = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
 
     // Sales today
     const salesToday = await this.prisma.sale.aggregate({
@@ -76,9 +80,9 @@ export class DashboardService {
   }
 
   async getPurchasesByMonth(year?: number) {
-    const targetYear = year || new Date().getFullYear();
-    const startDate = new Date(targetYear, 0, 1);
-    const endDate = new Date(targetYear, 11, 31, 23, 59, 59);
+    const targetYear = year || new Date().getUTCFullYear();
+    const startDate = new Date(Date.UTC(targetYear, 0, 1, 0, 0, 0, 0));
+    const endDate = new Date(Date.UTC(targetYear, 11, 31, 23, 59, 59, 999));
 
     const purchases = await this.prisma.purchase.findMany({
       where: {
@@ -98,7 +102,8 @@ export class DashboardService {
     });
 
     const purchasesByMonth = purchases.reduce((acc, purchase) => {
-      const monthKey = `${purchase.date.getFullYear()}-${String(purchase.date.getMonth() + 1).padStart(2, '0')}`;
+      const pDate = new Date(purchase.date);
+      const monthKey = `${pDate.getUTCFullYear()}-${String(pDate.getUTCMonth() + 1).padStart(2, '0')}`;
       if (!acc[monthKey]) {
         acc[monthKey] = { month: monthKey, total: 0, count: 0 };
       }
@@ -127,9 +132,9 @@ export class DashboardService {
   }
 
   async getSalesByMonth(year?: number) {
-    const targetYear = year || new Date().getFullYear();
-    const startDate = new Date(targetYear, 0, 1);
-    const endDate = new Date(targetYear, 11, 31, 23, 59, 59);
+    const targetYear = year || new Date().getUTCFullYear();
+    const startDate = new Date(Date.UTC(targetYear, 0, 1, 0, 0, 0, 0));
+    const endDate = new Date(Date.UTC(targetYear, 11, 31, 23, 59, 59, 999));
 
     const sales = await this.prisma.sale.findMany({
       where: {
@@ -150,7 +155,8 @@ export class DashboardService {
     });
 
     const salesByMonth = sales.reduce((acc, sale) => {
-      const monthKey = `${sale.date.getFullYear()}-${String(sale.date.getMonth() + 1).padStart(2, '0')}`;
+      const sDate = new Date(sale.date);
+      const monthKey = `${sDate.getUTCFullYear()}-${String(sDate.getUTCMonth() + 1).padStart(2, '0')}`;
       if (!acc[monthKey]) {
         acc[monthKey] = { month: monthKey, total: 0, count: 0 };
       }
@@ -209,7 +215,8 @@ export class DashboardService {
 
     // Group by month
     const flowByMonth = cashFlows.reduce((acc, flow) => {
-      const monthKey = `${flow.date.getFullYear()}-${String(flow.date.getMonth() + 1).padStart(2, '0')}`;
+      const fDate = new Date(flow.date);
+      const monthKey = `${fDate.getUTCFullYear()}-${String(fDate.getUTCMonth() + 1).padStart(2, '0')}`;
       if (!acc[monthKey]) {
         acc[monthKey] = { month: monthKey, income: 0, expense: 0, balance: 0 };
       }
@@ -266,7 +273,7 @@ export class DashboardService {
     const topClients = await this.prisma.sale.groupBy({
       by: ['clientId'],
       where: {
-        status: 'COMPLETED',
+        status: { not: 'CANCELLED' },
       },
       _sum: {
         total: true,

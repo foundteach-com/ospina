@@ -7,16 +7,18 @@ export class ComercialService {
 
   async getDashboardData() {
     const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth();
+
+    const currentMonthStart = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+    const lastMonthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    const lastMonthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
     
-    // 1. Ingresos y Ventas (Completadas o Pagadas)
-    // Asumimos que Sale.status = COMPLETED representa ventas cerradas.
+    // 1. Ingresos y Ventas (Ventas Activas No Canceladas)
     const currentMonthSales = await this.prisma.sale.aggregate({
       where: {
         date: { gte: currentMonthStart },
-        status: 'COMPLETED'
+        status: { not: 'CANCELLED' }
       },
       _sum: { total: true },
       _count: { id: true }
@@ -25,7 +27,7 @@ export class ComercialService {
     const lastMonthSales = await this.prisma.sale.aggregate({
       where: {
         date: { gte: lastMonthStart, lte: lastMonthEnd },
-        status: 'COMPLETED'
+        status: { not: 'CANCELLED' }
       },
       _sum: { total: true },
       _count: { id: true }
@@ -34,7 +36,7 @@ export class ComercialService {
     const currentRevenue = Number(currentMonthSales._sum.total || 0);
     const lastRevenue = Number(lastMonthSales._sum.total || 0);
     const revenueGrowth = lastRevenue === 0 
-      ? 100 
+      ? (currentRevenue > 0 ? 100 : 0)
       : ((currentRevenue - lastRevenue) / lastRevenue) * 100;
 
     // 2. Cotizaciones (Métricas)
@@ -66,31 +68,31 @@ export class ComercialService {
     });
 
     // 5. Gráfico de Ventas (Últimos 6 meses)
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const sixMonthsAgo = new Date(Date.UTC(year, month - 5, 1, 0, 0, 0, 0));
     const rawSalesLast6Months = await this.prisma.sale.groupBy({
       by: ['date'],
       where: {
         date: { gte: sixMonthsAgo },
-        status: 'COMPLETED'
+        status: { not: 'CANCELLED' }
       },
       _sum: { total: true }
     });
 
     // Agrupar por mes en memoria para el gráfico
     const monthsData = Array.from({ length: 6 }).map((_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const d = new Date(Date.UTC(year, month - (5 - i), 1));
       return {
-        month: d.getMonth(),
-        year: d.getFullYear(),
-        label: d.toLocaleString('es-CO', { month: 'short' }),
+        month: d.getUTCMonth(),
+        year: d.getUTCFullYear(),
+        label: d.toLocaleString('es-CO', { month: 'short', timeZone: 'UTC' }),
         total: 0
       };
     });
 
     rawSalesLast6Months.forEach(sale => {
       const d = new Date(sale.date);
-      const m = d.getMonth();
-      const y = d.getFullYear();
+      const m = d.getUTCMonth();
+      const y = d.getUTCFullYear();
       
       const monthObj = monthsData.find(md => md.month === m && md.year === y);
       if (monthObj) {

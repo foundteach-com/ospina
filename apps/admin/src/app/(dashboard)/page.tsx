@@ -198,7 +198,7 @@ function ComprasVsVentasPorMesChart() {
     
     // Process Sales
     filteredSales.forEach(sale => {
-      const idx = new Date(sale.date).getMonth();
+      const idx = new Date(sale.date).getUTCMonth();
       if (idx < 0 || idx > 11) return;
       let saleTotal = 0;
       sale.items?.forEach((item: any) => {
@@ -212,7 +212,7 @@ function ComprasVsVentasPorMesChart() {
 
     // Process Purchases
     filteredPurchases.forEach(purchase => {
-      const idx = new Date(purchase.date).getMonth();
+      const idx = new Date(purchase.date).getUTCMonth();
       if (idx < 0 || idx > 11) return;
       let purchaseTotal = 0;
       purchase.items?.forEach((item: any) => {
@@ -501,7 +501,7 @@ function ComparativaAnualVentasChart() {
 
     // Procesar Año Actual (Verde)
     rawSalesLeft.forEach(sale => {
-      const idx = new Date(sale.date).getMonth();
+      const idx = new Date(sale.date).getUTCMonth();
       if (idx < 0 || idx > 11) return;
       let saleTotal = 0;
       sale.items?.forEach((item: any) => {
@@ -514,7 +514,7 @@ function ComparativaAnualVentasChart() {
 
     // Procesar Año Anterior (Azul)
     rawSalesRight.forEach(sale => {
-      const idx = new Date(sale.date).getMonth();
+      const idx = new Date(sale.date).getUTCMonth();
       if (idx < 0 || idx > 11) return;
       let saleTotal = 0;
       sale.items?.forEach((item: any) => {
@@ -767,7 +767,7 @@ function VentasSection() {
     }));
 
     filteredSalesItems.forEach(item => {
-      const monthIndex = item.date.getMonth();
+      const monthIndex = item.date.getUTCMonth();
       const valSinIva = item.quantity * item.salePrice;
       const valConIva = valSinIva * (1 + item.salesIvaPercent / 100);
       

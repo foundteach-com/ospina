@@ -58,8 +58,8 @@ export class PurchasesController {
     if (query.year) {
       const targetYear = parseInt(query.year, 10);
       where.date = {
-        gte: new Date(targetYear, 0, 1),
-        lte: new Date(targetYear, 11, 31, 23, 59, 59, 999),
+        gte: new Date(Date.UTC(targetYear, 0, 1, 0, 0, 0, 0)),
+        lte: new Date(Date.UTC(targetYear, 11, 31, 23, 59, 59, 999)),
       };
     }
     
